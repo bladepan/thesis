@@ -1,0 +1,71 @@
+
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix,epsfig,endnotes}
+
+\usepackage{color}
+\usepackage{psfrag}
+\usepackage{subfigure}
+\usepackage{booktabs}
+%\usepackage{float}
+\usepackage{url}
+\usepackage{path}
+\usepackage{caption}
+\usepackage{courier}
+\usepackage{listings}
+\usepackage{pifont}
+\usepackage{graphicx}
+
+
+%don't want date printed
+\date{}
+
+%% disable the splitting of footnotes
+\interfootnotelinepenalty=10000
+
+%% source code styles
+\lstset{
+	basicstyle=\footnotesize\ttfamily,
+	extendedchars=true,
+	breaklines=true,
+	frame=lines
+}
+
+%% table style
+\renewcommand{\arraystretch}{1.1}
+
+\begin{document}
+
+%\conferenceinfo{XXX}{'13 Somewhere,  USA}
+\newcommand{\cb}{CloudBrowser}
+\newcommand{\citemain}{~\cite{mcdaniel2012cloudbrowser}}
+
+\title{\Large \bf Multiprocessor \cb}
+
+\author{Xiaozhong Pan  \qquad  Godmar Back\\
+Department of Computer Science\\ 
+Virginia Tech\\
+\url{bladepan@cs.vt.edu} \qquad  \url{gback@cs.vt.edu}
+}
+
+
+
+
+\maketitle
+\thispagestyle{empty}
+
+%% remove newpage here
+\input{abstract}
+\newpage
+\input{introduction}
+\input{motivation}
+
+
+\newpage
+
+{\footnotesize \bibliographystyle{acm}
+\bibliography{references}}
+
+%\theendnotes
+
+\end{document}
+
