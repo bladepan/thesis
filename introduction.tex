@@ -20,7 +20,7 @@ to create responsive and rich user experience because the whole user interface
 is wiped out and re-rendered every time user sends a request.
 
 AJAX is an approach that uses javascript to send requests to server
-and partially update the HTML document without page refresh.
+and partially updates the HTML document without page refresh.
 It is capable of delivering a better performance and native application like user experience.
 In this model, developers have to write client javascript code to handle server client communication
 and rendering logic.
@@ -43,7 +43,7 @@ because all the UI state is kept in the server side.
 %\cb{} could reuse most of existing client code because it does not require an extra markup language
 %and its sole programming language is javascript.
 
-Fig.\ref{fig:cb1arch} demonstrates the architecture of the original \cb{}.
+Fig.\ref{fig:cb1arch} demonstrates the architecture of the original \cb{}. %FIXME expand in detail here
 For a stateless web application,
 scaling up would be accomplished by adding more processes and configuring the new processes
 in a front end load balancer which distributes the client requests among all the processes.

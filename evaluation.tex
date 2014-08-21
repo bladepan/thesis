@@ -17,9 +17,9 @@ There are many factors could impact the performance of the system besides the nu
 like the number of virtual browsers, the memory consumed by each virtual browser, 
 the frequency of client requests
 and resource taken for handling each client requests.
-To make things simpler, we create a simple test application that would create a virtual browser for
-every two clients, the application consists a few DOM elements for the client to click,
-every client would click the DOM elements and wait for response and click again after a predefined wait time.
+To make things simpler, we create a simple test application that consists a few DOM elements for the client to click,
+every client would click the DOM elements and wait for response and click again after a predefined wait time,
+and we configure the test engine to create two connections for each virtual browser.
 For each test environment, 
 we gradually increase the number of clients until the average latency exceeds 100ms.
 
