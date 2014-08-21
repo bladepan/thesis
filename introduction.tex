@@ -2,19 +2,47 @@
 \label{sec:intro}
 
 % backgroud, motivation, design choices, architecture , experiments(goals, etc.)
+Before AJAX~\cite{garrett2005ajax} became pervasive, most web site works like this:
+the user sends a request to the web server through submitting a form or clicking a link on a web page,
+then the server processes this request and responds a new HTML document.
+In this model, the application logic resides mainly on server side, the client side is mostly
+plain HTML document.
+The problem about this form/link based model is that it is hard
+to create responsive and rich user experience because the whole user interface
+is wiped out and re-rendered every time user sends a request.
 
-\subsection{The architecture of the original \cb{}}
-The user's browser will download the client engine written in javascript.
-The client engine then connect to the server and fetch DOM elements in a
-virtual browser
-will connect to a virtual browser in server side and fetch DOM
-elements from the 
+AJAX is an approach that uses javascript to send requests to server
+and partially update the HTML document without page refresh.
+It is capable of delivering a better performance and native application like user experience.
+In this model, developers have to write client javascript code to handle server client communication
+and rendering logic. 
 
 
-\begin{figure}[h!]
-\centering
-\includegraphics[width=\textwidth]{figs/cb1_architecture_overview}
-\caption{Single Process \cb{} Architecture Overview}
-\label{fig:cb1arch}
-\end{figure}
+\cb{} is a server-centric framework designed to simplify the development of AJAX web applications.
+Developer's code is running in a server side virtual browser and the user's browser is just
+a dumb display device which synchronizes with the virtual browser.
+In \cb{}, developers use nothing but HTML, css and javascript to construct the UI logic just like
+any traditional AJAX application.
+In the place where traditional AJAX applications call a server side API through HTTP,
+developers could call a server side method directly.
+The synchronization between the virtual browser and the actual browser is 
+handled by the framework under the hood.
+\cb{} also naturally preserves UI state upon page refreshes
+because all the UI state is kept in the server side.
+
+
+
+%Comparing to other server-centric frameworks, 
+%\cb{} could reuse most of existing client code because it does not require an extra markup language
+%and its sole programming language is javascript.
+
+
+The original \cb{}'s architecture is restricted to a single process.
+It cannot benefit from multiple processors and provides no isolation between virtual browsers.
+The stateful nature of \cb{} makes it hard to support multiple process, 
+but we think it is a effort worth taking for it would not only boost \cb{}'s capacity
+but also shed some light on how to scale nodejs applications in general.
+
+
+
 

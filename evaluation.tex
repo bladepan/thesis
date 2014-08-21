@@ -1,3 +1,32 @@
 \section{Evaluation}
 \label{sec:eval}
-We have evaluated \cb{} for its scalability.
+We have evaluated how \cb{} scales out in multiple worker nodes and compared the performance
+with the original implementation.
+The metrics we take into account for measuring performance is memory and cpu consumption on the server side, 
+the number of clients
+and the request latency perceived on client side.
+We create seven test environments : 
+the first six environments are deployed with the new implementation with 1, 2, 4, 6, 8 and 10 worker nodes 
+configured respectively, 
+the last environment is deployed with the original implementation.
+All the test environments are deployed on a server with 16 Intel 2.27GHz cores and 12G memory.
+For each test environment, 
+we deploy a test engine on a separate machine to generate test clients.
+Each client connection would trigger some DOM event and send some requests mimicking user interaction with a web application.
+There are many factors could impact the performance of the system besides the number of client connections,
+like the number of virtual browsers, the memory consumed by each virtual browser, 
+the frequency of client requests
+and resource taken for handling each client requests.
+To make things simpler, we create a simple test application that would create a virtual browser for
+every two clients, the application consists a few DOM elements for the client to click,
+every client would click the DOM elements and wait for response and click again after a predefined wait time.
+For each test environment, 
+we gradually increase the number of clients until the average latency exceeds 100ms.
+
+
+
+\subsection{Scale Out}
+% 1, 2, 4, 6, 8, 10 worker nodes; original implementation 
+
+
+\subsection{}

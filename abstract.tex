@@ -9,6 +9,7 @@ Previous work\citemain{} has shown that \cb{} is capable of supporting hundreds 
 However, as more clients come in, the latency for each client would reach to a point that the interaction experience is unbearable for everyone.
 Besides, keeping \cb{} running on a single processor has 
 other drawbacks, like one cpu draining virtual browser slows down the performance of others.
+poor isolation between virtual browsers, fail-over
 To overcome these problems, we extend \cb{} to make it support multiple processes and multiple hosts. 
 Evaluation shows that the new implementation scales linearly up to X servers.
 
