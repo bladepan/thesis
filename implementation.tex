@@ -1,5 +1,28 @@
 \section{Design and Implementation}
 \label{sec:implementation}
+%In designing the new \cb{}, 
+%we also explore solutions for developers to store session data.
+One challenge to expand a web application to multiple processes is 
+how to store session data.
+For a single server web application, 
+the session data could be stored in memory.
+For multiple servers,
+application frameworks like J2EE~\cite{j2eedoc} suggest use persistent
+storage like database for session data.
+If the session data volume is huge or the access rate is frequent,
+reading session data from database could be a performance bottleneck.
+Caching session data locally on each server sounds like a good solution,
+but it has a warm up latency as a server needs to load session data when 
+the session data is generated elsewhere
+and it needs some sort of coherence mechanism to dealing with session data updates.
+Some methods~\cite{shachor2005maintaining} are devised to create session affinity
+to application servers so session data look up could be processed in memory.
+For \cb{}, 
+each request is associated with a virtual browser,
+session affinity is naturally maintained by the framework,
+developers could still create plain \js{} objects in the application code to 
+store session data.
+
 
 To distribute a web application among multiple processes, 
 a simple approach would be dispatch the user's requests to server processes randomly or in a round robin fashion.
@@ -24,11 +47,14 @@ whenever a virtual browser posts a new chat message all other browsers get the u
 %For the shared data that does not need to be persisted, 
 %But for some temporary data, this could be expensive 
 
-
-There are two main components in our design : a master node and possible multiple worker nodes.
-The master node acts as a proxy which dispatches requests from user to worker nodes 
-and as a management data repository to store shared data structures such as application configurations.
+As shown in Figure~\ref{fig:cb2arch}, the server side is divided into one master node and multiple worker nodes.
+The master node acts as a proxy which dispatches requests from user to worker nodes.
 The worker node hosts virtual browsers which execute application code.
+Like in the original design, 
+
+\newarchitectureoverview{}
+\requestdispatchdiagram{}
+\appinstancefig{}
 
 % some graphs
 
@@ -108,3 +134,51 @@ replace the return statement with a call to the callback. % TODO add a fig for t
 We also have to refactor the code of the corresponding RMI to use callback instead of 
 directly assignment.
 
+
+
+\begin{listing}[ht,width=0.3\textwidth]
+\begin{minted}[
+frame=lines,
+fontsize=\scriptsize,
+linenos
+]
+{javascript}
+var a = someService.getSomeObject1(key);
+
+someService.getSomeObject2(a, 
+    function(err, result){
+        //do something with result
+    }
+);
+\end{minted}
+\caption{Code sample from single process \cb{}}
+\label{code:single}
+\end{listing}
+
+\begin{listing}[ht,width=0.3\textwidth]
+\begin{minted}[
+frame=lines,
+fontsize=\scriptsize,
+linenos
+]
+{javascript}
+// getSomeObject1 is refactored 
+// to use a callback
+someService.getSomeObject1(key, 
+    function(err, a){
+        if(err){
+            throw err;
+        }
+        // getSomeObject2's signature 
+        // could remain the same
+        someService.getSomeObject2(a, 
+            function(err, result){
+                //do something with result
+            }
+        );
+    }
+);
+\end{minted}
+\caption{Code sample from multiple process \cb{}}
+\label{code:multi}
+\end{listing}

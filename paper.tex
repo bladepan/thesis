@@ -14,6 +14,9 @@
 \usepackage{listings}
 \usepackage{pifont}
 \usepackage{graphicx}
+\usepackage{minted}
+
+
 
 
 %don't want date printed
@@ -35,9 +38,48 @@
 
 \begin{document}
 
-%\conferenceinfo{XXX}{'13 Somewhere,  USA}
+% key words
 \newcommand{\cb}{CloudBrowser}
+\newcommand{\js}{JavaScript}
+\newcommand{\nodejs}{Node.js}
 \newcommand{\citemain}{~\cite{mcdaniel2012cloudbrowser}}
+
+% section for figs
+% maybe put this in a figure.tex
+\newcommand{\architectureoverview}{
+    \begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{figs/architecture_overview}
+    \caption{Single Process \cb{} Architecture Overview}
+    \label{fig:cb1arch}
+    \end{figure*}
+}
+
+\newcommand{\newarchitectureoverview}{
+    \begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{figs/new_architecture_overview}
+    \caption{Multiprocess Process \cb{} Architecture Overview}
+    \label{fig:cb2arch}
+    \end{figure*}
+}
+
+\newcommand{\requestdispatchdiagram}{
+    \begin{figure*}[ht]
+    \includegraphics[width=0.4\textwidth]{figs/request_dispatch}
+    \caption{Request Dispatch Diagram}
+    \label{fig:dispatch}
+    \end{figure*}
+}
+
+\newcommand{\appinstancefig}{
+    \begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{figs/appInstance}
+    \caption{Detailed view of an App Instance}
+    \label{fig:appinstance}
+    \end{figure*}
+}
 
 \title{\Large \bf Multiprocessor \cb}
 
