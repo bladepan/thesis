@@ -1,82 +1,149 @@
 \section{Design and Implementation}
 \label{sec:implementation}
-%In designing the new \cb{}, 
-%we also explore solutions for developers to store session data.
+As shown in Figure~\ref{fig:cb2arch}, the server side is divided into one master node and multiple worker nodes.
+The worker node hosts virtual browsers which execute application code and create server
+side DOM structures.
+The virtual browsers in a same worker node are grouped into \appins{}s,
+we will explain \appins{} in detail in section~\ref{sec:appins}.
+All the clients' requests go through master node which dispatches the requests to 
+worker nodes.
+Master node and worker nodes run on separate processes and communicate with each other
+via TCP messages.
+The new design could be deployed to multiple servers or a single server.
+
+Like in the original design,
+the client enters a web application by request a entry point URL.
+\cb{} will allocate a virtual browser for the client and send back 
+a HTML document containing virtual browser id and id of the virtual browser's \appins{}.
+Then client engine will embed these ids in request URL when sending 
+web socket messages.
+
+
+\newarchitectureoverview{}
+
+
+
+
+\subsection{Master}
+Figure~\ref{fig:dispatch} presents the dispatch logic of the master node.
+When the master receives a request from client,
+it first tries to extract \appins{} id from the request URL.
+If the request is associated with an \appins{}, 
+the master will look up a in memory mapping table to find the worker
+who hosts the \appins{} and forward the request to it.
+If this request is not associated with an \appins{}, 
+that means this is a request for the initial HTML document,
+the master would forward this request to any worker node.
+The worker node would further analyze this request using application specific logic.
+After dispatching the request, 
+the master will relay response message from worker node to client.
+
+
+
+\requestdispatchdiagram{}
+
+
+\subsection{Worker}
+\label{sec:worker}
+When worker node receives a request from the master, 
+one of the following could happen:
+
+\begin{enumerate}
+    \item The request belongs to a \appins{} on the worker.
+    \begin{enumerate}
+        \item It is associated with a virtual browser in the \appins{}, directs this request to the virtual browser.
+        \item It is not associated with any virtual browser in the \appins{}, create a virtual browser for the request
+        and let the new virtual browser handle this request.
+    \end{enumerate}
+
+    \item The request does not belong to any \appins{} on this worker.
+    \begin{enumerate}
+        \item The request belongs to an \appins{} on another worker. 
+        Send back response to client with a redirect HTTP header field
+        containing URL to that \appins{}.
+        \item Worker asks Master for a new \appins{}, 
+        the master will choose a most free worker node to create an new \appins{},
+        then the original worker will send back a response with a redirect HTTP header field
+        containing URL to the new \appins{}.
+    \end{enumerate}
+
+    \item The request is rejected because it violates permission rules or application specific rules.
+    \begin{enumerate}
+        \item The request is associated with a virtual browser or \appins{} but 
+        the request is from a client who does not have access right to those resource.
+    \end{enumerate}    
+\end{enumerate} 
+
+
+\subsection{\appins{}}
+\label{sec:appins}
 One challenge to expand a web application to multiple processes is 
-how to store session data.
-For a single server web application, 
-the session data could be stored in memory.
-For multiple servers,
-application frameworks like J2EE~\cite{j2eedoc} suggest use persistent
-storage like database for session data.
-If the session data volume is huge or the access rate is frequent,
-reading session data from database could be a performance bottleneck.
-Caching session data locally on each server sounds like a good solution,
-but it has a warm up latency as a server needs to load session data when 
-the session data is generated elsewhere
-and it needs some sort of coherence mechanism to dealing with session data updates.
-Some methods~\cite{shachor2005maintaining} are devised to create session affinity
-to application servers so session data look up could be processed in memory.
-For \cb{}, 
-each request is associated with a virtual browser,
-session affinity is naturally maintained by the framework,
-developers could still create plain \js{} objects in the application code to 
-store session data.
+how to store \emph{session data}.
+We refer \emph{session data} as semi-permanent
+application state associated with a user session. 
+Considering a simple chat application:
+the user could join a chat room by visiting the chat room's URL,
+he could see the recent messages posted by people joined in the chat room,
+he could also update his nickname and post new messages.
+The user's nick name and recent messages are session data
+because these information need to be kept around for page rendering 
+during the user's session.
+If this chat application only runs on one process,
+we could just keep all the session data in memory and access 
+them directly.
+This method does not work
+if we want to scale out this chat application to increase the application's capacity.
+Like in figure~\ref{fig:multiappservers}, 
+one common solution is to introduce load balancer to dispatch
+requests from clients among application servers and
+use a centralized session server to serve the session data~\cite{j2eedoc,chlan2002internet,chiang2001transparent,saigo2003session}.
+The advantage of this solution is that the load balancer can use
+a simple algorithm like round robin to dispatch the requests.
+The disadvantage is that the user's requests could hit different 
+servers and the server needs to fetch session data from the session server
+for every request to get the most recent session data.
+Some methods~\cite{shachor2005maintaining} are devised to create session affinity,
+that is the requests from a session are sent to the same application 
+server so application could cache session data locally to avoid communicating with
+session server for every quest.
+For the chat application in particular, 
+the recent messages in a chat room could be modified by multiple user sessions,
+so the session affinity solutions should also make sure all the requests within
+a chat room are dispatched to the same application server.
+In \cb{}, we created \appins{} mechanism to provide an easy and high performance
+way to manage session data.
+
+\multiappservers{}
+
+% detailed explain here
+Every virtual browser needs to be created inside an \appins{}.
+When worker creates an \appins{}, 
+application could create a customized \appins{} object to hold session data.
+The \appins{} object could be directly referenced and manipulated like any plain 
+\js{} object by application code running inside virtual browsers.
+Figure~\ref{fig:appinstance} shows an example of how a chat application would
+utilize \appins{}. 
+In this application, the \appins{} object stores the state of a chat room.
+It has a property called ``Messages'' represents recent messages and a method ``PostMessage''
+to add new message.
+Each virtual browser in the \appins{} represents a user's view of the chat room.
+The application code could use ``Messages'' in the \appins{} object to draw
+a list of chat history, 
+and call the ``PostMessage'' method when the user submit a new message.
+There is no need to create session affinity or caching session data,
+the virtual browsers in the same \appins{} are guaranteed to be created on the same process.
 
 
 
-
-To distribute a web application among multiple processes, 
-a simple approach would be dispatch the user's requests to server processes randomly or in a round robin fashion.
-This approach is not feasible for \cb{} because 
-the client needs to synchronize with a particular virtual browser.
-So a dispatch mechanism is required to direct the client requests to the right process.
-Another issue arises in distributing virtual browsers among processes is 
-how the virtual browsers access shared data.
-We could store all shared data in database and let application code call database APIs to get these data.
-This approach is already supported by \cb{} and makes sense for data that needs to be persisted like user profiles. 
-We also provide a mechanism called App Instance to group multiple virtual browsers,
-the virtual browsers in the same App Instance are guaranteed to locate in the same process and they could
-share in-memory data structure directly to each other through App Instance object.
-Applications like chat room could benefit from using App Instance to boost performance :
-application could initiate an App Instance for each chat room to broadcast chat messages, 
-whenever a virtual browser posts a new chat message all other browsers get the update.
-
-
+\appinstancefig{}
 
 %We also provide a in-memory data sharing mechanism called App Instance for use cases that need better performance than database.
 %User could define 
 %For the shared data that does not need to be persisted, 
 %But for some temporary data, this could be expensive 
 
-As shown in Figure~\ref{fig:cb2arch}, the server side is divided into one master node and multiple worker nodes.
-The master node acts as a proxy which dispatches requests from user to worker nodes.
-The worker node hosts virtual browsers which execute application code.
-Like in the original design, 
 
-\newarchitectureoverview{}
-\requestdispatchdiagram{}
-\appinstancefig{}
 
-% some graphs
-
-\subsection{Master}
-The master node stores a map of App Instances to worker nodes.
-When the user sends a request, 
-the master node checks if the request could be dispatched to an existing App Instance,
-if it could the master forward the request to the worker node hosts that App Instance, 
-otherwise it would either command a worker to initialize an App Instance and forward the
-request to the worker, or reject the request.
-The logic of whether to reject a request and how to initiate an App Instance is defined by the application writer.
-The request forward process is essentially a reverse proxy server.
-
-\subsection{Worker}
-The worker node runs actual virtual browser instances.
-Upon start up the worker node fetches application configurations from master node.
-Whenever the worker node initiate an App Instance, it will register the App Instance with master node.
-The worker node directs the incoming requests to corresponding virtual browsers.
-The processing of the requests is the same as the original \cb{}.
-The difference is that the response is passed to master instead of write directly to client.
 
 
 \subsection{Remote Method Invocation}
