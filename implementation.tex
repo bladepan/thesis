@@ -1,6 +1,6 @@
 \section{Design and Implementation}
 \label{sec:implementation}
-As shown in Figure~\ref{fig:cb2arch}, the server side is divided into one master node and multiple worker nodes.
+As shown in Figure~\ref{fig:cb2arch}, a \cb{} system consists of one master node and multiple worker nodes.
 The worker node hosts virtual browsers which execute application code and create server
 side DOM structures.
 The virtual browsers in a same worker node are grouped into \appins{}s,
@@ -12,11 +12,12 @@ via TCP messages.
 The new design could be deployed to multiple servers or a single server.
 
 Like in the original design,
-the client enters a web application by request a entry point URL.
-\cb{} will allocate a virtual browser for the client and send back 
-a HTML document containing virtual browser id and id of the virtual browser's \appins{}.
-Then client engine will embed these ids in request URL when sending 
-web socket messages.
+the client enters a web application by request an entry point URL.
+\cb{} will allocate a virtual browser for that client and sends back 
+a small HTML document.
+The HTML document has virtual browser id, virtual browser's \appins{} id and links to client engine code.
+After client's web browser downloads and executes client engine code,
+the client engine instance would establish a web socket connection with the master node. 
 
 
 \newarchitectureoverview{}
@@ -32,12 +33,17 @@ If the request is associated with an \appins{},
 the master will look up a in memory mapping table to find the worker
 who hosts the \appins{} and forward the request to it.
 If this request is not associated with an \appins{}, 
-that means this is a request for the initial HTML document,
-the master would forward this request to any worker node.
-The worker node would further analyze this request using application specific logic.
+the master would pick a worker node to forward this request.
+In this case, the worker node would use application specific logic to handle this request.
+For example, if the application is configured as create only one virtual browser per user, 
+the worker node will find a existing virtual browser of that user or create a new one 
+and redirect the request to that virtual browser's URL.
+A virtual browser's URL always contains an \appins{} id.
 After dispatching the request, 
 the master will relay response message from worker node to client.
 
+It is noticable that client engine is aware of \appins{} id, so the 
+requrests initiated by client engine will be dispatched by master node directly.
 
 
 \requestdispatchdiagram{}
@@ -75,8 +81,22 @@ one of the following could happen:
 \end{enumerate} 
 
 
+\subsection{Load Balancing}
+The worker node sends heartbeat message containing its memeory usage to master every 3 seconds.
+The master node stores the memory usage value as a indicator of the worker's workload.
+The worker with the smallest memeory usage value will be picked to create new \appins{} or
+handle the requests that the master failed to find associated \appins{}.
+Everytime the master node forward requests or send create \appins{} command to a worker,
+the cached memory usage of that node will be incremented by an empirical amount.
+This is to avoid a burst of workload all being directed to a fixed worker.
+The cached memory usage will be refreshed by the next heartbeat message.
+
+
+
 \subsection{\appins{}}
 \label{sec:appins}
+% program model, programmer retrieve and keep session data, responsible for session data management
+% php, dynamoDB session handler
 One challenge to expand a web application to multiple processes is 
 how to store \emph{session data}.
 We refer \emph{session data} as semi-permanent
