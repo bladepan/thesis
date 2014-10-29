@@ -1,32 +1,31 @@
 \section{Evaluation}
 \label{sec:eval}
-We have evaluated how \cb{} scales out in multiple worker nodes and compared the performance
-with the original implementation.
-The metrics we take into account for measuring performance is memory and cpu consumption on the server side, 
-the number of clients
-and the request latency perceived on client side.
-We create seven test environments : 
-the first six environments are deployed with the new implementation with 1, 2, 4, 6, 8 and 10 worker nodes 
-configured respectively, 
-the last environment is deployed with the original implementation.
-All the test environments are deployed on a server with 16 Intel 2.27GHz cores and 12G memory.
-For each test environment, 
-we deploy a test engine on a separate machine to generate test clients.
-Each client connection would trigger some DOM event and send some requests mimicking user interaction with a web application.
-There are many factors could impact the performance of the system besides the number of client connections,
-like the number of virtual browsers, the memory consumed by each virtual browser, 
-the frequency of client requests
-and resource taken for handling each client requests.
-To make things simpler, we create a simple test application that consists a few DOM elements for the client to click,
-every client would click the DOM elements and wait for response and click again after a predefined wait time,
-and we configure the test engine to create two connections for each virtual browser.
-For each test environment, 
-we gradually increase the number of clients until the average latency exceeds 100ms.
+We have wrote several web applications on top of \cb{} to test its
+performance and scalability.
+One application is called click application,
+it increments and prints a counter on HTML whenever the user clicks.
+This application represents applications with simple user interactions and small amount of DOM elements.
+Other applications are chat applications.
+A user can join a chat room to chat with other people,
+changes his nickname, send messages, view the most recent 50 to 100 messages in the chat room.
+The chat applications represents more sophisticated applications.
+We implemented the chat applications use popular web frameworks Angular and Ember.
+
+We also implement a benchmark tool to simulate multiple users.
+The benchmark tool will send HTTP requests to mimic the bootstrapping process of a real client,
+and send web socket message to \cb{} to simulate user interaction with the application.
+Those messages are identical to those triggered by real user events like mouse click and key stroke.
+
+The \cb{} system is deployed on a server with 8 Intel 2.27GHz cores and 12G memory.
+The benchmark tool is deployed on a separate machine.
+
+\subsection{Click Application}
+In this benchmark,
+we allocate a separate virtual browser for each client,
+a client will click on the page, then wait for the counter to be refreshed and click again.
 
 
+\subsection{Angular Chat Application}
 
-\subsection{Scale Out}
-% 1, 2, 4, 6, 8, 10 worker nodes; original implementation 
-gradually add clients to cluster,... add workers
 
 \subsection{}
