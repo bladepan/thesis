@@ -34,10 +34,10 @@ the system will dispatch the request to the worker node hosts the corresponding 
 the user will receive a bootstrap HTML document containing links to client engine code just as
 the original design.
 After the client engine is initialized, the client engine will send requests
-to master node to establish web socket.
+to master node to establish web socket connection.
 All the client server communication afterwards are transmitted via web socket.
-The client engine is fully aware of the current \appins{} id and virtual browser id, 
-all the HTTP requests initiated by the client engine will attach those ids in the URL.
+%The client engine is fully aware of the current \appins{} id and virtual browser id, 
+%all the HTTP requests initiated by the client engine will attach those ids in the URL.
 
 
 
@@ -128,7 +128,7 @@ We refer \emph{session data} as semi-permanent
 application state associated with a user session.
 Considering a simple chat application:
 the user could join a chat room by visiting the chat room's URL,
-he could see the recent messages posted by people joined in the chat room,
+he could see recent messages posted by other people joined in the chat room,
 he could also update his nickname and post new messages.
 The user's nick name and recent messages are session data
 because these information need to be kept around for page rendering

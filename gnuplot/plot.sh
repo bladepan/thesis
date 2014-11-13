@@ -29,3 +29,8 @@ plot_file click_scaleout2.dat "scale out for click application" 'client count'
 i_conf=$i_scirptdir/scaleout3.gp
 
 plot_file click2_scaleout2.dat "scale out for click application with wait" 'client count'
+
+
+i_conf=$i_scirptdir/latency_scaleout.gp
+
+plot_file jquerychat_scaleout.dat "scale out for click application with wait" 'client count'

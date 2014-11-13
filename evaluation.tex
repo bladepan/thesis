@@ -7,14 +7,17 @@ it increments and prints a counter on HTML whenever the user clicks.
 This application represents applications with simple user interactions and small amount of DOM elements.
 Other applications are chat applications.
 A user can join a chat room to chat with other people,
-changes his nickname, send messages, view the most recent 50 to 100 messages in the chat room.
+changes his nickname, send messages, view recent messages in the chat room.
+Whenever the number of messages in a chat room reaches 100, the first 50 messages
+are discarded.
 The chat applications represents more sophisticated applications.
-We implemented the chat applications use popular web frameworks Angular and Ember.
+We implemented the chat applications use popular web frameworks Angular and JQuery
+to assess how \cb{} performs with real world web technology stack.
 
-We also implement a benchmark tool to simulate multiple users.
-The benchmark tool will send HTTP requests to mimic the bootstrapping process of a real client,
+We implemented a benchmark tool to simulate multiple users.
+The benchmark tool will send HTTP requests to mimic the bootstrapping process,
 and send web socket message to \cb{} to simulate user interaction with the application.
-Those messages are identical to those triggered by real user events like mouse click and key stroke.
+These messages are identical to those triggered by real user events like mouse click and key stroke.
 
 The \cb{} system is deployed on a server with 8 Intel 2.27GHz cores and 12G memory.
 The benchmark tool is deployed on a separate machine.
@@ -25,7 +28,13 @@ we allocate a separate virtual browser for each client,
 a client will click on the page, then wait for the counter to be refreshed and click again.
 
 
+\clickscaleout{}
+
+\clickwaitscaleout{}
+
 \subsection{Angular Chat Application}
 
 
-\subsection{}
+\subsection{JQuery Chat Application}
+
+\jquerychatscaleout{}
