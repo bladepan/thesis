@@ -93,33 +93,52 @@
 }
 
 
-\newcommand{\clickscaleout}{
+\newcommand{\clickthroughput}{
     \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.5\textwidth]{gnuplot/click_scaleout2}
-    \caption{Throughput and latency for click application.}
-    \label{fig:clickscaleout}
+    \includegraphics[width=0.5\textwidth]{gnuplot/click_throughput}
+    \caption{Throughput of click application.}
+    \label{fig:clickthroughput}
     \end{figure}
 }
 
 
-\newcommand{\clickwaitscaleout}{
+\newcommand{\clicklatency}{
     \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.5\textwidth]{gnuplot/click2_scaleout2}
-    \caption{Throughput and latency for click application, with artificial delay.}
-    \label{fig:clickwaitscaleout}
+    \includegraphics[width=0.5\textwidth]{gnuplot/click_latency}
+    \caption{Latency of click application.}
+    \label{fig:clicklatency}
     \end{figure}
 }
 
 
-
-\newcommand{\jquerychatscaleout}{
+\newcommand{\clickwaitthroughput}{
     \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.5\textwidth]{gnuplot/jquerychat_scaleout}
-    \caption{Throughput and latency for chat application with JQuery.}
-    \label{fig:jquerychatscaleout}
+    \includegraphics[width=0.5\textwidth]{gnuplot/click_wait_throughput}
+    \caption{Throughput of click application, after introducing artificial delay.}
+    \label{fig:clickwaitthroughput}
+    \end{figure}
+}
+
+
+\newcommand{\clickwaitlatency}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{gnuplot/click_wait_latency}
+    \caption{Latency of click application, after introducing artificial delay.}
+    \label{fig:clickwaitlatency}
+    \end{figure}
+}
+
+
+\newcommand{\jquerychatlatency}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{gnuplot/jquerychat_latency}
+    \caption{Latency of chat application with JQuery.}
+    \label{fig:jquerychatlatency}
     \end{figure}
 }
 

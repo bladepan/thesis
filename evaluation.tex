@@ -19,6 +19,14 @@ The benchmark tool will send HTTP requests to mimic the bootstrapping process,
 and send web socket message to \cb{} to simulate user interaction with the application.
 These messages are identical to those triggered by real user events like mouse click and key stroke.
 
+In the benchmarks, each simulated client will wait for its action taking effect before 
+sending the next one.
+For example, in the click application, the client will wait for the counter
+to be refreshed before clicking again.
+In the chat application, the client will wait for
+the chat message appearing on the chat window before sending another one.
+% TBD
+
 The \cb{} system is deployed on a server with 8 Intel 2.27GHz cores and 12G memory.
 The benchmark tool is deployed on a separate machine.
 
@@ -27,14 +35,22 @@ In this benchmark,
 we allocate a separate virtual browser for each client,
 a client will click on the page, then wait for the counter to be refreshed and click again.
 
+\clickthroughput{}
+\clicklatency{}
 
-\clickscaleout{}
-
-\clickwaitscaleout{}
+\clickwaitthroughput{}
+\clickwaitlatency{}
 
 \subsection{Angular Chat Application}
+In this benchmark,
+every 5 clients will share a chat room, 
+after join the chat room, the client will change its nickname,
+after that the client will start send messages.
+The client will wait for each action takes effect to start the next one.
+For example, the client will wait for his previous message rendered on the chat window before
+sending the next one.
 
 
 \subsection{JQuery Chat Application}
 
-\jquerychatscaleout{}
+\jquerychatlatency{}
