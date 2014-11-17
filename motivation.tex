@@ -1,3 +1,113 @@
 \section{Motivation}
 \label{sec:moti}
 
+We motivates our approach to help developers to write scalable continuous web applications.
+People use multiple devices to access web applications all the time, 
+preserving the view state of the web application and presenting
+users synchronized view on all their devices enhances user experience.
+They could use web applications seamlessly on all their devices
+without the hassle of manually restoring to the state where they left.
+Moreover, as operating systems like IOS and MACOS introduces features
+like continuity to synchronize states of native applications among multiple
+devices, users would expect web applications to work like those native counterparts.
+In the other way around, native application developers could use \cb{} to 
+implement continuous native applications based on HTML.
+
+Web application owners constantly need to increase the capacity of web applications due
+to the increase of user loads or the applications themselves demand more resource
+as they evolve.
+The architecture solutions to scale a web system can be categorized into 
+scale-up and scale-out~\cite{cardellini2002state}.
+Scale-up is to increase the performance of a single server,
+it can be achieved by upgrading the server hardware or optimizing software.
+Scale-out is to employ more servers and distribute load among all servers.
+In this paper, we will only discuss scale-out solutions and scale-up in
+a sense that software could leverage the power of multiple processors.
+As other solutions such as increase memory capacity, optimizing operating system,
+tuning application software is applicable to all web frameworks.
+As Fig.~\ref{fig:webscaleout} shows, 
+a scale out web system architecture consists a load balancer and multiple
+application servers.
+The load balancer distribute requests from clients to the application servers,
+application servers host business logic and generate content for client requests.
+Here the load balancer could be one or multiple special purpose hardware or reverse 
+proxy software like nginx or apache HTTP server deployed on general purpose 
+machines, it could also be a conceptual part that handles distribution logic:
+for example the web system owner could register IP addresses of all the application
+servers to DNS server, and rely on the client browser to distribute its requests to
+all the IP addresses.
+
+A common strategy for load balancer is to distribute requests in a content-blind manner,
+for example, it pick an application server randomly or in a round robin fashion.
+The downside of this approach is that 
+for every request the application server needs to restore the application state
+as it could receive requests from any user.
+For example, the application server need to 
+fetch the user name from database when the user's request hit it for the first time,
+and this db access is duplicated when the user's requests 
+are routed to other servers.
+
+To reduce these redundant work, some web system owners adopt
+session affinity distribution.
+This approach distributes requests from a user to the same application server,
+so the application server needs only create application state once.
+In this approach, the load balancer is often implemented by reverse proxy software
+like nginx.
+
+
+In \cb{}, a virtual browser keeps the view 
+\cb{} is session-aware by design because 
+the user's requests are handled by virtual browsers,
+a virtual browser contains the application state and view state.
+We will discuss how to distribute virtual browsers among multiple servers
+ in detail in section~\ref{sec:implementation}.
+
+On top of virtual browser, 
+\cb{} has a level of abstraction called \appins{} that is helpful
+to build collaborative applications.
+An \appins{} is a group of virtual browsers that are guaranteed to be placed
+in the same \cb{} process.
+The virtual browsers from the same \appins{} share a user defined \appins{} object.
+The developer could use a \appins{} object to describe an entity that 
+could be accessed by multiple users, 
+then create virtual browser under that \appins{} as user's views of this shared entity.
+For example, the application could use an \appins{} object as a shared document and 
+define various properties and methods on that object.
+Whenever a user want to edit that document, the application
+creates a virtual browser under that \appins{},
+the user specific application state like user name and editor settings 
+could be stored in variables inside his virtual browser.
+The application could use the \appins{} object directly to render the document for every user, 
+and each user can have his own view of the editor.
+
+Current web frameworks do not have such clear construct to define application state.
+One option for the developer is to rely on session objects provided by frameworks.
+The application developer needs to configure the persistence  of session objects 
+and make sure the configuration works with the load distribution scheme.
+For example, in J2EE the session objects could be configured to be stored in memory or
+high available database~\cite{j2eedoc}; 
+PHP developers need to specify a session save handler to store session objects 
+in database~\cite{phpdoc}.
+By default, these frameworks store session objects in memory or in local file system.
+If the developer adopts a content-blind load balancer, 
+he should also configure the session objects to use database or other
+synchronization mechanism.
+If the developer uses a session affinity load balancer,
+he should configure the session objects to be stored in local memory.
+Another option is to implement his own way of handling application state.
+The developer also needs to make sure his implementation works with
+his load balancer.
+
+\cb{} does not have the concept of session,
+
+% That means the applications will not scale if not configured properly.
+% Second, the load distribution scheme and 
+% Even everything is correctly configured, 
+% the developer also needs to write boilerplate code to retrieve objects from the
+% session object to restore application state for every request.
+
+
+% Also, \cb{} makes it clear how the work load is distributed.
+
+
+\webscaleout{}
