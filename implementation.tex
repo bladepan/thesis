@@ -69,9 +69,20 @@ correct worker node.
 So the master only execute this dispatch logic before the client engine bootstrapped.
 
 For simplicity, all the client traffic and the workers' responses goes through master node.
-There is an embedded HTTP proxy inside master node to relay all the messages.
-We could also employ external HTTP proxy servers and decouple the dispatch logic with
-client server message transmission.
+We use an open source \nodejs{} module node HTTP proxy~\cite{nodeproxy} to implement
+an embedded HTTP proxy inside master node.
+The embedded HTTP proxy listens on the ports that clients connect to,
+when the proxy receives a HTTP request,
+it will call a method to get the target worker node and then relay the message
+to the worker node.
+We also considered to use high performance HTTP reverse proxy nginx~\cite{nginx}
+to relaying requests,
+but to do so we need to modify the code of nginx to 
+make it talks to master node before relaying requests,
+also it would make the deployment of \cb{} more complex.
+On the other hand, the embedded HTTP proxy could directly invoke master's methods.
+However, as the embedded HTTP proxy runs on the same thread as the master's other
+logic, the master could be overwhelmed under heavy load.
 
 \requestdispatchdiagram{}
 
@@ -84,6 +95,7 @@ Every time the master node forward requests or send create \appins{} command to 
 the cached memory usage of that node will be incremented by an empirical amount.
 This is to avoid a burst of workload all being directed to a fixed worker.
 The cached memory usage will be refreshed by the next heartbeat message.
+
 
 
 \subsection{Worker}
