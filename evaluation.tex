@@ -39,8 +39,9 @@ The benchmark tool is deployed on a separate machine.
 
 \subsection{Click Application}
 In this benchmark,
-we allocate a separate virtual browser for each client,
-a client will click on the page, then wait for the counter to be refreshed and click again.
+we allocate a separate virtual browser for each simulated user,
+the simulated user will click on the page, 
+then wait for the counter to be refreshed and click again.
 
 \clickthroughput{}
 \clicklatency{}
@@ -49,20 +50,44 @@ a client will click on the page, then wait for the counter to be refreshed and c
 \clickwaitlatency{}
 
 \subsection{Chat Applications}
-For chat applications, 
+See Fig.\ref{fig:appinstance},
+we use \appins{}s to represent application state of chat rooms.
+Each \appins{} has the corresponding chat room's model object ChatRoom.
+There could be multiple virtual browsers inside an \appins{} to  
+serve requests from users.
+In the benchmark, 
+we will create simulated users to join chat rooms and send chat messages.
+Every five simulated users will be grouped to join one chat room.
+Each simulated user will create its own virtual browser.
+So there would be one \appins{} for every five virtual browsers.
+The simulated user will perform the following actions:
+\begin{enumerate}
+\item Sleeps for 0-20 seconds, this is simulating that the users
+join the chat room.
+
+\item Double click the welcome panel to show the user name editing input box.
+
+\item Input a new name in the user name editing input box and hit enter.
+
+\item \label{itm:chatinput} Input a 15-20 character sentence in the chat message input box and hit enter.
+
+\item Sleeps for 5-10 seconds, and repeat step ~\ref{itm:chatinput}.
+
+\end{enumerate}
+
+% In section \ref{sec:angular} and \ref{sec:jquery}, 
+% we will discuss the benchmark
+
+\appinstancefig{}
+
 
 
 \subsubsection{Angular Chat Application}
-In this benchmark,
-every 5 clients will share a chat room, 
-after join the chat room, the client will change its nickname,
-after that the client will start send messages.
-The client will wait for each action takes effect to start the next one.
-For example, the client will wait for his previous message rendered on the chat window before
-sending the next one.
+\label{sec:angular}
 
 \angularchatlatency{}
 
 \subsubsection{JQuery Chat Application}
+\label{sec:jquery}
 
 \jquerychatlatency{}
