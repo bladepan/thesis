@@ -82,21 +82,38 @@ make it talks to master node before relaying requests,
 also it would make the deployment of \cb{} more complex.
 On the other hand, the embedded HTTP proxy could directly invoke master's methods.
 However, as the embedded HTTP proxy runs on the same thread as the master's other
-logic, the master could be overwhelmed under heavy load.
+components, the master could be overwhelmed under heavy load.
+This could be alleviated by using \nodejs{}'s Cluster API to make the embedded HTTP
+proxy to run on multiple processes.
 
 \requestdispatchdiagram{}
 
 \subsubsection{Load Balancing}
-The worker node sends heartbeat message containing its memory usage to master every 3 seconds.
-The master node stores the memory usage value as a indicator of the worker's workload.
-The worker with the smallest memory usage value will be picked to create new \appins{} or
-handle the requests that the master failed to find associated \appins{}.
+To make the work load as evenly distributed to the worker nodes as possible,
+the master node assign a integer weight value to each worker
+and the worker with the smallest weight will be picked to handle new requests
+or create new \appins{}.
+To make the weight value reflect the actual load of the worker,
+the worker node sends heartbeat message containing 
+its heapUsed value to master every 3 seconds(
+the heapUsed value is the total size of \js{} objects that have not been
+reclaimed by garbage collector, 
+it is a more accurate indicator of the worker's load than resident memory size
+).
+The master stores the heapUsed in megabytes as the worker's weight.
+To avoid a burst of workload all being directed to a fixed worker.
 Every time the master node forward requests or send create \appins{} command to a worker,
-the cached memory usage of that node will be incremented by an empirical amount.
-This is to avoid a burst of workload all being directed to a fixed worker.
-The cached memory usage will be refreshed by the next heartbeat message.
-
-
+the weight value of that node will be incremented by an empirical amount.
+For example, if there are two workers w1 and w2 in the system with weight
+100 and 101 respectively,
+before the next heartbeat message the master received ten requests to 
+create \appins{},
+if we do not increase the worker's weight after forwarding a request,
+we end up let w1 handles all the work,
+if we increase the worker's weight by 10 for each \appins{} created,
+we distribute these ten requests evenly.
+Even if the number we add to the weight does not accurately amount to the actual 
+heapUsed of the worker, it will be fixed after receiving the next heart beat message.
 
 \subsection{Worker}
 \label{sec:worker}
