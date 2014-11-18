@@ -2,7 +2,7 @@
 \label{sec:eval}
 We have wrote several web applications on top of \cb{} to test its
 performance and scalability.
-One application is called click application,
+One application is click application,
 it increments and prints a counter on HTML whenever the user clicks.
 This application represents applications with simple user interactions and small amount of DOM elements.
 Other applications are chat applications.
@@ -14,17 +14,24 @@ The chat applications represents more sophisticated applications.
 We implemented the chat applications use popular web frameworks Angular and JQuery
 to assess how \cb{} performs with real world web technology stack.
 
-We implemented a benchmark tool to simulate multiple users.
-The benchmark tool will send HTTP requests to mimic the bootstrapping process,
-and send web socket message to \cb{} to simulate user interaction with the application.
-These messages are identical to those triggered by real user events like mouse click and key stroke.
+\chatroomfig{}
 
-In the benchmarks, each simulated client will wait for its action taking effect before 
+We implemented a benchmark tool to simulate multiple users.
+Each simulated user sends HTTP requests the same way as
+a web browser does when an actual user is interacting with a web application.
+In the benchmarks, each simulated user will wait for its action taking effect before 
 sending the next one.
 For example, in the click application, the client will wait for the counter
 to be refreshed before clicking again.
 In the chat application, the client will wait for
 the chat message appearing on the chat window before sending another one.
+To be efficient, the simulated user does not render the view, 
+it just analyzes server's response message to see if its action has been processed by
+the server.
+For example, after processing a chat message, 
+the chat application will create a new DIV element with the chat message content, 
+the simulated user will know a chat message is processed after it received
+the corresponding DOM update message.
 % TBD
 
 The \cb{} system is deployed on a server with 8 Intel 2.27GHz cores and 12G memory.
@@ -41,7 +48,11 @@ a client will click on the page, then wait for the counter to be refreshed and c
 \clickwaitthroughput{}
 \clickwaitlatency{}
 
-\subsection{Angular Chat Application}
+\subsection{Chat Applications}
+For chat applications, 
+
+
+\subsubsection{Angular Chat Application}
 In this benchmark,
 every 5 clients will share a chat room, 
 after join the chat room, the client will change its nickname,
@@ -52,6 +63,6 @@ sending the next one.
 
 \angularchatlatency{}
 
-\subsection{JQuery Chat Application}
+\subsubsection{JQuery Chat Application}
 
 \jquerychatlatency{}
