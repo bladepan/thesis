@@ -54,16 +54,34 @@ See Fig.\ref{fig:appinstance},
 we use \appins{}s to represent application state of chat rooms.
 Each \appins{} has the corresponding chat room's model object ChatRoom.
 There could be multiple virtual browsers inside an \appins{} to  
-serve requests from users.
+serve requests from multiple users.
+If \emph{userA} requests Application URL http://example.com/chat,
+an \appins{} and a virtual browser is created.
+Let's say the \appins{}'s id is \emph{appins1},
+the virtual browser's id is \emph{vb1}.
+\emph{appins1} contains an chat room's model object.
+\emph{vb1} constructs initial HTML document provided by developer and 
+executes application \js{} code.
+Then \emph{userA} is redirected to http://example.com/chat/a/appins1/b/vb1.
+Other people can join this chat room by requesting the \appins{} URL
+http://example.com/chat/a/appins1.
+For example, \emph{userB} requests http://example.com/chat/a/appins1,
+another virtual browser \emph{vb2} is created and \emph{userB} will be
+redirected to http://example.com/chat/a/appins1/b/vb2. 
+
 In the benchmark, 
-we will create simulated users to join chat rooms and send chat messages.
-Every five simulated users will be grouped to join one chat room.
-Each simulated user will create its own virtual browser.
-So there would be one \appins{} for every five virtual browsers.
+the simulated users will be grouped into groups of five.
+At the beginning of the benchmark, 
+for every group one user will request for Application URL to make 
+\cb{} create an \appins{},
+after that, the remaining users will use the \appins{} URL to start
+their own session.
+Thus, in the benchmark every five simulated user will share a chat room.
+
 The simulated user will perform the following actions:
 \begin{enumerate}
-\item Sleeps for 0-20 seconds, this is simulating that the users
-join the chat room.
+\item Sleeps for 0-20 seconds. This is simulating the users enter the 
+chat room at different times.
 
 \item Double click the welcome panel to show the user name editing input box.
 
@@ -71,9 +89,12 @@ join the chat room.
 
 \item \label{itm:chatinput} Input a 15-20 character sentence in the chat message input box and hit enter.
 
-\item Sleeps for 5-10 seconds, and repeat step ~\ref{itm:chatinput}.
+\item Sleeps for 5-10 seconds and repeat step ~\ref{itm:chatinput} 
+until the user has sent 300 messages. 
+This is simulating the time for the user to think and type a message.
 
 \end{enumerate}
+
 
 % In section \ref{sec:angular} and \ref{sec:jquery}, 
 % we will discuss the benchmark
@@ -84,10 +105,23 @@ join the chat room.
 
 \subsubsection{Angular Chat Application}
 \label{sec:angular}
+Angular.js~\cite{angular} is a \js{} framework that enable the developers to 
+use HTML elements to declare dynamic views.
+Fig.\ref{fig:angularchatlatency} shows the latency perceived by benchmark tool
+at different workload.
+The system can support much fewer concurrent clients than the click application.
+First of all, it is a much more complex application than the click application,
+the system needs more memory and CPU resource to support each user.
+Second, every time the user sends a message, the view of other virtual browsers
+in the same chat room needs to be updated as well.
+Third, Angular.js brings a substantial overhead 
+to pay for the price of friendly programming interface.
 
 \angularchatlatency{}
 
 \subsubsection{JQuery Chat Application}
 \label{sec:jquery}
+Fig.\ref{fig:jquerychatlatency} shows latency of JQuery Chat.
+The JQuery Chat supports almost twice the users of the Angular Chat.
 
 \jquerychatlatency{}
