@@ -11,21 +11,21 @@ set title title
 set xlabel xlabel
 
 
-set ylabel "Throughput"
-set y2label "Latency"
+set ylabel "Latency"
+
 
 set ytics nomirror in
 set y2tics nomirror
 
-set yrange [0:*]
-set y2range [0:*]
+set yrange [0:* < 300]
+set y2range [0:* < 300]
 
 # filename is a parameter
-plot filename  u 1:3 t 'Latency - 1 worker' with linespoints axes x1y2,\
-"" u 1:5 t 'Latency - 2 workers' with linespoints axes x1y2,\
-"" u 1:7 t 'Latency - 4 workers' with linespoints axes x1y2,\
-"" u 1:9 t 'Latency - 8 workers' with linespoints axes x1y2,\
-"" u 1:11 t 'Latency - 9 workers' with linespoints axes x1y2,\
-"" u 1:13 t 'Latency - 10 workers' with linespoints axes x1y2,\
-"" u 1:15 t 'Latency - 12 workers' with linespoints axes x1y2
+plot filename  u 1:3 t 'Latency - 1 worker' with linespoints axes x1y1,\
+"" u 1:5 t 'Latency - 2 workers' with linespoints axes x1y1,\
+"" u 1:7 t 'Latency - 4 workers' with linespoints axes x1y1,\
+"" u 1:9 t 'Latency - 8 workers' with linespoints axes x1y1,\
+"" u 1:11 t 'Latency - 9 workers' with linespoints axes x1y1,\
+"" u 1:13 t 'Latency - 10 workers' with linespoints axes x1y1,\
+"" u 1:15 t 'Latency - 12 workers' with linespoints axes x1y1
 #
