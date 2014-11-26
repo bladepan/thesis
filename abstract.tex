@@ -3,16 +3,19 @@
 % Usenix style
 % \subsection*{Abstract}
 % todo more description about cb
-\cb{}\citemain{} is a server centric web framework that simplifies development of web applications.
-\cb{} eliminates the need to write client/server communication code and naturally preserves presentation state in between requests.
-Previous work\citemain{} has shown that \cb{} is capable of supporting hundreds of clients using one processor.
-However, as more clients come in, the latency for each client would reach to a point that the interaction experience becomes unbearable for everyone.
-Besides, keeping \cb{} running on a single processor makes it hard to provide
-isolation between virtual browsers,
-like one cpu draining virtual browser would sinificantly slows down the performance of others.
-To overcome these problems, we extended \cb{} to make it support multiple processes and multiple hosts. 
-Evaluation shows that the new implementation scales linearly up to X servers.
-
+\cb{}\citemain{} is a server centric web framework that 
+keeps web applications' application and representation state on the server side.
+It simplifies the development of web application by
+eliminting the need to write client/server communication code.
+It also provides the end users a continuous experience in between visits even across
+multiple devices.
+Previous work\citemain{} has a limitation that it can only support one process.
+We present a new implementation of \cb{} that could be deployed to multiple processes
+on multiple machines.
+The new implementation expands the capacity of \cb{} to make it feasible to 
+support real world applications.
+Evaluation shows that the new implementation could support 
+live chat application with over 1000 concurrent users on a eight core machine.
 
 \end{abstract}
 

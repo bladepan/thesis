@@ -1,9 +1,10 @@
-client count    throughput 1    latency 1   throughput 2    latency 2   throughput 4    latency 4   throughput 8    latency 8   throughput 9    latency 9   throughput 10   latency 10  throughput 12   latency 12
+#client count   throughput 1    latency 1   throughput 2    latency 2   throughput 4    latency 4   throughput 8    latency 8   throughput 9    latency 9   throughput 10   latency 10  throughput 12   latency 12
 5   0.69    16  NAN NAN NAN NAN NAN NAN NAN NAN NAN NAN NAN NAN
 50  6.4 19.2    6.4 17  6.4 16.63   6.53    16.62   NAN NAN NAN NAN NAN NAN
 100 12.79   47.25   12.9    20.14   12.9    17.5    13.0    16.8    NAN NAN NAN NAN NAN NAN
 150 18.97   107.88  19.16   34.2    19.12   13.56   19.38   18.03   NAN NAN NAN NAN NAN NAN
 200 24.95   200.2   25.5    56  25.57   20.93   25.67   18.32   NAN NAN NAN NAN NAN NAN
+250 NAN NAN 32.08   73.19   NAN NAN NAN NAN NAN NAN NAN NAN NAN NAN
 300 NAN NAN 38.28   91.36   38.76   28.50   38.91   18.78   38.84   18.62   38.92   17.89   38.57   17.61
 400 NAN NAN NAN NAN 51.03   50.51   51.78   25.10   51.45   19.20   51.55   19.20   51.85   18.36
 500 NAN NAN NAN NAN 63.59   82.18   64.48   24.00   64.37   24.11   64.46   20.59   64.07   19.56
@@ -11,3 +12,7 @@ client count    throughput 1    latency 1   throughput 2    latency 2   throughp
 700 NAN NAN NAN NAN NAN NAN 89.42   39.80   89.31   45.07   89.88   38.18   90.38   35.89
 800 NAN NAN NAN NAN NAN NAN 101.81  57.16   102.40  50.41   102.34  48.78   101.63  48.61
 900 NAN NAN NAN NAN NAN NAN 113.65  72.09   114.47  62.68   113.71  66.09   114.58  60.62
+1000    NAN NAN NAN NAN NAN NAN 126.15  83.19   126.87  76.95   126.78  73.61   124.78  71.20
+1100    NAN NAN NAN NAN NAN NAN 138.76  94.32   139.33  91.00   139.02  87.86   138.87  83.80
+1200    NAN NAN NAN NAN NAN NAN 148.89  106.46  151.42  102.96  151.44  99.70   150.90  95.04
+1300    NAN NAN NAN NAN NAN NAN 160.03  174.81  163.31  114.60  162.52  113.81  163.20  109.40

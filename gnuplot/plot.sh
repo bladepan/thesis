@@ -33,7 +33,7 @@ plot_file jquerychat_scaleout.dat "Chat application with JQuery" "client count" 
 plot_file angularchat_scaleout.dat "Chat application with Angular.js" "client count" "angularchat_latency.png"
 
 i_conf=$i_scirptdir/scaleout_throughput.gp
-plot_file click_scaleout2.dat "Click application with delay" "client count" "click_throughput.png"
+plot_file click_scaleout2.dat "Click application" "client count" "click_throughput.png"
 plot_file click2_scaleout2.dat "Click application with delay" "client count" "click_wait_throughput.png"
 
 

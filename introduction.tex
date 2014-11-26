@@ -12,50 +12,58 @@ is wiped out and re-rendered every time user sends a request.
 AJAX is an approach that uses \js{} to send requests to server
 and partially updates the HTML document without page refresh.
 It is capable of delivering a better performance and native application like user experience.
-However, in this model, the server client communication is exposed to the developer.
-A traditional AJAX application would require the developer to divide the application logic to two parts: 
-client side and server side. 
+However, in this model, the distributed nature of the web is exposed to the developer.
+A traditional AJAX application would require the developer to divide the application logic to two parts:
+client side and server side.
 To access a web application, the user would request an entry point web page via a web browser.
 The web browser downloads a HTML document consisting a initial view layout,
  some \js{} files, and other resources like CSS, images, etc.
-The client side logic resides in those \js{} files executed by web browser.
-The \js{} code listens and processes various events and
-updates DOM structures to create a dynamic interactive user interface.
-The client side logic needs to communicate with the server to fetch data
-or push application states.
-The server side logic listens and processes requests from the client side,
-it would usually perform some validation on the incoming request.
-The client side logic would also perform some data validation before push
-application states to the server so that it could inform the user the data 
+Th web browser execute those \js{} files to setup event handlers and client side application state.
+The developers code logic in those \js{} files to make static
+HTML elements a dynamic interactive user interface.
+For any non trivial application,
+the client side logic needs to communicate with the server to fetch more data
+to present to the user,
+or push application states to the server to make it persistent
+or make the state available to others.
+The server side logic listens and processes requests from the client side
+and generate a response.
+The client side logic would normally also perform some data validation before push
+application states to the server so that it could inform the user the data
 is invalid promptly.
-Even with the client side validation logic, the server should not skip its own validation on incoming data 
-because user could bypass the client side logic easily and send requests to server directly, 
-also the validation logic involves server side state is not feasible to be implemented on client side.
+Even with the client side would check for data validity,
+the server should also perform its own data checking logic
+because user could bypass the client side logic easily and send requests to server directly,
+also some data checking that involves server side state is not feasible to be implemented on client side.
 
-% summary of short comes in AJAX applications. how to preserve UI states 
-Although much superior in user experience, 
-developing AJAX application is a more sophisticated job for developers.
+% summary of short comes in AJAX applications. how to preserve UI states
+From the analysis above,
+we can see developing AJAX application is a more sophisticated job for developers.
 The distributed nature of HTTP protocol is exposed to the developers.
-The developers need to write sophisticated \js{} code for user interaction
-and keep client server state in sync.
-The users are also expecting more advanced features from web applications :
+The developers need to duplicate validation logic on client and server side,
+and write sophisticated \js{} code to keep client server state in sync.
+On the other hand, the users are also expecting more advanced features from web applications :
 they would prefer to be presented the view when they last time left the application,
-since the users are accustomed to cloud services, 
+since the users are accustomed to cloud services,
 they would expect the view would preserve even they access the application
 using different devices;
-also, with the popularity of the collaborative applications like Google Docs 
-and iWork for iCloud, 
-users would want to bring more collaboration features to existing applications.
+today web applications are not merely replacement of traditional desktop applications,
+with the power of Internet,
+many web applications introduce extensive collaboration features,
+as users get accustomed with such features in popular web applications
+like Google Docs,iWork for iCloud and collabedit,
+they would want to bring more collaboration features to existing applications.
 
+Existing web frameworks fail to provide a good abstraction to create
+AJAX applications and built in support for creating
+continuous collaborative web applications.
 
-\nodejs{}~\cite{tilkov2010node} is a server side \js{} execution environment 
+\nodejs{}~\cite{tilkov2010node} is a server side \js{} execution environment
 that could be utilized to develop AJAX applications.
 The advantage of using \nodejs{} is that the client side and server side code are programed in
 the same language and
 the programmer could reuse code like data validation logic in client side and server side.
-
-
-
+But the partition between client server side still exists.
 
 %Developer's code is running in a server side virtual browser and the user's browser is just
 %a dumb display device which synchronizes with the virtual browser.
@@ -63,36 +71,36 @@ the programmer could reuse code like data validation logic in client side and se
 %just like any traditional AJAX application.
 %In the place where traditional AJAX applications call a server side API through HTTP,
 %developers could call a server side method directly.
-%The view synchronization between the virtual browser and the actual browser is 
+%The view synchronization between the virtual browser and the actual browser is
 %handled by the framework under the hood.
 %\cb{} also naturally preserves UI state upon page refreshes
 %because all the UI state is kept in the server side.
 
 
-%Comparing to other server-centric frameworks, 
+%Comparing to other server-centric frameworks,
 %\cb{} could reuse most of existing client code because it does not require an extra markup language
 %and its sole programming language is \js{}.
 
-\cb{} is a server-centric framework designed to simplify the development of AJAX web applications.
-Fig.\ref{fig:cb1arch} demonstrates the architecture of the original \cb{}. 
+\cb{} is a server-centric framework designed to address the challenges to create AJAX applications.
+Fig.\ref{fig:cb1arch} demonstrates the architecture of the original \cb{}.% FIXME
 Like web applications built on any other technologies, the user's web browser would need to request an entry
 point web page to access the web application.
-\cb{} determines if it needs to initiate a new virtual browser or use an existing 
+\cb{} determines if it needs to initiate a new virtual browser or use an existing
 virtual browser for the request.
 A virtual browser parses application HTML file to create DOM structures and
 execute application \js{} code.
 After allocating a virtual browser for the request,
 \cb{} then sends a small HTML document and \js{} code to the web browser to
 bootstrap client engine.
-The client engine would forward user events to the corresponding virtual browser and 
+The client engine would forward user events to the corresponding virtual browser and
 synchronize the DOM structure in user's web browser with the virtual one.
-The application \js{} code could listen to DOM events and manipulate DOM elements 
+The application \js{} code could listen to DOM events and manipulate DOM elements
 like any other web application except that the DOM is reside on server side.
 The application code could directly invoke server side method to serialize application
 state instead of calling client server RPCs. %TODO talk about code reuse
 For the developer, there is no need to partition logic to client part and server part
 and it requires nothing more than HTML, CSS and \js{}.
-Moreover, 
+Moreover,
 the UI state is naturally preserved in server side.
 
 
@@ -104,24 +112,24 @@ However, for \cb{} it is vital to make sure the web server connects to the corre
 virtual browser instance inside a particular process to get the right view state.
 In the original \cb{}'s design, a \cb{} process contains all the virtual browsers.% FIXME
 %It cannot benefit from multiple processors and provides no isolation between virtual browsers.
-It is challenging to make a stateful application like \cb{} to support multiple process, 
+It is challenging to make a stateful application like \cb{} to support multiple process,
 but we think it is an effort worth taking :
 the new design would boost \cb{}'s capacity to make it support larger scale web applications,
 the process of implementing it also shed some light on how to scale \nodejs{} applications in general.
 
 %\subsection{The architecture of the original \cb{}}
 %\cb{} is built on \nodejs{} \js{} execution environment. %FIXME
-%As shown in Fig.\ref{fig:cb1arch}, 
+%As shown in Fig.\ref{fig:cb1arch},
 %The user's browser will download the client engine written in \js{}.
 %The client engine then connect to the server and fetch DOM elements in a
 %virtual browser
 %will connect to a virtual browser in server side and fetch DOM
-%elements from the 
+%elements from the
 
 %The requests are translated to DOM events by the framework to be triggered on virtual browsers.
 %The application \js{} code would handle these events and update the DOM elements.
-%Finally the 
+%Finally the
 
 % move this until you have the desired placement
-\architectureoverview{} 
+\architectureoverview{}
 
