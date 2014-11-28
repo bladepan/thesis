@@ -42,20 +42,29 @@ we can see developing AJAX application is a more sophisticated job for developer
 The distributed nature of HTTP protocol is exposed to the developers.
 The developers need to duplicate validation logic on client and server side,
 and write sophisticated \js{} code to keep client server state in sync.
-On the other hand, the users are also expecting more advanced features from web applications :
+On the other hand, 
+the users are also expecting more advanced features from web applications :
 they would prefer to be presented the view when they last time left the application,
 since the users are accustomed to cloud services,
 they would expect the view would preserve even they access the application
-using different devices;
+using different devices,
+newer desktop and mobile operating systems have already introduce similar
+features in their native application like continuity~\cite{apple} in MacOS and IOS,
+the users would expect web applications behave in the same way;
 today web applications are not merely replacement of traditional desktop applications,
 with the power of Internet,
 many web applications introduce extensive collaboration features,
 as users get accustomed with such features in popular web applications
 like Google Docs,iWork for iCloud and collabedit,
 they would want to bring more collaboration features to existing applications.
+We will use \emph{continuous} to refer seamlessly preserving application view across
+multiple user accesses even those accesses could be originated on multiple device.
 
-Existing web frameworks fail to provide a good abstraction to create
-AJAX applications and built in support for creating
+Traditional web frameworks fail to provide a good abstraction to create
+AJAX applications.
+They usually need the users partition application logic,
+and use different languages on client and server side.
+They also lack built in support for creating
 continuous collaborative web applications.
 
 \nodejs{}~\cite{tilkov2010node} is a server side \js{} execution environment
@@ -65,26 +74,32 @@ the same language and
 the programmer could reuse code like data validation logic in client side and server side.
 But the partition between client server side still exists.
 
-%Developer's code is running in a server side virtual browser and the user's browser is just
-%a dumb display device which synchronizes with the virtual browser.
-%In \cb{}, developers use nothing but HTML, CSS and \js{} to construct the UI representation layer
-%just like any traditional AJAX application.
-%In the place where traditional AJAX applications call a server side API through HTTP,
-%developers could call a server side method directly.
-%The view synchronization between the virtual browser and the actual browser is
-%handled by the framework under the hood.
-%\cb{} also naturally preserves UI state upon page refreshes
-%because all the UI state is kept in the server side.
-
-
-%Comparing to other server-centric frameworks,
-%\cb{} could reuse most of existing client code because it does not require an extra markup language
-%and its sole programming language is \js{}.
+To address the problem of application logic partition, 
+server-centric frameworks move application logic and representation to server side.
 
 \cb{} is a server-centric framework designed to address the challenges to create AJAX applications.
+It is built using \nodejs{}.
 Fig.\ref{fig:cb1arch} demonstrates the architecture of the original \cb{}.% FIXME
-Like web applications built on any other technologies, the user's web browser would need to request an entry
-point web page to access the web application.
+The framework provides a runtime environment for application code called virtual browser.
+The virtual browser has DOM implementation like an actual web browser and behaves like one.
+The developers could write code using \js{} and HTML they are already familiar with.
+The virtual browser also captures user events and forward to event handlers specified in application
+\js{} code.
+The difference between virtual browser and an actual browser is, 
+the virtual browser runs on server side so the application \js{} has
+direct access to server side resource like database or server file system.
+For the application developer, 
+there is no need to partition application logic and application state to client side and server side.
+All the representation state and application state is kept in server side.
+The user's browser is just a dumb display device.%FIXME
+The framework will send over the DOM structure and clone it in the 
+user's web browser.
+The user's input and events will be forwarded to the virtual browser and
+changes in virtual browser's DOM structure will be synced to the user side as well.
+In this way, the system provides an illusion that the user's browser is running on the 
+server and has direct access to server resource.
+Like web applications built on any other technologies, 
+the user's web browser would need to request an entry point web page to access the web application.
 \cb{} determines if it needs to initiate a new virtual browser or use an existing
 virtual browser for the request.
 A virtual browser parses application HTML file to create DOM structures and
@@ -94,28 +109,59 @@ After allocating a virtual browser for the request,
 bootstrap client engine.
 The client engine would forward user events to the corresponding virtual browser and
 synchronize the DOM structure in user's web browser with the virtual one.
-The application \js{} code could listen to DOM events and manipulate DOM elements
-like any other web application except that the DOM is reside on server side.
-The application code could directly invoke server side method to serialize application
-state instead of calling client server RPCs. %TODO talk about code reuse
-For the developer, there is no need to partition logic to client part and server part
-and it requires nothing more than HTML, CSS and \js{}.
+To save bandwidth, only the client engine only forward the events the application code listens for.
+The developer could use existing practices to listen for DOM events and manipulate DOM elements.
+There is no need to write code to bridge client and server.
+The application logic is code in one language, 
+and there is no special template language to learn, 
+the interface is defined by HTML and CSS.
+All of these characters makes it easy to write applications on \cb{}.
 Moreover,
-the UI state is naturally preserved in server side.
+as the UI state is naturally preserved in server side.
+All the applications are continuous with no programming effort.
+Simple collaborative features could be enabled by simply allowing multiple users
+connect to a same virtual browser :
+these users could view and manipulate the same view thus creating a coarse
+collaboration effect.
+Advanced collaborative features could be achieved by some additional
+programming:
+the application could differentiate different users inside the same virtual browser 
+using visual clues; 
+the application could also assign different user with different virtual browser and use
+shared object to keep the views in these virtual browser in sync.
+
+Compare to other server-centric frameworks:
+\cb{} does not require developers to learn framework specific template
+technology to describe representation, 
+they could use existing abundant CSS libraries and web page design skills;
+\cb{} does not reinitialize the view components for every user visit,
+thus providing a continuous experience.
 
 
-In previous work, the \cb{} can only support one process.
-For a stateless web application,
-scaling up would be accomplished by adding more processes and configuring the new processes
-in a front end load balancer which distributes the client requests among all the processes.
-However, for \cb{} it is vital to make sure the web server connects to the corresponding
-virtual browser instance inside a particular process to get the right view state.
-In the original \cb{}'s design, a \cb{} process contains all the virtual browsers.% FIXME
-%It cannot benefit from multiple processors and provides no isolation between virtual browsers.
-It is challenging to make a stateful application like \cb{} to support multiple process,
-but we think it is an effort worth taking :
-the new design would boost \cb{}'s capacity to make it support larger scale web applications,
-the process of implementing it also shed some light on how to scale \nodejs{} applications in general.
+%********** facebook refresh rate, user event message, maybe in thesis
+
+
+In previous work, we implemented a prototype of \cb{} that can only support one process.
+It cannot leverage the power of multiple processor architecture and
+it cannot scale out to multiple machines.
+To make it support larger scale web applications,
+we designed and implemented a multiple process version of \cb{}.
+The new design could scale linearly to eight processes.
+And we believe
+the new implementation could also shed some light on how to scale \nodejs{} applications in general.
+
+
+% For a stateless web application,
+% scaling up would be accomplished by adding more processes and configuring the new processes
+% in a front end load balancer which distributes the client requests among all the processes.
+% However, for \cb{} it is vital to make sure the web server connects to the corresponding
+% virtual browser instance inside a particular process to get the right view state.
+% In the original \cb{}'s design, a \cb{} process contains all the virtual browsers.% FIXME
+% %It cannot benefit from multiple processors and provides no isolation between virtual browsers.
+% It is challenging to make a stateful application like \cb{} to support multiple process,
+% but we think it is an effort worth taking :
+% the new design would boost \cb{}'s capacity to make it support larger scale web applications,
+% the process of implementing it also shed some light on how to scale \nodejs{} applications in general.
 
 %\subsection{The architecture of the original \cb{}}
 %\cb{} is built on \nodejs{} \js{} execution environment. %FIXME
