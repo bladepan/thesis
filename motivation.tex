@@ -1,6 +1,45 @@
 \section{Motivation}
 \label{sec:moti}
 
+Our motivation is to create a framework that simplifies scalable web application
+development by providing good abstraction of client server interaction and 
+server side architecture.
+Fig.~\ref{fig:webscaleout} shows the architecture of a scalable web system.
+The web layer are servers that generate dynamic web content for clients.
+We refer these servers as application servers because they host web application
+logic.
+The servers in the service layer provide services for the web layer
+like data persistence, data query, message queue, cache, etc. 
+The clients cannot directly access the service layer.
+The load balancer is a logical component that 
+distributes requests from clients to application servers.
+It could be implemented by one or more special purpose hardware like F5's BIG-IP,
+or by reverse proxy software (like nginx, apache HTTP server) deployed on general
+purpose servers.
+The load balancer could also be a conceptual component that does not map to 
+any physical machine in the web system.
+For example, 
+the load balancer could be implemented by Round Robin DNS,
+the web system's owner registers public IP addresses of the application servers
+to DNS server under the same name,
+when clients send name resolution requests for the name,
+the DNS server responses those IP addresses to clients in a round robin fashion,
+so clients' actual requests will be distributed to multiple application servers.
+We will only focus on the dispatch logic of the load balancer without meddling with
+implementation details.
+The client layer is the UI representation and application code running on the
+clients' web browser.
+An actual web system could be much more complex than Fig.~\ref{fig:webscaleout},
+for example, there could be multiple layers inside the service layer,
+there could be web servers that are dedicated to serve static resources.
+We omit these details because they are not relevant to our discussion.
+
+
+
+\cb{} aims to provide an integrated solution to the client layer, the load balancer 
+and the web layer.
+
+
 We motivates our approach to 
 provide a framework that simplifies web application development
 with build in support for developing continuous and collaborative web applications.
