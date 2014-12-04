@@ -78,22 +78,34 @@ after that, the remaining users will use the \appins{} URL to start
 their own session.
 Thus, in the benchmark every five simulated user will share a chat room.
 
-The simulated user will perform the following actions:
-\begin{enumerate}
-\item Sleeps for 0-20 seconds. This is simulating the users enter the 
-chat room at different times.
+Each simulated user will send 300 chat messages.
+Each chat message is a sentence of 15-20 characters.
+The user would wait for the previous chat message appended on the chat history
+panel before sending the next one.
+The user would wait for 5-10 seconds before sending each message,
+this is simulating the time for a human to think and type a message.
 
-\item Double click the welcome panel to show the user name editing input box.
+We measure the time between the moment 
+the user hit the enter key to send the message to 
+when the message is echoed back as latency of the chat application.
 
-\item Input a new name in the user name editing input box and hit enter.
 
-\item \label{itm:chatinput} Input a 15-20 character sentence in the chat message input box and hit enter.
+% The simulated user will perform the following actions:
+% \begin{enumerate}
+% \item Sleeps for 0-20 seconds. This is simulating the users enter the 
+% chat room at different times.
 
-\item Sleeps for 5-10 seconds and repeat step ~\ref{itm:chatinput} 
-until the user has sent 300 messages. 
-This is simulating the time for the user to think and type a message.
+% \item Double click the welcome panel to show the user name editing input box.
 
-\end{enumerate}
+% \item Input a new name in the user name editing input box and hit enter.
+
+% \item \label{itm:chatinput} Input a 15-20 character sentence in the chat message input box and hit enter.
+
+% \item Sleeps for 5-10 seconds and repeat step ~\ref{itm:chatinput} 
+% until the user has sent 300 messages. 
+% This is simulating the time for the user to think and type a message.
+
+% \end{enumerate}
 
 
 % In section \ref{sec:angular} and \ref{sec:jquery}, 

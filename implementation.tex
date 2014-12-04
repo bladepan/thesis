@@ -143,6 +143,26 @@ one of the following could happen:
     \end{enumerate}
 \end{enumerate}
 
+\subsection{\appins{}}
+
+%FIXME
+On top of virtual browser, 
+\cb{} has a level of abstraction called \appins{} that is helpful
+to build collaborative applications.
+An \appins{} is a group of virtual browsers that are guaranteed to be placed
+in the same \cb{} process.
+The virtual browsers from the same \appins{} share a user defined \appins{} object.
+The developer could use a \appins{} object to describe an entity that 
+could be accessed by multiple users, 
+then create virtual browser under that \appins{} as user's views of this shared entity.
+For example, the application could use an \appins{} object as a shared document and 
+define various properties and methods on that object.
+Whenever a user want to edit that document, the application
+creates a virtual browser under that \appins{},
+the user specific application state like user name and editor settings 
+could be stored in variables inside his virtual browser.
+The application could use the \appins{} object directly to render the document for every user, 
+and each user can have his own view of the editor.
 
 
 \subsection{Remote Method Invocation}

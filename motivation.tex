@@ -2,8 +2,15 @@
 \label{sec:moti}
 
 Our motivation is to create a framework that simplifies scalable web application
-development by providing good abstraction of client server interaction and 
-server side architecture.
+development.
+
+% client <---> application ,
+% by providing good abstraction of client server interaction and 
+% server side architecture.
+
+
+\webscaleout{}
+
 Fig.~\ref{fig:webscaleout} shows the architecture of a scalable web system.
 The web layer are servers that generate dynamic web content for clients.
 We refer these servers as application servers because they host web application
@@ -34,112 +41,86 @@ for example, there could be multiple layers inside the service layer,
 there could be web servers that are dedicated to serve static resources.
 We omit these details because they are not relevant to our discussion.
 
-
-
-\cb{} aims to provide an integrated solution to the client layer, the load balancer 
-and the web layer.
-
-
-We motivates our approach to 
-provide a framework that simplifies web application development
-with build in support for developing continuous and collaborative web applications.
-People use multiple devices to access web applications all the time, 
-preserving the view state of the web application and presenting
-users synchronized view on all their devices enhances user experience.
-They could use web applications seamlessly on all their devices
-without the hassle of manually restoring to the state where they left.
-Moreover, as native applications adopts continuous features
-to synchronize application state and view among multiple devices, 
-web application developers should explore the possibility .%FIXME
-In the other way around, native application developers could use \cb{} to 
-implement continuous native applications based on HTML.
-
-Web application owners constantly need to increase the capacity of web applications due
-to the increase of user loads or the applications themselves demand more resource
-as they evolve.
-The architecture solutions to scale a web system can be categorized into 
-scale-up and scale-out~\cite{cardellini2002state}.
-Scale-up is to increase the performance of a single server,
-it can be achieved by upgrading the server hardware or optimizing software.
-Scale-out is to employ more servers and distribute load among all servers.
-In this paper, we will only discuss scale-out solutions and scale-up in
-a sense that software could leverage the power of multiple processors.
-As other solutions such as increase memory capacity, optimizing operating system,
-tuning application software is applicable to all web frameworks.
-As Fig.~\ref{fig:webscaleout} shows, 
-a scale out web system architecture consists a load balancer and multiple
-application servers.
-The load balancer distribute requests from clients to the application servers,
-application servers host business logic and generate content for client requests.
-Here the load balancer could be one or multiple special purpose hardware or reverse 
-proxy software like nginx or apache HTTP server deployed on general purpose 
-machines, it could also be a conceptual part that handles distribution logic:
-for example the web system owner could register IP addresses of all the application
-servers to DNS server, and rely on the client browser to distribute its requests to
-all the IP addresses.
-
-A common strategy for load balancer is to distribute requests in a content-blind manner,
+A common strategy for load balancer is to distribute requests in a client-blind manner,
 for example, it pick an application server randomly or in a round robin fashion.
-The downside of this approach is that 
-for every request the application server needs to restore the application state
-as it could receive requests from any user.
-For example, the application server need to 
-fetch the user name from database when the user's request hit it for the first time,
-and this db access is duplicated when the user's requests 
-are routed to other servers.
+In this case, the requests from a client could be distributed to any application server.
+The application server needs to reinitialize the client's application state for every request.
+The application server cannot naively cache the application sate in hopes of reducing the
+cost of construct application state, 
+because the user's requests might not be routed to the server again, 
+in this case, caching the user's application state would be a waste of space,
+even if the user's requests hit this server in a future time,
+the application state might have been changed on some other server,
+that would make the cache in this server invalidate.
+One solution would be move as much application state to the Client Layer as possible,
+to make the cost of initializing application state on the server side smaller.
+First, it is improbable to remove all application state from server.
+For example, for security reasons, 
+the server might need the user's profile to check if the user has 
+the privilege to make a certain request.
+In this case, the cost of reinitializing application state cannot be avoid.
 
-To reduce these redundant work, some web system owners adopt
-session affinity distribution.
-This approach distributes requests from a user to the same application server,
-so the application server needs only create application state once.
-In this approach, the load balancer is often implemented by reverse proxy software
-like nginx.
+To overcome the shortcomings of client-blind load distribution,
+some systems adopt client-aware load balancers.
+These load balancers would dispatch the request from the same
+client to the same application server.
+Thus, the application server could cache application state.
+The load balancers would need to parse HTTP header to get
+a session identifier to discriminate each client.
+The dispatch logic could be achieved by applying a hash function
+on the session identifier and map the hash value to an application server.
+However, 
+this simple method does not work well with collaborative applications
+which require application state being shared with multiple users.
+For example, a user might want to co-edit a document with another user.
+These two user's requests to edit that document would be ideally directed to the same machine 
+so that the synchronization of that document's state between two users
+could be handled in memory.
+Conceivably, the load balancer could distribute the requests based on
+application level entity and the application could embed application level
+entity identifier in HTTP header.
 
+Another aspect that needs to be consider to design a scalable web system
+is the servers' load.
+The servers' load could be drastically uneven if the load balancer
+does not take the servers' state into the distribution process.
 
-In \cb{}, a virtual browser keeps the view 
-\cb{} is session-aware by design because 
-the user's requests are handled by virtual browsers,
-a virtual browser contains the application state and view state.
-We will discuss how to distribute virtual browsers among multiple servers
- in detail in section~\ref{sec:implementation}.
+% Current web frameworks usually only deals with the Client Layer and the Web Layer,
+% the web application developer should take the distribution policy of the load balancer
+% into consideration when designing web applications, 
+% and they would need to configure or implement the load balancer to support 
+% the needs of the application.
 
-On top of virtual browser, 
-\cb{} has a level of abstraction called \appins{} that is helpful
-to build collaborative applications.
-An \appins{} is a group of virtual browsers that are guaranteed to be placed
-in the same \cb{} process.
-The virtual browsers from the same \appins{} share a user defined \appins{} object.
-The developer could use a \appins{} object to describe an entity that 
-could be accessed by multiple users, 
-then create virtual browser under that \appins{} as user's views of this shared entity.
-For example, the application could use an \appins{} object as a shared document and 
-define various properties and methods on that object.
-Whenever a user want to edit that document, the application
-creates a virtual browser under that \appins{},
-the user specific application state like user name and editor settings 
-could be stored in variables inside his virtual browser.
-The application could use the \appins{} object directly to render the document for every user, 
-and each user can have his own view of the editor.
-
-Current web frameworks do not have such clear construct to define application state.
+Current web frameworks do not have clear construct to define application state.
 One option for the developer is to rely on session objects provided by frameworks.
 The application developer needs to configure the persistence  of session objects 
 and make sure the configuration works with the load distribution scheme.
-For example, in J2EE the session objects could be configured to be stored in memory or
+For example, in J2EE the session objects could be configured to be managed in memory or
 high available database~\cite{j2eedoc}; 
-PHP developers need to specify a session save handler to store session objects 
+in PHP developers could specify a session save handler to store session objects 
 in database~\cite{phpdoc}.
 By default, these frameworks store session objects in memory or in local file system.
-If the developer adopts a content-blind load balancer, 
-he should also configure the session objects to use database or other
-synchronization mechanism.
-If the developer uses a session affinity load balancer,
-he should configure the session objects to be stored in local memory.
+If the developer adopts a client-blind load balancer, 
+he needs to configure the session objects to use database or other
+synchronization mechanism to make sure the application state could be fetched on every server.
 Another option is to implement his own way of handling application state.
-The developer also needs to make sure his implementation works with
-his load balancer.
+Regardless of the choices of managing application state,
+the developer needs take the distribution policy of the load balancer
+into consideration when designing web applications,
+and in the other direction,
+the developer needs to find the right load balancer to support his application.
 
-\cb{} does not have the concept of session,
+
+
+
+\cb{} provides two abstractions virtual browser and \appins{} to manage application state.
+The developer does not need to worry about the load balancer layer as
+the system takes care of these details naturally.
+The requests for the same \appins{} are forwarded to the same \cb{} process.
+One \appins{} corresponds to one application level entity, 
+the developers could attach multiple virtual browsers to it.
+Thus, the requests are distributed according to application level entities.
+The system will also make the load as evenly distributed to application servers as possible.
 
 % That means the applications will not scale if not configured properly.
 % Second, the load distribution scheme and 
@@ -151,4 +132,3 @@ his load balancer.
 % Also, \cb{} makes it clear how the work load is distributed.
 
 
-\webscaleout{}
