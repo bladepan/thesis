@@ -1,31 +1,21 @@
 \section{Design and Implementation}
 \label{sec:implementation}
-As shown in Figure~\ref{fig:cb2arch}, a \cb{} system consists of one master node and multiple worker nodes.
-The worker node hosts virtual browsers which execute application code and create server
-side DOM structures.
-The virtual browsers in a same worker node are grouped into \appins{}s,
-we will explain \appins{} in detail in section~\ref{sec:appins}.
-All the clients' requests go through master node which dispatches the requests to
-worker nodes.
-Master node and worker nodes run on separate processes and communicate with each other
-via TCP messages.
-The new design could be deployed to multiple servers or a single server.
+As shown in Figure~\ref{fig:cb2arch}, 
+a \cb{} system consists of one master node and multiple worker nodes.
+These nodes are separated processes and they communicate with each other
+with HTTP messages.
+So \cb{} could be flexibly deployed  
+to one one machine or multiple machines 
+as long as they can reach each other by network.
 
-Like in any other web framework, the user access the hosted web application by entering
-a URL in his web browser.
-The user could use any of the below URL types to access an application.
-\begin{enumerate}
-\item \label{itm:appurl} http://example.com/[app] : Application URL.
-`app' is application specified mount point. For example, a chat application's mount point URL
-might be http://example.com/chat.
-\item \label{itm:appinsurl} http://example.com/[app]/a/[appInstanceId] : \appins{} URL.
-`appInstanceId' is id of a \appins{}. For example,
-\appins{} 1 in chat application has the URL http://example.com/chat/a/1.
-access \appins{} 1 in chat application.
-\item \label{itm:vburl} http://example.com/[app]/a/[appInstanceId]/b/[browserId] : Browser URL.
-`browserId' is id of a virtual browser. For example, virtual browser 2 is inside \appins{} 1 of
-chat application, so that virtual browser's URL is http://example.com/chat/a/1/b/2.
-\end{enumerate}
+The worker nodes correspond to the web layer in Fig.~\ref{fig:webscaleout},
+they execute actual application code and process user requests.
+The master distributes client requests to workers and relays the 
+response from workers to clients.
+
+
+
+% FIXME merge into the master chapter
 If the user requests an Application URL or an \appins{} URL, 
 \cb{} will try to allocate a virtual browser for the request,
 after that, the system will send a redirect response containing a Browser URL to the user.
@@ -35,7 +25,12 @@ the user will receive a bootstrap HTML document containing links to client engin
 the original design.
 After the client engine is initialized, the client engine will send requests
 to master node to establish web socket connection.
-All the client server communication afterwards are transmitted via web socket.
+All the client server communication afterwards is transmitted via web socket.
+In the bootstrap HTML document, 
+the server will also write the virtual browser's id and the virtual browser's 
+\appins{} id in \js{} code,
+the client engine will embed these ids into the URL when establishing web socket
+connection.
 %The client engine is fully aware of the current \appins{} id and virtual browser id, 
 %all the HTTP requests initiated by the client engine will attach those ids in the URL.
 
@@ -43,37 +38,97 @@ All the client server communication afterwards are transmitted via web socket.
 
 \newarchitectureoverview{}
 
+\subsection{Client Bootstrap}
+Like in any other web framework, 
+the hosted web applications are exposed to the clients via URLs.
+\cb{} hides a distributed system from the user transparently,
+the user only needs to know the master's DNS name or IP address to 
+access a web application.
+In the following of the paper, 
+we assume the master's DNS name is \emph{example.com}.
+A user could use any of the below URL types to access an application in \cb{}.
+\begin{enumerate}
+\item \label{itm:appurl} http://example.com/[app] : Application URL.
+`app' is an application specified mount point. 
+For example, a chat application's mount point URL could be http://example.com/chat.
+\item \label{itm:appinsurl} http://example.com/[app]/a/[appInstanceId] : \appins{} URL.
+`appInstanceId' is id of a \appins{}. For example,
+\appins{} 1 in chat application has the URL http://example.com/chat/a/1.
+access \appins{} 1 in chat application.
+\item \label{itm:vburl} http://example.com/[app]/a/[appInstanceId]/b/[browserId] : Browser URL.
+`browserId' is id of a virtual browser. For example, virtual browser 2 is inside \appins{} 1 of
+chat application, so that virtual browser's URL is http://example.com/chat/a/1/b/2.
+\end{enumerate}
+\appins{} is a container of virtual browsers.
+In our new design,
+a virtual browser must be created inside an \appins{},
+an \appins{} can have multiple virtual browsers.
+We will discuss \appins{} in detail in the remainder of this paper.
+
+When the system receives a new request from client,
+it will allocate a new or existing virtual browser for the request .
+If the request URL is not a \emph{Browser URL}, 
+the system will send back a HTTP 302 redirect response 
+with a \emph{Browser URL} to the client.
+The client will send a new request with the \emph{Browser URL} 
+after receiving the redirect response.
+If the request URL is a \emph{Browser URL},
+the master will forward the request to the worker 
+that contains the corresponding \appins{} and virtual browser.
+Then the worker will send back a initial HTML document.
+The initial HTML document contains in-line \js{} code that 
+encodes the \appins{} id and virtual browser id,
+links to Client Engine code,
+and a few HTML elements like head and body.
+After loading the initial HTML document, 
+the user's browser will load and execute the Client Engine code.
+The Client Engine will establish a web socket connection with the master,
+the master will tunnel this connection to the corresponding worker node
+because the Client Engine will embed the \appins{} id in the request URL.
+After that, the master node will just copy messages running in the 
+connection back and forth.
+Like in previous design, 
+the Client Engine receives DOM updates and forwards client events via
+web socket connection.
+For clarity, 
+we omit the cases that the system rejects client requests
+due to various possible exceptions like  illegal URL,
+authorization exception, etc.
+
 \subsection{Master}
 Figure~\ref{fig:dispatch} presents the dispatch logic of the master node.
-When the master receives a request from client,
+When the master receives a new request from client,
 it first tries to extract \appins{} id from the request URL.
-If the request is associated with an \appins{},
-the master will look up a in memory mapping table to find the worker
-who hosts the \appins{} and forward the request to it.
-If this request is not associated with an \appins{},
-the master would pick a worker node to forward this request.
-In this case, the worker node would use application specific logic to handle this request.
-For example, if the application is configured as create only one virtual browser per user,
-the worker node will find a existing virtual browser of that user or create a new one
-and send a redirect response to make the client's web browser request that virtual browser's URL.
-A virtual browser's URL always contains an \appins{} id.
-After dispatching the request,
-the master will relay response message from worker node to client.
+If the request URL contains an \appins{},
+the master will look up a in-memory mapping table to find the worker
+that hosts the \appins{} and forward the request to it.
+If this request URL does not contain an \appins{},
+the master would pick a worker node using load balancing mechanism in section~\ref{sec:lb}.
+% In this case, the worker node would use application specific logic to handle this request.
+% For example, 
+% a single page application could be configured allocate only one virtual browser for 
+% a user.
+% In this case, 
+% the worker node will try to find an existing virtual browser for that user or 
+% create a new one if it cannot find an existing one.
+% Then the worker sends a redirect response with the virtual browser's URL
+% to the client.
 
 It is noticeable that the majority of the client server traffic are web socket messages,
-those messages are transmitted via an established web socket that is already connected to the 
-correct worker node.
-So the master only execute this dispatch logic before the client engine bootstrapped.
+those messages are transmitted via an established web socket that is already tunneled to 
+a worker node.
+So the master only execute this dispatch logic in the client bootstrap process.
 
+% one way, two way forwarding
 For simplicity, all the client traffic and the workers' responses goes through master node.
 We use an open source \nodejs{} module node HTTP proxy~\cite{nodeproxy} to implement
 an embedded HTTP proxy inside master node.
-The embedded HTTP proxy listens on the ports that clients connect to,
+The embedded HTTP proxy listens on the port that clients connect to,
 when the proxy receives a HTTP request,
-it will call a method to get the target worker node and then relay the message
+it will call the dispatch method to get a worker node and then relay the message
 to the worker node.
 We also considered to use high performance HTTP reverse proxy nginx~\cite{nginx}
-to relaying requests,
+to relay requests,
 but to do so we need to modify the code of nginx to 
 make it talks to master node before relaying requests,
 also it would make the deployment of \cb{} more complex.
@@ -86,6 +141,7 @@ proxy to run on multiple processes.
 \requestdispatchdiagram{}
 
 \subsubsection{Load Balancing}
+\label{sec:lb}
 To make the work load as evenly distributed to the worker nodes as possible,
 the master node assign a integer weight value to each worker
 and the worker with the smallest weight will be picked to handle new requests
@@ -102,13 +158,13 @@ To avoid a burst of workload all being directed to a fixed worker.
 Every time the master node forward requests or send create \appins{} command to a worker,
 the weight value of that node will be incremented by an empirical amount.
 For example, if there are two workers w1 and w2 in the system with weight
-100 and 101 respectively,
-before the next heartbeat message the master received ten requests to 
-create \appins{},
-if we do not increase the worker's weight after forwarding a request,
-we end up let w1 handles all the work,
-if we increase the worker's weight by 10 for each \appins{} created,
-we distribute these ten requests evenly.
+100 and 101 respectively.
+Before the next heartbeat message from w1 arrives the master received ten requests to 
+create \appins{}.
+If we do not increase the worker's weight after forwarding a request,
+we end up let w1 handles all the work.
+If we increase the worker's weight by 10 for each \appins{} created,
+we will distribute these ten requests evenly between these 2 workers.
 Even if the number we add to the weight does not accurately amount to the actual 
 heapUsed of the worker, it will be fixed after receiving the next heart beat message.
 
@@ -144,7 +200,7 @@ one of the following could happen:
 \end{enumerate}
 
 \subsection{\appins{}}
-
+\label{sec:appins}
 %FIXME
 On top of virtual browser, 
 \cb{} has a level of abstraction called \appins{} that is helpful
