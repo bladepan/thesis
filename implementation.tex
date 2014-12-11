@@ -114,10 +114,14 @@ the master would pick a worker node using load balancing mechanism in section~\r
 % Then the worker sends a redirect response with the virtual browser's URL
 % to the client.
 
-It is noticeable that the majority of the client server traffic are web socket messages,
+
+
+It is noticeable that the majority of the client server traffic are
+web socket messages (user interface update and event forwarding),
 those messages are transmitted via an established web socket that is already tunneled to 
 a worker node.
-So the master only execute this dispatch logic in the client bootstrap process.
+The master do not need to interfere with these messages.
+So dispatch logic is only executed in the client bootstrap process.
 
 % one way, two way forwarding
 For simplicity, all the client traffic and the workers' responses goes through master node.
@@ -129,7 +133,7 @@ it will call the dispatch method to get a worker node and then relay the message
 to the worker node.
 We also considered to use high performance HTTP reverse proxy nginx~\cite{nginx}
 to relay requests,
-but to do so we need to modify the code of nginx to 
+but to do so we need to modify nginx's source code to 
 make it talks to master node before relaying requests,
 also it would make the deployment of \cb{} more complex.
 On the other hand, the embedded HTTP proxy could directly invoke master's methods.
@@ -170,57 +174,120 @@ heapUsed of the worker, it will be fixed after receiving the next heart beat mes
 
 \subsection{Worker}
 \label{sec:worker}
-When worker node receives a request from the master,
+The worker node handles the client requests forwarded by the master node,
+When worker node receives a client request forwarded by the master,
 one of the following could happen:
-
 \begin{enumerate}
-    \item The request belongs to a \appins{} on the worker.
-    \begin{enumerate}
-        \item It is associated with a virtual browser in the \appins{}, directs this request to the virtual browser.
-        \item It is not associated with any virtual browser in the \appins{}, create a virtual browser for the request
-        and let the new virtual browser handle this request.
-    \end{enumerate}
-
-    \item The request does not belong to any \appins{} on this worker.
-    \begin{enumerate}
-        \item The request belongs to an \appins{} on another worker.
-        Send back response to client with a redirect HTTP header field
-        containing URL to that \appins{}.
-        \item Worker asks Master for a new \appins{},
-        the master will choose a most free worker node to create an new \appins{},
-        then the original worker will send back a response with a redirect HTTP header field
-        containing URL to the new \appins{}.
-    \end{enumerate}
-
-    \item The request is rejected because it violates permission rules or application specific rules.
-    \begin{enumerate}
-        \item The request is associated with a virtual browser or \appins{} but
-        the request is from a client who does not have access right to those resource.
-    \end{enumerate}
+    \item The request URL is a \emph{Browser URL}.
+     The worker finds the virtual browser specified in the URL, sends back a initial HTML document.
+    \item The request URL is an \emph{\appins{} URL}.
+        The worker first finds the \appins{} specified in the URL, 
+        then use an existing virtual browser or create a new one inside that \appins{} for the client, 
+        then the worker sends back a redirect response with the virtual browser's URL.
+    \item The request is an \emph{Application URL}. 
+    The worker will either allocate an \appins{} and virtual browser locally 
+    or ask the master node to find an \appins{} and virtual browser 
+    in the system for this request.
+    After that the worker will send back a redirect response with the
+    virtual browser's URL.
 \end{enumerate}
+In the latter two cases,
+whether the system should create a new \appins{} or a new virtual browser 
+for the request is determined by application specified rules.
+For example, 
+a single page application might restrict each user has only one view.
+This could be achieved by configure the application as a `singleUserInstance' 
+application.
+That is the framework will make sure only one \appins{} with one virtual browser
+will be created for each user.
+For this application, if the user does not specify a virtual browser id
+in his request,
+the worker needs to check if any virtual browser has been created for this user
+in the system.
+If the request URL is an \emph{\appins{} URL},
+the worker needs only to check if the specified \appins{} is created for the user
+and if there is any virtual browser in the \appins{}.
+If the request URL is an \emph{Application URL},
+the worker needs to ask the master to find an \appins{} in the system
+if there is no \appins{} for the user locally.
+The reason why the master is involved is because
+the the master maintains 
+a map of \appins{} to worker nodes so it is capable of answer this question.
+Also, when there is no existing \appins{} for the user in the system,
+the master could find a most free worker using the load balancing algorithm mentioned
+earlier to create a new \appins{} and virtual browser for the user.
+
+We have omit the cases that the worker could also deny the request.
+For example, 
+the client does not have the authorization to access the virtual browser or \appins{} specified
+in request URL.
+
+For web socket messages, 
+before the connection established,
+the worker node will first check for the validity of the attached
+ \appins{} id and virtual browser id in request header,
+then the worker node will check if the user has the authorization to access
+the specified virtual browser.
+The connection will be closed if any of the checking fails.
+After the web socket connection establishes,
+the worker node will send the current DOM elements of the virtual browser 
+to the connection.
+Then the client engine could construct user interface based on the DOM elements received.
+
+\appinstancefig{}
 
 \subsection{\appins{}}
 \label{sec:appins}
-%FIXME
-On top of virtual browser, 
-\cb{} has a level of abstraction called \appins{} that is helpful
-to build collaborative applications.
-An \appins{} is a group of virtual browsers that are guaranteed to be placed
-in the same \cb{} process.
-The virtual browsers from the same \appins{} share a user defined \appins{} object.
-The developer could use a \appins{} object to describe an entity that 
-could be accessed by multiple users, 
-then create virtual browser under that \appins{} as user's views of this shared entity.
-For example, the application could use an \appins{} object as a shared document and 
-define various properties and methods on that object.
-Whenever a user want to edit that document, the application
-creates a virtual browser under that \appins{},
-the user specific application state like user name and editor settings 
-could be stored in variables inside his virtual browser.
-The application could use the \appins{} object directly to render the document for every user, 
-and each user can have his own view of the editor.
+\appins{} is designed to help developers to maintain 
+the application state that is shared by multiple views.
+Developers can create multiple virtual browsers inside
+an \appins{}.
+When a virtual browser is created,
+the system inject an API object as a global variable 
+in the virtual browser's \emph{window}.
+The application code can get reference to server side
+object like database connection via this API object.
+The \appins{} is also exposed to application code by the API objects.
+For example, in a chat room application,
+each user has his distinct view of a chat room.
+As in Figure~\ref{fig:appinstance}, 
+each user's view of a chat room is maintained by a virtual browser.
+These views share a chat room object that maintains the chat messages
+in the chat room.
+With \appins{}, we can create an \appins{} for each chat room
+and attach the chat room object in the \appins{}.
+Then for each user who joins the chat room we create a virtual browser
+under the \appins{}.
+The application code could directly manipulate the chat room object
+like append a new message to \emph{messages},
+other virtual browsers in the \appins{} can see the change immediately.
+
+Combined with the routing mechanism,
+\appins{} allows multiple views to share data without the help
+of back-end services like event queue, cache, database, etc.
+And using local object referencing is much faster than those alternatives.
 
 
+% %FIXME
+% On top of virtual browser, 
+% \cb{} has a level of abstraction called \appins{} that is helpful
+% to build collaborative applications.
+% An \appins{} is a group of virtual browsers that are guaranteed to be placed
+% in the same \cb{} process.
+% The virtual browsers from the same \appins{} share a user defined \appins{} object.
+% The developer could use a \appins{} object to describe an entity that 
+% could be accessed by multiple users, 
+% then create virtual browser under that \appins{} as user's views of this shared entity.
+% For example, the application could use an \appins{} object as a shared document and 
+% define various properties and methods on that object.
+% Whenever a user want to edit that document, the application
+% creates a virtual browser under that \appins{},
+% the user specific application state like user name and editor settings 
+% could be stored in variables inside his virtual browser.
+% The application could use the \appins{} object directly to render the document for every user, 
+% and each user can have his own view of the editor.
+
+% MARK
 \subsection{Remote Method Invocation}
 In \cb{} programming API and some internal module, there are use cases like list all the App Instances in an application
 and terminate a virtual browser.

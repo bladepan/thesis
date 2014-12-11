@@ -26,12 +26,13 @@ to be refreshed before clicking again.
 In the chat application, the client will wait for
 the chat message appearing on the chat window before sending another one.
 To be efficient, the simulated user does not render the view, 
-it just analyzes server's response message to see if its action has been processed by
-the server.
+it just analyzes server's response messages to assess 
+if its action has been processed by the server.
 For example, after processing a chat message, 
-the chat application will create a new DIV element with the chat message content, 
+the chat application will create a new DIV element with the chat message content
+and append that DIV element to the DOM tree, 
 the simulated user will know a chat message is processed after it received
-the corresponding DOM update message.
+a DOM update message containing that chat message's content.
 % TBD
 
 The \cb{} system is deployed on a server with 8 Intel 2.27GHz cores and 12G memory.
@@ -42,32 +43,65 @@ In this benchmark,
 we allocate a separate virtual browser for each simulated user,
 the simulated user will click on the page, 
 then wait for the counter to be refreshed and click again.
+The application is just a 14 lines HTML document with 5 lines of in-line
+\js{} code.
+The \js{} code registers a \emph{onclick} handler on a DIV element,
+the handler increment a \emph{counter} variable and set the DIV's innerHTML as
+the counter every time it is invoked.
 
 \clickthroughput{}
+
+Figure~\ref{fig:clickthroughput} shows the throughput of the application 
+under different concurrent levels.
+Each line represents a \cb{} with different number of worker nodes.
+We can see the throughput scales linearly as the number of worker nodes goes up.
+For 100 concurrent simulated clients, 
+the throughput of \cb{} with 1, 2, 4, 8 workers are 1191, 2368, 4600 and 7584 events
+per second.
+
 \clicklatency{}
+
+Figure~\ref{fig:clicklatency} is the latency of the application.
+A usability study shows that the users feel instantaneous if the 
+the application response time is below 100ms.
+With this criteria,
+\cb{} with 8 workers can sustain 800 concurrent users with an acceptable latency (96ms).
+
+This test scenario does not model real clients because real clients cannot 
+interact with user interface with such high speed.
+We modified our benchmark tools to add a think time 
+uniformly distributed from 1 second to 2 seconds before each simulated click.
+The throughput and latency for this configuration is shown 
+in Figure~\ref{fig:clickwaitthroughput} and Figure~\ref{fig:clickwaitlatency} respectively.
+\cb{} can support 10,000 concurrent clients with 8 workers with a latency of 52ms.
+% FIXME throughput is not linear
+
 
 \clickwaitthroughput{}
 \clickwaitlatency{}
 
 \subsection{Chat Applications}
-See Fig.\ref{fig:appinstance},
-we use \appins{}s to represent application state of chat rooms.
-Each \appins{} has the corresponding chat room's model object ChatRoom.
-There could be multiple virtual browsers inside an \appins{} to  
-serve requests from multiple users.
-If \emph{userA} requests Application URL http://example.com/chat,
-an \appins{} and a virtual browser is created.
+As in Fig.\ref{fig:appinstance},
+we use \appins{}s to maintain application state of chat rooms.
+The virtual browsers use the \emph{ChatRoom} objects inside their \appins{}s 
+directly to render the chat history window.
+The user can request \emph{Application URL} http://example.com/chat
+to create a new chat room.
+For example, if 
+\emph{userA} requests http://example.com/chat,
+an \appins{} and a virtual browser will be created.
 Let's say the \appins{}'s id is \emph{appins1},
 the virtual browser's id is \emph{vb1}.
-\emph{appins1} contains an chat room's model object.
-\emph{vb1} constructs initial HTML document provided by developer and 
-executes application \js{} code.
-Then \emph{userA} is redirected to http://example.com/chat/a/appins1/b/vb1.
-Other people can join this chat room by requesting the \appins{} URL
+\emph{appins1} has an \emph{ChatRoom} object that is used to store 
+a chat room's application state.
+\emph{vb1} represents \emph{userA}'s view of the newly created
+chat room.
+If another user \emph{userB} wants to join the chat room, 
+he needs to request \emph{appins1}'s \emph{\appins{} URL} 
 http://example.com/chat/a/appins1.
-For example, \emph{userB} requests http://example.com/chat/a/appins1,
-another virtual browser \emph{vb2} is created and \emph{userB} will be
-redirected to http://example.com/chat/a/appins1/b/vb2. 
+The system will create a new virtual browser inside \emph{appins1}
+as \emph{userB}'s view.
+
 
 In the benchmark, 
 the simulated users will be grouped into groups of five.
@@ -84,6 +118,8 @@ The user would wait for the previous chat message appended on the chat history
 panel before sending the next one.
 The user would wait for 5-10 seconds before sending each message,
 this is simulating the time for a human to think and type a message.
+In the beginning to the benchmark, 
+we add a 0-10 seconds wait time for each client before they get started.
 
 We measure the time between the moment 
 the user hit the enter key to send the message to 
@@ -111,30 +147,81 @@ when the message is echoed back as latency of the chat application.
 % In section \ref{sec:angular} and \ref{sec:jquery}, 
 % we will discuss the benchmark
 
-\appinstancefig{}
-
-
+% http://www.ng-newsletter.com/posts/directives.html
 
 \subsubsection{Angular Chat Application}
 \label{sec:angular}
 Angular.js~\cite{angular} is a \js{} framework that enable the developers to 
 use HTML elements to declare dynamic views.
+In this application, we also use bootstrap CSS framework for styling.
+
 Fig.\ref{fig:angularchatlatency} shows the latency perceived by benchmark tool
 at different workload.
 The system can support much fewer concurrent clients than the click application.
+% data here
 First of all, it is a much more complex application than the click application,
 the system needs more memory and CPU resource to support each user.
 Second, every time the user sends a message, the view of other virtual browsers
 in the same chat room needs to be updated as well.
 Third, Angular.js brings a substantial overhead 
-to pay for the price of friendly programming interface.
+to pay for the price of friendly programming interface: % confirm, compile ~ link
+Angular will walk through the messages list to find out newly created
+message objects,
+then Angular appends template DOM elements for each new message objects,
+finally Angular updates the template DOM elements with the real content of the 
+message objects.
+
+We also wrote ...
 
 \angularchatlatency{}
 
 \subsubsection{JQuery Chat Application}
 \label{sec:jquery}
-Fig.\ref{fig:jquerychatlatency} shows latency of JQuery Chat.
-The JQuery Chat supports almost twice the number of users comparing to Angular Chat.
+In this application, we use JQuery to manipulate DOM elements.
+We also use handlebars.js to create DOM elements based on templates
+because writing code manually to generate DOM elements based on dynamic data 
+is error prone and difficult to maintain.
+To remove compilation overhead, 
+we compiled templates into \js{} functions and save the compiled code as static files.
+We also use moment.js to do date time formatting as there is no built in support 
+in JQuery.
+Like the previous application, we use bootstrap for styling and keep the same look
+and feel as the previous one.
+Compared to Angular, JQuery does not have the expressiveness so we need include 
+extra libraries and the code is much less elegant. % TODO line count
 
+Fig.\ref{fig:jquerychatlatency} shows latency of JQuery Chat.
+The JQuery Chat supports over twice the number of users comparing to Angular Chat.
+The system can support 1,800 concurrent users with 99ms latency.
 
 \jquerychatlatency{}
+
+
+% code space is part of heapTotal http://jayconrod.com/posts/55/a-tour-of-v8-garbage-collection
+% should not use heapUsed because the memory taken in
+% heapTotal cannot be used by other process.
+% use heapUsed because we use this value to assess if we got memory leaks
+\subsection{Memory Consumption}
+We will use the heapUsed value to estimate the memory consumption of our system.
+The heapUsed value is the size of V8's heap that is currently being used and
+size of dead objects that is not garbage collected yet.
+For a long running \nodejs{} server,
+this value fluctuate over time even when there is no load on the server.
+Because the server will always create ephemeral objects on V8's heap,
+so the memory usage will goes up until V8's garbage collector kicks in
+and removes some dead objects.
+We use this value because using rss and total heap size might give false alarms
+of memory leak.
+
+The heapUsed value could be fetched via a \nodejs{} API 
+We will use the heap size to measure 
+% The memory consumption of a \nodejs{} server fluctuate over time even when there is
+% no load on the server.
+% Because the server will always create ephemeral objects on V8's heap,
+% so the memory usage will goes up until V8's garbage collector kicks in
+% and reduce 
+
+
+At start up, the master node takes up 71MB memory.
+It takes more space as the number of connected client increases and the number
+of \appins{} created in the system.
