@@ -158,7 +158,8 @@ In this application, we also use bootstrap CSS framework for styling.
 Fig.\ref{fig:angularchatlatency} shows the latency perceived by benchmark tool
 at different workload.
 The system can support much fewer concurrent clients than the click application.
-% data here
+With 8 workers, the system can support 700 concurrent users with average latency 
+of 86ms.
 First of all, it is a much more complex application than the click application,
 the system needs more memory and CPU resource to support each user.
 Second, every time the user sends a message, the view of other virtual browsers
@@ -171,7 +172,26 @@ then Angular appends template DOM elements for each new message objects,
 finally Angular updates the template DOM elements with the real content of the 
 message objects.
 
-We also wrote ...
+Some extra effort is required to make Angular work in our system.
+First, if the model object is shared in multiple virtual browsers like this application,
+we need to notify other virtual browsers to update their view.
+A typical Angular application does not need to update the view explicitly because
+Angular would detect model object change and update the view automatically 
+after every method's invocation(to be precise, these methods should be declared using Angular's API).
+In our environment, angular code in one virtual browser does not know the model object
+is changed by some methods in another virtual browser.
+However, the code for notify and update the view is just 23 lines of code.
+Second, angular use an incremented counter to generate ids to identify objects in an array when the 
+array is used in a \emph{ng-repeat} loop.
+As we have shared objects for multiple virtual browsers,
+different objects created in different virtual browsers could be assigned with duplicate 
+ids by different Angular instances.
+We create an API to assign unique ids to objects to avoid this problem.
+The programmer must call this API before put an object into a data structure that is shared
+by multiple virtual browsers.
+This problem could also be avoid by letting Angular tracking objects by their position in the array,
+we do not use this solution for performance considerations.
+
 
 \angularchatlatency{}
 
@@ -188,7 +208,13 @@ in JQuery.
 Like the previous application, we use bootstrap for styling and keep the same look
 and feel as the previous one.
 Compared to Angular, JQuery does not have the expressiveness so we need include 
-extra libraries and the code is much less elegant. % TODO line count
+extra libraries and the code is much less elegant. 
+
+% TODO compare effort
+The \js{} plus HTML code for Angular Chat Application is 209 lines long,
+for JQuery Chat Application is 258 lines long.
+Even taking account of 4 lines API support for Angular.js, 
+using Angular.js requires less code than JQuery not mentioning the expressiveness.
 
 Fig.\ref{fig:jquerychatlatency} shows latency of JQuery Chat.
 The JQuery Chat supports over twice the number of users comparing to Angular Chat.
@@ -198,30 +224,48 @@ The system can support 1,800 concurrent users with 99ms latency.
 
 
 % code space is part of heapTotal http://jayconrod.com/posts/55/a-tour-of-v8-garbage-collection
-% should not use heapUsed because the memory taken in
-% heapTotal cannot be used by other process.
-% use heapUsed because we use this value to assess if we got memory leaks
 \subsection{Memory Consumption}
-We will use the heapUsed value to estimate the memory consumption of our system.
-The heapUsed value is the size of V8's heap that is currently being used and
-size of dead objects that is not garbage collected yet.
-For a long running \nodejs{} server,
-this value fluctuate over time even when there is no load on the server.
-Because the server will always create ephemeral objects on V8's heap,
-so the memory usage will goes up until V8's garbage collector kicks in
-and removes some dead objects.
-We use this value because using rss and total heap size might give false alarms
-of memory leak.
-
-The heapUsed value could be fetched via a \nodejs{} API 
-We will use the heap size to measure 
-% The memory consumption of a \nodejs{} server fluctuate over time even when there is
-% no load on the server.
-% Because the server will always create ephemeral objects on V8's heap,
-% so the memory usage will goes up until V8's garbage collector kicks in
-% and reduce 
+We use \nodejs{} process.memoryUsage() API to measure the memory usage of each process
+of the system.
+The function will return rss, heapTotal, and heapUsed of the process.
+The \emph{rss} is the size of memory held in RAM by the process.
+The \emph{heapTotal} is the size of V8's heap, it is further divided into 
+multiple spaces for generational garbage collector and JIT compiler.
+The \emph{heapUsed} is the size of heap that the program is currently using,
+it includes the size of dead objects that is not garbage collected yet.
+These values fluctuate over time as the program creating ephemeral objects and
+garbage collector reclaims memory from time to time.
+We take memory usage at different phases in 3 experiments.
+In these experiments, 
+we set up a system of one master and one worker,
+then use benchmark tool to create load on JQuery Chat Application mentioned earlier.
+As shown in Table~\ref{tbl:mem}, we take the memory statistics from Startup, Peak, and Idle phases.
+The Startup phase is when the system starts up before the benchmark tool impose workload.
+Peak is the point the highest points of the memory statistics in the experiments.
+Idle is after the benchmark tool finishes.
+To be more accurate, we force the system do a round of garbage collection before taking the 
+\emph{StartUp} and \emph{Idle} value.
 
 
 At start up, the master node takes up 71MB memory.
 It takes more space as the number of connected client increases and the number
 of \appins{} created in the system.
+
+
+% Please add the following required packages to your document preamble:
+% \usepackage{multirow}
+\begin{table}[h]
+\begin{tabular}{|l|l|r|r|r|r|r|r|r|r|r|}
+\hline
+\multicolumn{2}{|l|}{\multirow{2}{*}{Unit MB}} & \multicolumn{3}{c|}{100 Clients} & \multicolumn{3}{c|}{200 Clients} & \multicolumn{3}{c|}{300 Clients} \\ \cline{3-11} 
+\multicolumn{2}{|l|}{} & \multicolumn{1}{l|}{rss} & \multicolumn{1}{l|}{HeapTotal} & \multicolumn{1}{l|}{HeapUsed} & \multicolumn{1}{l|}{rss} & \multicolumn{1}{l|}{HeapTotal} & \multicolumn{1}{l|}{HeapUsed} & \multicolumn{1}{l|}{rss} & \multicolumn{1}{l|}{HeapTotal} & \multicolumn{1}{l|}{HeapUsed} \\ \hline
+\multirow{3}{*}{Master} & Startup & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
+ & Peak & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
+ & Idle & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \hline
+\multirow{3}{*}{Worker} & Startup & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
+ & Peak & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
+ & Idle & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \hline
+\end{tabular}
+\caption{Memory Usage}
+\label{tbl:mem}
+\end{table}
