@@ -2,6 +2,8 @@
 reset
 set terminal png
 set samples 10000
+# the default is NAN
+set datafile missing "Null"
 set   autoscale                        # scale axes automatically
 unset log                              # remove any log-scaling
 unset label                            # remove any previous labels
