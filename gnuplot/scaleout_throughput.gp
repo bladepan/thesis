@@ -1,6 +1,7 @@
 # Gnuplot script file for plotting data
 reset
-set terminal png
+set terminal postscript eps enhanced color 16
+set output output
 set samples 10000
 # the default is NAN
 set datafile missing "Null"
@@ -21,6 +22,11 @@ set y2tics nomirror
 
 set yrange [0:*]
 set y2range [0:*]
+
+# set xtics font ",12"
+# set ytics font ",12"
+# set y2tics font ",12"
+# set key font ",12"
 
 # filename is a parameter
 plot filename  u 1:2 t 'Throughput - 1 worker' with linespoints axes x1y1,\

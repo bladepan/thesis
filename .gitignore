@@ -1,4 +1,6 @@
 gnuplot/*.png
+gnuplot/*.pdf
+gnuplot/*.eps
 
 ## Core latex/pdflatex auxiliary files:
 *.aux

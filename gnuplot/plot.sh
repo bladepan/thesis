@@ -9,20 +9,26 @@ plot_file(){
     i_title=$2
     xlabel=$3
     if [[ "X$4"!="X" ]]; then
-        i_png=$4
+        i_output=$4".eps"
     else
-        i_png="${filename%.*}".png
+        echo should specify output file name
+        exit 1
     fi
-    gnuplot -e "filename='$filename'; title='$i_title';xlabel='$xlabel'" $i_conf > $i_png
+    echo plot $i_output
+    gnuplot -e "filename='$filename';title='$i_title';xlabel='$xlabel';output='$i_output'" $i_conf
 }
 
-
+echo plot latency graphs
 i_conf=$i_scirptdir/scaleout_latency.gp
-plot_file click_scaleout.dat "Click application" "client count" "click_latency.png"
-plot_file click_wait_scaleout.dat "Click application" "client count" "click_wait_latency.png"
-plot_file jquerychat_scaleout.dat "Chat application with JQuery" "client count" "jquerychat_latency.png"
-plot_file angularchat_scaleout.dat "Chat application with Angular.js" "client count" "angularchat_latency.png"
+plot_file click_scaleout.dat "Click application" "client count" "click_latency"
+plot_file click_wait_scaleout.dat "Click application" "client count" "click_wait_latency"
+plot_file jquerychat_scaleout.dat "Chat application with JQuery" "client count" "jquerychat_latency"
+plot_file angularchat_scaleout.dat "Chat application with Angular.js" "client count" "angularchat_latency"
 
+echo plot throughput graphs
 i_conf=$i_scirptdir/scaleout_throughput.gp
-plot_file click_scaleout.dat "Click application" "client count" "click_throughput.png"
-plot_file click_wait_scaleout.dat "Click application with delay" "client count" "click_wait_throughput.png"
+plot_file click_scaleout.dat "Click application" "client count" "click_throughput"
+plot_file click_wait_scaleout.dat "Click application with delay" "client count" "click_wait_throughput"
+
+echo plot system resource consumption graph
+gnuplot resource_consumption.gp

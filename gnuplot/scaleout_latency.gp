@@ -1,6 +1,8 @@
 # Gnuplot script file for plotting data
 reset
-set terminal png
+set terminal postscript eps enhanced color 16
+# output is an variable
+set output output
 set samples 10000
 # the default is NAN
 set datafile missing "Null"
