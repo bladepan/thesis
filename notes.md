@@ -46,6 +46,10 @@ SUM:                             4             24              5            258
 
 ```
 
+## code size
+click app 341bytes 
+jquery chat 263K
+
 
 # MISC
 

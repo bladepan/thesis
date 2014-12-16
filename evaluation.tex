@@ -54,10 +54,14 @@ the counter every time it is invoked.
 Figure~\ref{fig:clickthroughput} shows the throughput of the application 
 under different concurrent levels.
 Each line represents a \cb{} with different number of worker nodes.
-We can see the throughput scales linearly as the number of worker nodes goes up.
 For 100 concurrent simulated clients, 
 the throughput of \cb{} with 1, 2, 4, 8 workers are 1191, 2368, 4600 and 7584 events
 per second.
+We can see the throughput scales linearly up to 4 workers.
+The reason why the throughput for 8 workers is suboptimal is that the
+system has exhausted CPU resource on the test server.
+All 8 worker process and 1 master process takes up 100\% CPU on peak and there are
+only 8 cores available on the test server.
 
 \clicklatency{}
 
@@ -73,8 +77,14 @@ We modified our benchmark tools to add a think time
 uniformly distributed from 1 second to 2 seconds before each simulated click.
 The throughput and latency for this configuration is shown 
 in Figure~\ref{fig:clickwaitthroughput} and Figure~\ref{fig:clickwaitlatency} respectively.
-\cb{} can support 10,000 concurrent clients with 8 workers with a latency of 52ms.
-% FIXME throughput is not linear
+In this setting, the capacity of the system is much greater than before.
+With 1 worker, the system could support 1,500 concurrent clients and the average latency is 42ms.
+With 8 workers, 
+the system can support 10,000 concurrent clients with 8 workers with a latency of 52ms.
+As the Figure~\ref{fig:clickwaitlatency} shows, 
+the system with 2 workers is twice the capacity than with 1 worker,
+% TODO more analysis
+
 
 
 \clickwaitthroughput{}
@@ -233,39 +243,83 @@ The \emph{heapTotal} is the size of V8's heap, it is further divided into
 multiple spaces for generational garbage collector and JIT compiler.
 The \emph{heapUsed} is the size of heap that the program is currently using,
 it includes the size of dead objects that is not garbage collected yet.
-These values fluctuate over time as the program creating ephemeral objects and
-garbage collector reclaims memory from time to time.
-We take memory usage at different phases in 3 experiments.
-In these experiments, 
-we set up a system of one master and one worker,
-then use benchmark tool to create load on JQuery Chat Application mentioned earlier.
-As shown in Table~\ref{tbl:mem}, we take the memory statistics from Startup, Peak, and Idle phases.
-The Startup phase is when the system starts up before the benchmark tool impose workload.
-Peak is the point the highest points of the memory statistics in the experiments.
-Idle is after the benchmark tool finishes.
-To be more accurate, we force the system do a round of garbage collection before taking the 
-\emph{StartUp} and \emph{Idle} value.
+It is not clear how much memory a \nodejs{} process actually needs from these statistics.
+The \emph{heapUsed} value is the best approximation but it could still contain
+ephemeral objects that are not collected by garbage collector.
+For our system, the memory consumption is affected by multiple factors:
+the code size of web applications, the request rate of clients, 
+the number of virtual browsers, how web applications allocate objects, etc.
+We set up a minimum \cb{} system (1 master node and 1 worker node)
+and run the same type of experiments on JQuery Chat Application as mentioned in Section~\ref{sec:jquery}.
+Every 5 seconds, the \cb{} processes will call memoryUsage method and print out
+memory statistics.
+We create test load for 100,200, and 300 concurrent clients in the three experiments.
+% To get a more accurate view of memory consumption at start up time and idle time,
+% we make \cb{} processes call \emph{gc} directly after the processes initialize and after
+% the benchmark programs completes.
 
+\memfig{}
 
-At start up, the master node takes up 71MB memory.
-It takes more space as the number of connected client increases and the number
-of \appins{} created in the system.
+Figure~\ref{fig:mem} shows memory statistics of worker node under these experiments.
+We record four sets of memory statistics for each experiment: 
+when the system finishes initialization and called \emph{gc} to trigger a round of garbage collection,
+denoted by \emph{startUp};
+after the system creates all the virtual browsers for clients and before the clients send 
+events, referred as \emph{beforeWorkload};
+the maximum value of each memory statistics during the experiment, denoted by \emph{peak};
+after the benchmark tool finishes sending events and the system called \emph{gc} again,
+denoted by \emph{afterWorkload}.
+We consider the following statistics would be interesting to note:
+$M_{idle}$, the amount of heap size required when the system sits idle;
+$M_{browser}$ as the size taken to load and initialize a virtual browser;
+$M_{browserp}$ as the size taken by each virtual browser in \emph{peak}, 
+it includes the intermediate objects created during client requests.
+% $M_{browser3}$ as the size taken by each virtual browser after benchmark.
+We use $h$ as \emph{heapUsed} value, $C$ as client count.
+It is easy to see that:
+\begin{enumerate}
+\item $M_{idle} \leq Min(h_{startUp}, h_{beforeWorkload}, h_{peak}, h_{afterWorkload})$
+\item $M_{browser} \leq (h_{beforeWorkload} - M_{idle})/C$
+\item $M_{browserp} \leq (h_{peak} - M_{idle})/C$
+% \item $M_{browser3} \leq (h_{afterWorkload} - M_{idle})/C$
+\end{enumerate}
+Because we do not know the exact value of $M_{idle}$, 
+we will assume $M_{idle}=0$ for the latter two formulas.
+After analysis, $M_{idle} \leq 64.86MB$, $M_{browser} \leq 3.08MB$, $M_{browserp} \leq 5.88MB$.
 
+For simple applications with simple application state, the memory footprint would be mush smaller.
+The JQuery Chat application's code size is 263KB, while the click application is only 0.3KB.
+We have run more than 14,000 virtual browsers running click application in a 12GB box without
+experiencing any thrashing.
+
+The master node has a much lower memory foot print because of its simple logic
+and internal state.
+Under workload, the master node will take more space to manage connections and
+copy network messages back and forth.
+Besides that, there is no discernible difference among \emph{startUp}, \emph{beforeWorkload},
+and \emph{afterWorkload}.
+For master node,
+$M_{idle} \leq 17.03MB$ , $M_{browser} \leq 57KB$.
+$57KB$ seems like a big chuck because we assume $M_{idle}=0$ in calculation,
+if we assume $M_{idle}=17.03MB$, then $M_{browser} = 0$. 
+In reality, $M_{browser}$ would be very small.
+
+% FIXME talk about GC
 
 % Please add the following required packages to your document preamble:
 % \usepackage{multirow}
-\begin{table}[h]
-\begin{tabular}{|l|l|r|r|r|r|r|r|r|r|r|}
-\hline
-\multicolumn{2}{|l|}{\multirow{2}{*}{Unit MB}} & \multicolumn{3}{c|}{100 Clients} & \multicolumn{3}{c|}{200 Clients} & \multicolumn{3}{c|}{300 Clients} \\ \cline{3-11} 
-\multicolumn{2}{|l|}{} & \multicolumn{1}{l|}{rss} & \multicolumn{1}{l|}{HeapTotal} & \multicolumn{1}{l|}{HeapUsed} & \multicolumn{1}{l|}{rss} & \multicolumn{1}{l|}{HeapTotal} & \multicolumn{1}{l|}{HeapUsed} & \multicolumn{1}{l|}{rss} & \multicolumn{1}{l|}{HeapTotal} & \multicolumn{1}{l|}{HeapUsed} \\ \hline
-\multirow{3}{*}{Master} & Startup & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
- & Peak & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
- & Idle & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \hline
-\multirow{3}{*}{Worker} & Startup & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
- & Peak & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
- & Idle & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \hline
-\end{tabular}
-\caption{Memory Usage}
-\label{tbl:mem}
-\end{table}
+% \begin{table}[h]
+% \begin{tabular}{|l|l|r|r|r|r|r|r|r|r|r|}
+% \hline
+% \multicolumn{2}{|l|}{\multirow{2}{*}{Unit MB}} & \multicolumn{3}{c|}{100 Clients} & \multicolumn{3}{c|}{200 Clients} & \multicolumn{3}{c|}{300 Clients} \\ \cline{3-11} 
+% \multicolumn{2}{|l|}{} & \multicolumn{1}{l|}{rss} & \multicolumn{1}{l|}{HeapTotal} & \multicolumn{1}{l|}{HeapUsed} & \multicolumn{1}{l|}{rss} & \multicolumn{1}{l|}{HeapTotal} & \multicolumn{1}{l|}{HeapUsed} & \multicolumn{1}{l|}{rss} & \multicolumn{1}{l|}{HeapTotal} & \multicolumn{1}{l|}{HeapUsed} \\ \hline
+% \multirow{3}{*}{Master} & Startup & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
+%  & Peak & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
+%  & Idle & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \hline
+% \multirow{3}{*}{Worker} & Startup & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
+%  & Peak & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
+%  & Idle & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \hline
+% \end{tabular}
+% \caption{Memory Usage}
+% \label{tbl:mem}
+% \end{table}
