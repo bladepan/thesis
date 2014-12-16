@@ -37,7 +37,7 @@ set xrange [500:5000]
 set yrange [0:*]
 set y2range [0:*]
 
-
+set key off
 set title "100 clients"
 
 plot 'test660_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
@@ -46,7 +46,7 @@ plot 'test660_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
 "" u ($1 / 1000):5 t 'HeapUsed(MB)' w lines axes x1y2
 #
 #
-
+set key at 4500,80
 set title "200 clients"
 
 plot 'test661_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
@@ -54,7 +54,7 @@ plot 'test661_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
 "" u ($1 / 1000):4 t 'HeapTotal(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):5 t 'HeapUsed(MB)' w lines axes x1y2
 #
-
+set key off
 set title "300 clients"
 
 plot 'test662_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
