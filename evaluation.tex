@@ -271,7 +271,7 @@ after the benchmark tool finishes sending events and the system called \emph{gc}
 denoted by \emph{afterWorkload}.
 We consider the following statistics would be interesting to note:
 $M_{idle}$, the amount of heap size required when the system sits idle;
-$M_{browser}$ as the size taken to load and initialize a virtual browser;
+$M_{browser}$, the size to support a new virtual browser;
 $M_{browserp}$ as the size taken by each virtual browser in \emph{peak}, 
 it includes the intermediate objects created during client requests.
 % $M_{browser3}$ as the size taken by each virtual browser after benchmark.
@@ -286,11 +286,10 @@ It is easy to see that:
 Because we do not know the exact value of $M_{idle}$, 
 we will assume $M_{idle}=0$ for the latter two formulas.
 After analysis, $M_{idle} \leq 64.86MB$, $M_{browser} \leq 3.08MB$, $M_{browserp} \leq 5.88MB$.
-
-For simple applications with simple application state, the memory footprint would be mush smaller.
-The JQuery Chat application's code size is 263KB, while the click application is only 0.3KB.
-We have run more than 14,000 virtual browsers running click application in a 12GB box without
-experiencing any thrashing.
+One might find it counter instinct that during peak time,
+the worker node under 200 clients use about the same amount memory as it under 300 clients.
+A closer look reveals that under 300 clients, 
+garbage collector is more active and thus keeps down the memory print.
 
 The master node has a much lower memory foot print because of its simple logic
 and internal state.
@@ -300,26 +299,66 @@ Besides that, there is no discernible difference among \emph{startUp}, \emph{bef
 and \emph{afterWorkload}.
 For master node,
 $M_{idle} \leq 17.03MB$ , $M_{browser} \leq 57KB$.
-$57KB$ seems like a big chuck because we assume $M_{idle}=0$ in calculation,
-if we assume $M_{idle}=17.03MB$, then $M_{browser} = 0$. 
-In reality, $M_{browser}$ would be very small.
+$57KB$ seems unreasonably big because we assume $M_{idle}=0$ in calculation,
+if we assume $M_{idle}=17MB$, then $M_{browser} = 0.1K$. 
+In reality, $M_{browser}$ would be very small because we only store \appins{}
+level information on master using very simple data structures.
 
-% FIXME talk about GC
+For simple applications with simple application state, the memory footprint would be mush smaller.
+The JQuery Chat application's code size is 263KB, while the click application is only 0.3KB.
+We have run more than 14,000 virtual browsers running click application in a 12GB box without
+experiencing any thrashing.
 
-% Please add the following required packages to your document preamble:
-% \usepackage{multirow}
-% \begin{table}[h]
-% \begin{tabular}{|l|l|r|r|r|r|r|r|r|r|r|}
-% \hline
-% \multicolumn{2}{|l|}{\multirow{2}{*}{Unit MB}} & \multicolumn{3}{c|}{100 Clients} & \multicolumn{3}{c|}{200 Clients} & \multicolumn{3}{c|}{300 Clients} \\ \cline{3-11} 
-% \multicolumn{2}{|l|}{} & \multicolumn{1}{l|}{rss} & \multicolumn{1}{l|}{HeapTotal} & \multicolumn{1}{l|}{HeapUsed} & \multicolumn{1}{l|}{rss} & \multicolumn{1}{l|}{HeapTotal} & \multicolumn{1}{l|}{HeapUsed} & \multicolumn{1}{l|}{rss} & \multicolumn{1}{l|}{HeapTotal} & \multicolumn{1}{l|}{HeapUsed} \\ \hline
-% \multirow{3}{*}{Master} & Startup & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
-%  & Peak & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
-%  & Idle & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \hline
-% \multirow{3}{*}{Worker} & Startup & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
-%  & Peak & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \cline{2-11} 
-%  & Idle & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\ \hline
-% \end{tabular}
-% \caption{Memory Usage}
-% \label{tbl:mem}
-% \end{table}
+% FIXME
+In \nodejs{}, we have few options to configure the garbage collector's behavior.
+For example, we do not have the option to specify a minimum heap size to save
+the cost of allocating memory when the system is process client requests.
+Also, V8 is conservative about requesting more memory from the operating system, % need citation
+it will try to reclaim memory by performing several garbage collection cycles before 
+allocate more memory for heap, % is this true for all garbage collection systems?
+which further slows down the application.
+
+Figure~\ref{fig:mem} also implies the system would spend more time on garbage collection if
+the application accumulates memory in a faster pace.
+Under 300 concurrent clients, the system experience more garbage collection cycles as
+well as higher CPU usage during garbage collection.
+% TODO
+
+\subsection{Third Party Libraries}
+Although we have not done an extensive evaluation of third party libraries we use,
+we notice several issues that could greatly hurt the overall performance.
+
+We use \jsdom{} to implement the server side DOM tree,
+\jsdom{}'s implementation of \emph{getComputedStyle} function runs slow in our test applications.
+This function computes an element's CSS properties by apply all active style rules~\cite{wilson2000document}.
+The very first invocation of \emph{getComputedStyle} in a virtual browser when it
+is initializing and loading style rules takes more than 200ms, 
+after that each invocation takes 10~20ms.
+The situation is exacerbated by the fact that some functions might call \emph{getComputedStyle}
+multiple times.
+For example, JQuery's \emph{toggle} function calls \emph{getComputedStyle} three times.
+There are many ways to alleviate this problem:
+We could use less style rules in our applications, the less styles we define,
+the faster \emph{getComputedStyle} executes;
+We could modify libraries like JQuery to call \emph{getComputedStyle} less often
+by cache the return of \emph{getComputedStyle} whenever possible;
+Avoid \emph{getComputedStyle} by using less expansive approaches, for example,
+instead of calling JQuery's \emph{toggle} to hide an element, 
+we could add a CSS class which is defined as `display:none' to the element.
+The first two solutions are not feasible because that requires us to either give up
+mature CSS frameworks like Bootstrap or patching a huge number of existing \js{} libraries.
+The third approach requires the developer have a good understanding of the libraries
+he is using and deliberately code to avoid using style properties directly.
+A more probable solution would be creating a better implementation of \emph{getComputedStyle} 
+that is comparable with the implementation of a desktop web browser.
+
+Another issue regarding to \jsdom{} is a internal function called \emph{lengthFromProperties} function 
+performs poorly.
+This function computes the children count of a DOM node and it will be called 
+when the program reading a DOM NodeList Object's length property.
+In the CPU profiling in Angular Chat application, 
+this function could take more than 30\% CPU time during benchmark.%FIXME upgraded jsdom on oct.20, need to update this number
+This problem can be avoid by deliberately avoid calling this function if necessary.
+Like we discussed earlier, a better solution would is improving the existing implementation
+of reading NodeList length property.
+
