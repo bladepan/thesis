@@ -1,5 +1,20 @@
 \section{Related Work}
 \label{sec:related}
-some related work
-nodejs
-other server-centric
+ItsNat~\cite{santamariaitsnat} is a server-centric framework that also adopts server side DOM tree
+and has a similar client server DOM synchronization mechanism.
+However, the application developers need to register event handlers using Java
+language, thus they cannot use the existing client side \js{} libraries.
+Moreover, to horizontally scale up, ItsNat introduces a stateless mode which
+constructs the whole server side DOM tree for every client side request,
+which could be expensive if the DOM tree is big.
+Another option is to introduce a load balancer that 
+keeps session affinity when distributes requests.
+In our system, scaling up is handled transparently by the system.
+
+
+% http://itsnat.sourceforge.net/index.php?_page=overview
+
+% http://books.zkoss.org/wiki/ZK_Developer%27s_Reference/Clustering
+% http://www.javaworld.com/article/2075019/jndi/j2ee-clustering--part-1.html
+
+% TODO zkoss

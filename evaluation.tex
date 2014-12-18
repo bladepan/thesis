@@ -43,23 +43,22 @@ In this benchmark,
 we allocate a separate virtual browser for each simulated user,
 the simulated user will click on the page, 
 then wait for the counter to be refreshed and click again.
-The application is just a 14 lines HTML document with 5 lines of in-line
-\js{} code.
+The application is just a 14 lines HTML document with 5 lines in-line \js{} code.
 The \js{} code registers a \emph{onclick} handler on a DIV element,
-the handler increment a \emph{counter} variable and set the DIV's innerHTML as
+the \emph{onclick} handler increment a \emph{counter} variable and set the DIV's innerHTML as
 the counter every time it is invoked.
 
 \clickthroughput{}
 
 Figure~\ref{fig:clickthroughput} shows the throughput of the application 
 under different concurrent levels.
-Each line represents a \cb{} with different number of worker nodes.
+Each line represents a \cb{} system with different numbers of worker nodes.
 For 100 concurrent simulated clients, 
-the throughput of \cb{} with 1, 2, 4, 8 workers are 1191, 2368, 4600 and 7584 events
+the throughput of \cb{} with 1, 2, 4, 8 workers are $1191$, $2368$, 4600 and 7584 events
 per second.
-We can see the throughput scales linearly up to 4 workers.
+The throughput scales linearly up to 4 workers.
 The reason why the throughput for 8 workers is suboptimal is that the
-system has exhausted CPU resource on the test server.
+system has exhausted CPU resource on the test server at that point.
 All 8 worker process and 1 master process takes up 100\% CPU on peak and there are
 only 8 cores available on the test server.
 
@@ -73,17 +72,18 @@ With this criteria,
 
 This test scenario does not model real clients because real clients cannot 
 interact with user interface with such high speed.
-We modified our benchmark tools to add a think time 
-uniformly distributed from 1 second to 2 seconds before each simulated click.
+To model real users, we configure the simulated users to pause for a while
+after it received the server's response for the previous action.
+The pause time is uniformly distributed from 1 second to 2 seconds.
 The throughput and latency for this configuration is shown 
 in Figure~\ref{fig:clickwaitthroughput} and Figure~\ref{fig:clickwaitlatency} respectively.
 In this setting, the capacity of the system is much greater than before.
-With 1 worker, the system could support 1,500 concurrent clients and the average latency is 42ms.
-With 8 workers, 
+Using 1 worker, the system could support 1,500 concurrent clients with the average latency 41ms.
+Using 8 workers, 
 the system can support 10,000 concurrent clients with 8 workers with a latency of 52ms.
 As the Figure~\ref{fig:clickwaitlatency} shows, 
 the system with 2 workers is twice the capacity than with 1 worker,
-% TODO more analysis
+% FIXME more analysis
 
 
 
@@ -122,17 +122,18 @@ after that, the remaining users will use the \appins{} URL to start
 their own session.
 Thus, in the benchmark every five simulated user will share a chat room.
 
-Each simulated user will send 300 chat messages.
+Each simulated user will send 300 chat messages in the chat room it is in.
 Each chat message is a sentence of 15-20 characters.
-The user would wait for the previous chat message appended on the chat history
-panel before sending the next one.
-The user would wait for 5-10 seconds before sending each message,
-this is simulating the time for a human to think and type a message.
+Every time after a simulated user send a message,
+it would wait for this message rendered on the chat history window,
+pause for 5-10 seconds,
+and then send another message.
+The pause is simulating the time for a human to think and type a message.
 In the beginning to the benchmark, 
 we add a 0-10 seconds wait time for each client before they get started.
 
 We measure the time between the moment 
-the user hit the enter key to send the message to 
+the user hit the enter key to send the message and
 when the message is echoed back as latency of the chat application.
 
 
@@ -169,9 +170,11 @@ Fig.\ref{fig:angularchatlatency} shows the latency perceived by benchmark tool
 at different workload.
 The system can support much fewer concurrent clients than the click application.
 With 8 workers, the system can support 700 concurrent users with average latency 
-of 86ms.
+of 90ms.
 First of all, it is a much more complex application than the click application,
 the system needs more memory and CPU resource to support each user.
+The increased memory usage would trigger more garbage collection cycles,
+which would further slows down the application.
 Second, every time the user sends a message, the view of other virtual browsers
 in the same chat room needs to be updated as well.
 Third, Angular.js brings a substantial overhead 
@@ -181,6 +184,8 @@ message objects,
 then Angular appends template DOM elements for each new message objects,
 finally Angular updates the template DOM elements with the real content of the 
 message objects.
+Even for desktop web browsers, the list rendering speed of Angular.js
+receives widely complaints.% FIXME citation
 
 Some extra effort is required to make Angular work in our system.
 First, if the model object is shared in multiple virtual browsers like this application,
@@ -207,37 +212,44 @@ we do not use this solution for performance considerations.
 
 \subsubsection{JQuery Chat Application}
 \label{sec:jquery}
+To assess the applications written in simpler \js{} libraries,
+we write an application with exactly the same functionality and 
+appearance with the Angular Chat Application in the previous section.
 In this application, we use JQuery to manipulate DOM elements.
 We also use handlebars.js to create DOM elements based on templates
 because writing code manually to generate DOM elements based on dynamic data 
 is error prone and difficult to maintain.
-To remove compilation overhead, 
-we compiled templates into \js{} functions and save the compiled code as static files.
+To remove compilation overhead of handlebar.js, 
+we pre-compiled templates into \js{} functions and save the compiled code as static files.
 We also use moment.js to do date time formatting as there is no built in support 
 in JQuery.
-Like the previous application, we use bootstrap for styling and keep the same look
-and feel as the previous one.
-Compared to Angular, JQuery does not have the expressiveness so we need include 
-extra libraries and the code is much less elegant. 
-
-% TODO compare effort
+Like the previous application, we use bootstrap for styling.
+Compared to Angular, JQuery is less expressive so we need
+extra libraries to write maintainable code.
 The \js{} plus HTML code for Angular Chat Application is 209 lines long,
-for JQuery Chat Application is 258 lines long.
+for this application it is 258 lines long.
 Even taking account of 4 lines API support for Angular.js, 
-using Angular.js requires less code than JQuery not mentioning the expressiveness.
+using Angular.js requires less coding than JQuery.
+The code in Angular Chat Application is also more readable,
+thanks to the data DOM binding in Angular.
 
+However, this application has a much better performance than Angular 
+Chat Application because we have more control over how the view
+are updated.
+We do not scan over the whole list of messages to find updated ones
+because we know which ones are new and which ones need to be removed.
 Fig.\ref{fig:jquerychatlatency} shows latency of JQuery Chat.
-The JQuery Chat supports over twice the number of users comparing to Angular Chat.
 The system can support 1,800 concurrent users with 99ms latency.
+It is more than two times of the capacity of Angular Chat Application.
 
 \jquerychatlatency{}
 
 
-% code space is part of heapTotal http://jayconrod.com/posts/55/a-tour-of-v8-garbage-collection
+% code space is part of heapTotal. http://jayconrod.com/posts/55/a-tour-of-v8-garbage-collection
 \subsection{Memory Consumption}
 We use \nodejs{} process.memoryUsage() API to measure the memory usage of each process
 of the system.
-The function will return rss, heapTotal, and heapUsed of the process.
+The function will return \emph{rss}, \emph{heapTotal}, and \emph{heapUsed} of the process.
 The \emph{rss} is the size of memory held in RAM by the process.
 The \emph{heapTotal} is the size of V8's heap, it is further divided into 
 multiple spaces for generational garbage collector and JIT compiler.
