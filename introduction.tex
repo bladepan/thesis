@@ -69,10 +69,16 @@ continuous collaborative web applications.
 
 \nodejs{}~\cite{tilkov2010node} is a server side \js{} execution environment
 that could be utilized to develop AJAX applications.
-The advantage of using \nodejs{} is that the client side and server side code are programed in
-the same language and
-the programmer could reuse code like data validation logic in client side and server side.
-But the partition between client server side still exists.
+Using \nodejs{} the developers could implement the client side and server side
+in the same language.
+The developer could create modular code that could be plugged in to both sides
+ to maintain common logic.
+Skrupsky et al.~\cite{skrupsky2012don} introduces an way to automatically generate
+client side validation code based on server side code.
+With these new tools, the developers could reduce code repetition,
+but the partition between client server side still exists.
+
+
 
 To address the problem of application logic partition, 
 server-centric frameworks move application logic and representation to server side.

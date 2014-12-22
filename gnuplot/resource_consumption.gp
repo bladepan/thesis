@@ -21,7 +21,7 @@ set ytic auto                          # set ytics automatically
 set xlabel "Time(s)"
 
 
-set ylabel "Percentage"
+set ylabel "CPU Percentage"
 set y2label "MB"
 
 set ytics nomirror in

@@ -18,3 +18,30 @@ In our system, scaling up is handled transparently by the system.
 % http://www.javaworld.com/article/2075019/jndi/j2ee-clustering--part-1.html
 
 % TODO zkoss
+
+% http://books.zkoss.org/wiki/Small_Talks/2007/April/How_to_Run_ZK_on_Apache_%2B_Tomcat_clustering,_Part_I
+% session replication "replication costly while cluster nodes more then three (it's about math, think about fully connected graph K3~K4"
+ZK~\cite{chen2007zk} is a Java-based server-centric framework that is widely adopted in enterprise web projects.
+Developers define UI interface using a XML markup language ZUML or in Java code.
+Then the UI definition is translated to HTML and CSS and transmitted to the client side
+when the page is requested.
+% TODO how zk works
+ZK use session replication to scale up(ZK store UI states in session objects).
+First, developers need make sure that objects referenced by UI must implement Serializable.
+It also requires lengthy configuration to make the cluster nodes 
+replicate session objects to each other,
+you need different configuration for different types of Java Application Servers.
+Besides of development effort, session replication is costly and memory consuming, 
+the cost of session replication is proportional to the size of the cluster,
+and memory consumption for each cluster node is proportional to the number of active
+clients,
+this seriously limits ZK's scalability.
+% TODO every node pick an arbitrary node to replicate is also an option, wonder why they do not use this option
+
+LIBERATED~\cite{lipman2011liberated} is a development environment that enables
+developer to test client side and server side code in a web browser.
+However, the developers still need to face the dichotomy of client side and server side 
+state. 
+% TODO restrictions
+
+

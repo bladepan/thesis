@@ -14,14 +14,12 @@ set title title
 set xlabel xlabel
 
 
-set ylabel "Throughput"
+set ylabel "Throughput(operations/second)"
 
 
 set ytics nomirror in
-set y2tics nomirror
 
 set yrange [0:*]
-set y2range [0:*]
 
 # set xtics font ",12"
 # set ytics font ",12"
