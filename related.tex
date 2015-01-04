@@ -9,7 +9,7 @@ constructs the whole server side DOM tree for every client side request,
 which could be expensive if the DOM tree is big.
 Another option is to introduce a load balancer that 
 keeps session affinity when distributes requests.
-In our system, scaling up is handled transparently by the system.
+In our system, scaling up is handled transparently by the framework.
 
 
 % http://itsnat.sourceforge.net/index.php?_page=overview
@@ -38,10 +38,19 @@ clients,
 this seriously limits ZK's scalability.
 % TODO every node pick an arbitrary node to replicate is also an option, wonder why they do not use this option
 
-LIBERATED~\cite{lipman2011liberated} is a development environment that enables
-developer to test client side and server side code in a web browser.
-However, the developers still need to face the dichotomy of client side and server side 
-state. 
+LIBERATED~\cite{lipman2011liberated} creates a development environment that runs server side code and 
+client side code inside web browser.
+The developers could test the whole stack of the web application use just the browser.
+With the help of \js{} debug tools provided by web browser, the developers could also
+debug and step into server side code.
+Although it is much easier to test the application logic,
+the developers still need to face the dichotomy of client side and server side state.
+Because LIBERATED needs to run server inside the web browser,
+it greatly restricts the flexibility of server side.
+For example, the applications could only use the database features that are supported by
+browser databases.
+Moreover, LIBERATED only covers simple single-server architecture, 
+it is unclear how LIBERATED can support the development of multiple layered distributed web systems.
 % TODO restrictions
 
 

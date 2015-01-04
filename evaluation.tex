@@ -53,14 +53,18 @@ the counter every time it is invoked.
 Figure~\ref{fig:clickthroughput} shows the throughput of the application 
 under different concurrent levels.
 Each line represents a \cb{} system with different numbers of worker nodes.
-For 100 concurrent simulated clients, 
-the throughput of \cb{} with 1, 2, 4, 8 workers are $1191$, $2368$, 4600 and 7584 events
-per second.
 The throughput scales linearly up to 4 workers.
-The reason why the throughput for 8 workers is suboptimal is that the
-system has exhausted CPU resource on the test server at that point.
-All 8 worker process and 1 master process takes up 100\% CPU on peak and there are
-only 8 cores available on the test server.
+There are two reasons why the result for 8 workers is suboptimal:
+First, there are only 8 cores on the machine for 9 server processes.
+In the experiments with 4 workers, each worker nodes take 100\% CPU utilization
+under the benchmark workload.
+With 8 workers, no worker node can monopolize a core and it is common that
+a worker node can only take about 60\% CPU usage under the benchmark workload. 
+% http://rnikola.cs.vt.edu:2000/logs/dec28/test991_data/test991.md
+Second, 
+the master node's capacity cannot support $12000$ events per second.
+The master node already takes nearly 100\% CPU for $9000$ events per second.
+
 
 \clicklatency{}
 
@@ -68,7 +72,7 @@ Figure~\ref{fig:clicklatency} is the latency of the application.
 A usability study shows that the users feel instantaneous if the 
 the application response time is below 100ms.
 With this criteria,
-\cb{} with 8 workers can sustain 800 concurrent users with an acceptable latency (96ms).
+\cb{} with 8 workers can sustain 800 concurrent users with an acceptable latency (93ms).
 
 This test scenario does not model real clients because real clients cannot 
 interact with user interface with such high speed.
@@ -78,7 +82,7 @@ The pause time is uniformly distributed from 1 second to 2 seconds.
 The throughput and latency for this configuration is shown 
 in Figure~\ref{fig:clickwaitthroughput} and Figure~\ref{fig:clickwaitlatency} respectively.
 In this setting, the capacity of the system is much greater than before.
-Using 1 worker, the system could support 1,500 concurrent clients with the average latency 41ms.
+Using 1 worker, the system could support 2,000 concurrent clients with the average latency 66ms.
 Using 8 workers, 
 the system can support 10,000 concurrent clients with 8 workers with a latency of 52ms.
 As the Figure~\ref{fig:clickwaitlatency} shows, 
