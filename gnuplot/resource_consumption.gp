@@ -21,7 +21,7 @@ set ytic auto                          # set ytics automatically
 set xlabel "Time(s)"
 
 
-set ylabel "CPU Percentage"
+set ylabel "CPU Utilization"
 set y2label "MB"
 
 set ytics nomirror in
@@ -33,31 +33,32 @@ set y2tics font ",10"
 set key font ",10"
 
 # show only part of x
-set xrange [500:5000]
+set xrange [0:1500]
 set yrange [0:*]
 set y2range [0:*]
 
 set key off
 set title "100 clients"
 
-plot 'test660_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
+plot 'test1180_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
 "" u ($1 / 1000):3 t 'rss(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):4 t 'HeapTotal(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):5 t 'HeapUsed(MB)' w lines axes x1y2
 #
 #
-set key at 4500,80
+#set key at 200,80
+set key off
 set title "200 clients"
 
-plot 'test661_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
+plot 'test1185_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
 "" u ($1 / 1000):3 t 'rss(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):4 t 'HeapTotal(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):5 t 'HeapUsed(MB)' w lines axes x1y2
 #
-set key off
+set key below
 set title "300 clients"
 
-plot 'test662_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
+plot 'test1295_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
 "" u ($1 / 1000):3 t 'rss(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):4 t 'HeapTotal(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):5 t 'HeapUsed(MB)' w lines axes x1y2

@@ -62,8 +62,7 @@ With 8 workers, no worker node can monopolize a core and it is common that
 a worker node can only take about 60\% CPU usage under the benchmark workload. 
 % http://rnikola.cs.vt.edu:2000/logs/dec28/test991_data/test991.md
 Second, 
-the master node's capacity cannot support $12000$ events per second.
-The master node already takes nearly 100\% CPU for $9000$ events per second.
+the master node already takes nearly 100\% CPU in the experiments with 8 workers.
 
 
 \clicklatency{}
@@ -84,11 +83,12 @@ in Figure~\ref{fig:clickwaitthroughput} and Figure~\ref{fig:clickwaitlatency} re
 In this setting, the capacity of the system is much greater than before.
 Using 1 worker, the system could support 2,000 concurrent clients with the average latency 66ms.
 Using 8 workers, 
-the system can support 10,000 concurrent clients with 8 workers with a latency of 52ms.
-As the Figure~\ref{fig:clickwaitlatency} shows, 
-the system with 2 workers is twice the capacity than with 1 worker,
+the system can support 10,000 concurrent clients with 8 workers with a latency of 34ms.
+The Figure~\ref{fig:clickwaitthroughput} shows the throughput for this setting 
+scales to 4 workers.
+The master node becomes bottleneck again in the experiments with 8 workers.
 % FIXME more analysis
-
+% http://rnikola.cs.vt.edu:2000/logs/jan03/test1284_data/test1284.md
 
 
 \clickwaitthroughput{}
@@ -257,72 +257,40 @@ The function will return \emph{rss}, \emph{heapTotal}, and \emph{heapUsed} of th
 The \emph{rss} is the size of memory held in RAM by the process.
 The \emph{heapTotal} is the size of V8's heap, it is further divided into 
 multiple spaces for generational garbage collector and JIT compiler.
-The \emph{heapUsed} is the size of heap that the program is currently using,
-it includes the size of dead objects that is not garbage collected yet.
-It is not clear how much memory a \nodejs{} process actually needs from these statistics.
-The \emph{heapUsed} value is the best approximation but it could still contain
-ephemeral objects that are not collected by garbage collector.
+The \emph{heapUsed} is the size of heap that the process is currently using,
+it includes the size of all live objects and dead objects that have not been garbage collected yet.
 For our system, the memory consumption is affected by multiple factors:
 the code size of web applications, the request rate of clients, 
 the number of virtual browsers, how web applications allocate objects, etc.
-We set up a minimum \cb{} system (1 master node and 1 worker node)
-and run the same type of experiments on JQuery Chat Application as mentioned in Section~\ref{sec:jquery}.
-Every 5 seconds, the \cb{} processes will call memoryUsage method and print out
-memory statistics.
-We create test load for 100,200, and 300 concurrent clients in the three experiments.
-% To get a more accurate view of memory consumption at start up time and idle time,
-% we make \cb{} processes call \emph{gc} directly after the processes initialize and after
-% the benchmark programs completes.
 
 \memfig{}
 
-Figure~\ref{fig:mem} shows memory statistics of worker node under these experiments.
-We record four sets of memory statistics for each experiment: 
-when the system finishes initialization and called \emph{gc} to trigger a round of garbage collection,
-denoted by \emph{startUp};
-after the system creates all the virtual browsers for clients and before the clients send 
-events, referred as \emph{beforeWorkload};
-the maximum value of each memory statistics during the experiment, denoted by \emph{peak};
-after the benchmark tool finishes sending events and the system called \emph{gc} again,
-denoted by \emph{afterWorkload}.
-We consider the following statistics would be interesting to note:
-$M_{idle}$, the amount of heap size required when the system sits idle;
-$M_{browser}$, the size to support a new virtual browser;
-$M_{browserp}$ as the size taken by each virtual browser in \emph{peak}, 
-it includes the intermediate objects created during client requests.
-% $M_{browser3}$ as the size taken by each virtual browser after benchmark.
-We use $h$ as \emph{heapUsed} value, $C$ as client count.
-It is easy to see that:
-\begin{enumerate}
-\item $M_{idle} \leq Min(h_{startUp}, h_{beforeWorkload}, h_{peak}, h_{afterWorkload})$
-\item $M_{browser} \leq (h_{beforeWorkload} - M_{idle})/C$
-\item $M_{browserp} \leq (h_{peak} - M_{idle})/C$
-% \item $M_{browser3} \leq (h_{afterWorkload} - M_{idle})/C$
-\end{enumerate}
-Because we do not know the exact value of $M_{idle}$, 
-we will assume $M_{idle}=0$ for the latter two formulas.
-After analysis, $M_{idle} \leq 64.86MB$, $M_{browser} \leq 3.08MB$, $M_{browserp} \leq 5.88MB$.
-One might find it counter instinct that during peak time,
-the worker node under 200 clients use about the same amount memory as it under 300 clients.
-A closer look reveals that under 300 clients, 
-garbage collector is more active and thus keeps down the memory print.
+\cb{} processes call \emph{process.memoryUsage} method every five seconds and record
+the result.
+We present memory statistics of \cb{} processes from three benchmark experiments
+ to demonstrate system memory usage under different client workload.
+All three experiments have a minimum \cb{} system(one master and one worker) on server side.
+The benchmark tool simulates 100, 200 and 300 users using JQuery Chat Application 
+respectively for these three experiments.
+Figure~\ref{fig:mem} shows memory statistics of worker node from these three experiments.
+When the system starts up, the worker node's \emph{heapUsed} is about 80MB.
+When the benchmark tool sending events,
+the maximum \emph{heapUsed} value for the worker node is
+767MB, 1405MB and 2058MB.
+We can estimate that each virtual browser adds no more than 6.9MB on worker node 
+at peak time.
 
-The master node has a much lower memory foot print because of its simple logic
-and internal state.
+The master node has a much lower memory foot print than worker node
+because of its simple internal state.
+Initially, the master node's \emph{heapUsed} value is about 34MB.
 Under workload, the master node will take more space to manage connections and
 copy network messages back and forth.
-Besides that, there is no discernible difference among \emph{startUp}, \emph{beforeWorkload},
-and \emph{afterWorkload}.
-For master node,
-$M_{idle} \leq 17.03MB$ , $M_{browser} \leq 57KB$.
-$57KB$ seems unreasonably big because we assume $M_{idle}=0$ in calculation,
-if we assume $M_{idle}=17MB$, then $M_{browser} = 0.1K$. 
-In reality, $M_{browser}$ would be very small because we only store \appins{}
-level information on master using very simple data structures.
+The peak \emph{heapUsed} value for master node is 51MB, 55.85MB and 56.56MB.
+We can estimate that each virtual browser adds no more than 170KB to master node.
 
 For simple applications with simple application state, the memory footprint would be mush smaller.
 The JQuery Chat application's code size is 263KB, while the click application is only 0.3KB.
-We have run more than 14,000 virtual browsers running click application in a 12GB box without
+We have run more than 16,000 virtual browsers running click application in a 12GB box without
 experiencing any thrashing.
 
 % FIXME
@@ -339,6 +307,7 @@ the application accumulates memory in a faster pace.
 Under 300 concurrent clients, the system experience more garbage collection cycles as
 well as higher CPU usage during garbage collection.
 % TODO
+
 
 \subsection{Third Party Libraries}
 Although we have not done an extensive evaluation of third party libraries we use,

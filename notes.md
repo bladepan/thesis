@@ -50,6 +50,39 @@ SUM:                             4             24              5            258
 click app 341bytes 
 jquery chat 263K
 
+## memory usage
+
+100 clients
+
+https://www.googledrive.com/host/0B_Ym9nC_RdWxVVpaNE53U1U5UGM/dec30/test1180_data/test1180.md
+
+master max heapUsed 51.14
+
+200 clients
+
+https://www.googledrive.com/host/0B_Ym9nC_RdWxVVpaNE53U1U5UGM/dec30/test1185_data/test1185.md
+
+master max heapUsed 55.85
+
+300 clients
+
+https://www.googledrive.com/host/0B_Ym9nC_RdWxVVpaNE53U1U5UGM/jan03/test1295_data/test1295.md
+
+master max heapUsed 56.56
+
+## network
+
+https://www.googledrive.com/host/0B_Ym9nC_RdWxVVpaNE53U1U5UGM/dec30/test1180_data/test1180.md
+
+100 client, 300*100 chat messages
+120000 client events,
+4 client events per chat message
+152900 server side events,
+5.0967 server side events per chat message
+
+every chat room got 1500 message, broadcast dom remove event 1400/50 + 1 = 29 times, 29/300 = 0.0967
+
+
 
 # MISC
 

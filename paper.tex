@@ -184,9 +184,9 @@
     Resource Consumption of worker node running JQueryChat Application\\
 X axis is time. Left Y axis corresponds to the red line of CPU usage.
 Right Y axis corresponds to memory statistics.\\
-The peak of red line between 4,500s and 5,000s is when the process invokes \emph{gc} function.
-The worker sits idle before benchmark tool requests hits the system around the 1,200s, the benchmark tool finishes around 3,600s.
-During this time period, \emph{HeapUsed} fluctuates as the system creates new objects and garbage collector cleans dead objects.
+After about 90s after the system boots up, the benchmark tool starts to simulate 
+user workload.
+When the benchmark tool sending requests, \emph{HeapUsed} fluctuates as the system creates new objects and garbage collector cleans dead objects.
 When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating garbage collector is working at that time.
     }
     \label{fig:mem}
