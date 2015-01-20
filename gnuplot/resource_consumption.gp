@@ -33,14 +33,14 @@ set y2tics font ",10"
 set key font ",10"
 
 # show only part of x
-set xrange [0:1500]
+set xrange [0:1000]
 set yrange [0:*]
 set y2range [0:*]
 
 set key off
 set title "100 clients"
 
-plot 'test1180_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
+plot '100clients_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
 "" u ($1 / 1000):3 t 'rss(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):4 t 'HeapTotal(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):5 t 'HeapUsed(MB)' w lines axes x1y2
@@ -50,7 +50,7 @@ plot 'test1180_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,
 set key off
 set title "200 clients"
 
-plot 'test1185_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
+plot '200clients_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
 "" u ($1 / 1000):3 t 'rss(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):4 t 'HeapTotal(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):5 t 'HeapUsed(MB)' w lines axes x1y2
@@ -58,7 +58,7 @@ plot 'test1185_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,
 set key below
 set title "300 clients"
 
-plot 'test1295_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
+plot '300clients_worker1_sysmon.dat' u ($1 / 1000):2 t 'cpu(%)' w lines axes x1y1,\
 "" u ($1 / 1000):3 t 'rss(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):4 t 'HeapTotal(MB)' w lines axes x1y2, \
 "" u ($1 / 1000):5 t 'HeapUsed(MB)' w lines axes x1y2
