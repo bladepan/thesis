@@ -30,8 +30,8 @@ set yrange [0:*]
 plot filename  u 1:2 t 'Throughput - 1 worker' with linespoints axes x1y1,\
 "" u 1:4 t 'Throughput - 2 workers' with linespoints axes x1y1,\
 "" u 1:6 t 'Throughput - 4 workers' with linespoints axes x1y1,\
-"" u 1:8 t 'Throughput - 8 workers' with linespoints axes x1y1,\
-"" u 1:10 t 'Throughput - 9 workers' with linespoints axes x1y1,\
-"" u 1:12 t 'Throughput - 10 workers' with linespoints axes x1y1,\
-"" u 1:14 t 'Throughput - 12 workers' with linespoints axes x1y1
+"" u 1:8 t 'Throughput - 6 workers' with linespoints axes x1y1,\
+"" u 1:10 t 'Throughput - 8 workers' with linespoints axes x1y1,\
+"" u 1:12 t 'Throughput - 9 workers' with linespoints axes x1y1,\
+"" u 1:14 t 'Throughput - 10 workers' with linespoints axes x1y1
 #

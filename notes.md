@@ -8,6 +8,71 @@ https://www.ietf.org/rfc/rfc2109.txt
 
 
 
+### meteor.js
+
+meteor.js  model-> update in mongodb -> sync in view, the view changes only you make the changes via mongo api
+
+meteor has some dirty checking mechanism, if a function changes 'a' property in session, the view value on 'b' property is not re-calculated
+
+meteor has a simulated db implemenation in local, the Metero.methods are executed in local as well as in server side, meteor only pass parameter of the Metero.methods to the server side, because it believes server can simulate client result by parameter only
+
+inside Metero.methods you should not call any code rely on client side environment, like dom manipulation, jquery, random...
+
+https://www.meteor.com/try/10
+
+```
+ any real application needs to control permissions for its data. In Meteor, the best way to do this is by declaring methods. Instead of the client code directly calling insert, update, and remove, it will instead call methods that will check if the user is authorized to complete the action and then make any changes to the database on the client's behalf.
+ ...
+ If the result from the server comes back and is consistent with the simulation on the client, everything remains as is. If the result on the server is different from the result of the simulation on the client, the UI is patched to reflect the actual state of the server.
+
+With Meteor methods and latency compensation, you get the best of both worlds — the security of server code and no round-trip delay.
+```
+
+
+livedata_connection.js:995 
+
+message protocol
+
+https://github.com/meteor/meteor/blob/devel/packages/ddp/DDP.md
+
+```
+The client may provide a randomSeed JSON value. If provided, this value is used to seed pseudo-random number generation. By using the same seed with the same algorithm, the same pseudo-random values can be generated on the client and the server. In particular, this is used for generating ids for newly created documents. If randomSeed is not provided, then values generated on the server and the client will not be identical.
+```
+
+
+data push works like this : server sends 'ping', client response 'pong', then data push begins,
+
+if the web socket reconnects because of timeout, the server pushes all the data to client
+
+when the client commit update to server, the server echos the update back with all fields
+
+
+to make a data structure reative ready, you need to write some boilerplate code
+
+https://atmospherejs.com/meteor/tracker
+
+```javascript
+  ///
+  /// Reactive user system
+  ///
+  userId: function () {
+    var self = this;
+    if (self._userIdDeps)
+      self._userIdDeps.depend();
+    return self._userId;
+  },
+```
+
+
+live query
+
+https://www.meteor.com/livequery
+
+```
+Livequery accomplishes this seemingly impossible feat by connecting to the database as a replication slave, or by setting up a set of database triggers, or using whatever native pubsub functionality the database may have, or in the worst case by polling, depending on what a particular database supports.
+```
+
+
 ## line counts
 
 ```

@@ -1,6 +1,7 @@
-#client count   throughput 1    latency 1   throughput 2    latency 2   throughput 4    latency 4   throughput 8    latency 8   throughput 9    latency 9   throughput 10   latency 10  throughput 12   latency 12
-100 1715.56 57.02   3025.99 28.10   6254.58 13.46   9295.32 9.95    Null    Null    Null    Null    Null    Null
-200 1659.12 119.4   3259.63 55.21   6239.31 27.53   8904.8  21.94   Null    Null    Null    Null    Null    Null
-400 1575.92 252.26  3197.66 113.2   6241.47 55.29   8053.92 49.07   Null    Null    Null    Null    Null    Null
-800 1486.01 532.9   3112.30 236.49  6368.79 112.64  8500.07 92.97   Null    Null    Null    Null    Null    Null
-1000    1475.67 669.76  3068.73 301.95  5856.57 145.37  8414.87 117.54  Null    Null    Null    Null    Null    Null
+#client count   throughput 1    latency 1   throughput 2    latency 2   throughput 4    latency 4   throughput6 latency6    throughput 8    latency 8   throughput 9    latency 9   throughput 10   latency 10  throughput 12   latency 12
+100 1949.39 49.46   4048.16 22.25   7633.6  11.53   null    null    null    null    null    null    null    null    null    null
+200 1874.25 104.8   3815.51 46.8    7640.17 23.61   11635.03    15.73   null    null    null    null    null    null    null    null
+400 1834.89 214.87  3703.07 96.24   7592.23 48.06   11497.33    32.43   null    null    null    null    null    null    null    null
+800 1710.98 458.5   3423.66 206.87  7263.30 99.02   11063.53    67.06   null    null    null    null    null    null    null    null
+1000    1636.05 596.66  3441.87 264.01  7021.7  121.86  11039.01    84.05   null    null    null    null    null    null    null    null
+1300    null    null    null    null    7231.59 165.28  null    null    null    null    null    null    null    null    null    null

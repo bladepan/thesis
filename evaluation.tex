@@ -14,6 +14,7 @@ The chat applications represents more sophisticated applications.
 We implemented the chat applications use popular web frameworks Angular and JQuery
 to assess how \cb{} performs with real world web technology stack.
 
+
 \chatroomfig{}
 
 We implemented a benchmark tool to simulate multiple users.
@@ -37,6 +38,8 @@ a DOM update message containing that chat message's content.
 
 The \cb{} system is deployed on a server with 8 Intel 2.27GHz cores and 12G memory.
 The benchmark tool is deployed on a separate machine.
+To test the maximum scalability of our system, we use the static load balance strategy
+to eliminate the impact of the work load distribution.
 
 \subsection{Click Application}
 In this benchmark,
@@ -45,7 +48,7 @@ the simulated user will click on the page,
 then wait for the counter to be refreshed and click again.
 The application is just a 14 lines HTML document with 5 lines in-line \js{} code.
 The \js{} code registers a \emph{onclick} handler on a DIV element,
-the \emph{onclick} handler increment a \emph{counter} variable and set the DIV's innerHTML as
+the \emph{onclick} handler increment a \emph{counter} variable and set the DIV's text as
 the counter every time it is invoked.
 % one DOMRemove one DOMInsert event
 \clickthroughput{}
@@ -53,16 +56,15 @@ the counter every time it is invoked.
 Figure~\ref{fig:clickthroughput} shows the throughput of the application 
 under different concurrent levels.
 Each line represents a \cb{} system with different numbers of worker nodes.
-The throughput scales linearly up to 4 workers.
-There are two reasons why the result for 8 workers is suboptimal:
-First, there are only 8 cores on the machine for 9 server processes.
-In the experiments with 4 workers, each worker nodes take 100\% CPU utilization
-under the benchmark workload.
-With 8 workers, no worker node can monopolize a core and it is common that
-a worker node can only take about 60\% CPU usage under the benchmark workload. 
-% http://rnikola.cs.vt.edu:2000/logs/dec28/test991_data/test991.md
-Second, 
-the master node already takes nearly 100\% CPU in the experiments with 8 workers.
+The throughput scales linearly up to 6 workers.
+We stop adding more worker nodes because 
+we are running out of CPU resource on the test box.
+If the master node runs on a single process, 
+it reaches 100\% CPU utilization when the overall throughput goes around 8,000 operations per second.
+So in the benchmark of 4 workers and 6 workers,
+we configure the master node to spawn a child process.
+And the worker nodes is always using 100\% CPU under benchmark workload,
+there would be no gain of stacking more worker nodes on a 8 core machine.
 
 
 \clicklatency{}
@@ -70,8 +72,9 @@ the master node already takes nearly 100\% CPU in the experiments with 8 workers
 Figure~\ref{fig:clicklatency} is the latency of the application.
 A usability study shows that the users feel instantaneous if the 
 the application response time is below 100ms.
+% TBD more data
 With this criteria,
-\cb{} with 8 workers can sustain 800 concurrent users with an acceptable latency (93ms).
+\cb{} with 6 workers can sustain 1,000 concurrent users with an acceptable latency (84ms).
 
 This test scenario does not model real clients because real clients cannot 
 interact with user interface with such high speed.
@@ -122,11 +125,11 @@ the simulated users will be grouped into groups of five.
 At the beginning of the benchmark, 
 for every group one user will request for Application URL to make 
 \cb{} create an \appins{},
-after that, the remaining users will use the \appins{} URL to start
+after that, the remaining users in the group will use the \appins{} URL to start
 their own session.
-Thus, in the benchmark every five simulated user will share a chat room.
+In essence, in the benchmark every five simulated user will share a chat room.
 
-Each simulated user will send 300 chat messages in the chat room it is in.
+Each simulated user will send 100 chat messages in the chat room it is in.
 Each chat message is a sentence of 15-20 characters.
 Every time after a simulated user send a message,
 it would wait for this message rendered on the chat history window,

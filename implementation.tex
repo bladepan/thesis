@@ -136,41 +136,53 @@ to relay requests,
 but to do so we need to modify nginx's source code to 
 make it talks to master node before relaying requests,
 also it would make the deployment of \cb{} more complex.
-On the other hand, the embedded HTTP proxy could directly invoke master's methods.
-However, as the embedded HTTP proxy runs on the same thread as the master's other
-components, the master could be overwhelmed under heavy load.
-This could be alleviated by using \nodejs{}'s Cluster API to make the embedded HTTP
-proxy to run on multiple processes.
+On the other hand, the embedded HTTP proxy could be initiated inside the master process
+and ther is no language boundaries to cross.
+To prevent the HTTP proxy bearing down the master node under heavy load,
+the embedded HTTP proxy spawns a preconfigured number of child processes to share the workload.
+
 
 \requestdispatchdiagram{}
 
 \subsubsection{Load Balancing}
 \label{sec:lb}
-To make the work load as evenly distributed to the worker nodes as possible,
-the master node assign a integer weight value to each worker
-and the worker with the smallest weight will be picked to handle new requests
-or create new \appins{}.
-To make the weight value reflect the actual load of the worker,
-the worker node sends heartbeat message containing 
-its heapUsed value to master every 3 seconds(
-the heapUsed value is the total size of \js{} objects that have not been
-reclaimed by garbage collector, 
-it is a more accurate indicator of the worker's load than resident memory size
-).
-The master stores the heapUsed in megabytes as the worker's weight.
-To avoid a burst of workload all being directed to a fixed worker.
-Every time the master node forward requests or send create \appins{} command to a worker,
-the weight value of that node will be incremented by an empirical amount.
+We created a weight based load balance framework to to distribute workload among worker nodes.
+The master node will pick the worker with the smallest weight 
+to handle new requests or create new \appins{}.
+Currently, we have a dynamic and a static load balance strategies available,
+new load balancer strategies could be easily plugged in to this framework.
+
+If dynamic load balance is enabled,
+the worker node will send heart beat message with its weight
+ to the master every 3 seconds.
+The master will set the node's weight with the weight from heart beat message.
+However, 
+the weight value cached in master node would become stale and make the
+load distribution skewed.
 For example, if there are two workers w1 and w2 in the system with weight
-100 and 101 respectively.
-Before the next heartbeat message from w1 arrives the master received ten requests to 
-create \appins{}.
-If we do not increase the worker's weight after forwarding a request,
-we end up let w1 handles all the work.
-If we increase the worker's weight by 10 for each \appins{} created,
-we will distribute these ten requests evenly between these 2 workers.
-Even if the number we add to the weight does not accurately amount to the actual 
-heapUsed of the worker, it will be fixed after receiving the next heart beat message.
+100 and 101 respectively, 
+a new request would make a worker's weight increase by 1.
+Before the next heartbeat message from w1 arrives the master receives
+a burst of 10 new requests, 
+the master would forward all these requests to w1.
+We could configure the heart beat message to be sent more frequently
+ to make the master node get the weight update faster.
+The system also increment the node's weight value by an empirical amount
+every time a new request is forwarded to the node.
+In the example above, if we increment the weight of the worker
+by 0.8 every time for every new request,
+the result load distribution would be much more desirable.
+The existing dynamic load balance strategy use \emph{heapUsed} as weight value,
+the \emph{heapUsed} value is the total size of \js{} objects that have not been
+reclaimed by garbage collector.
+If the worker nodes are deployed on homogeneous hardware
+and the workload is not CPU intensive,
+\emph{heapUsed} is a good measurement of the actual load of worker nodes.
+
+The static load balancer increment the weight of the worker by 1 every time
+the master forward a new request to it.
+For homogeneous requests, this strategy would make the load evenly distributed.
+
 
 \subsection{Worker}
 \label{sec:worker}

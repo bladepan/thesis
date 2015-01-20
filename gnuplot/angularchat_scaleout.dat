@@ -1,15 +1,15 @@
-#client count   throughput 1    latency 1   throughput 2    latency 2   throughput 4    latency 4   throughput 8    latency 8   throughput 9    latency 9   throughput 10   latency 10  throughput 12   latency 12
-1   0.13    18.52   Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-5   0.66    20.46   Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-50  6.46    31.68   6.43    25.63   6.50    23.25   Null    Null    Null    Null    Null    Null    Null    Null
-100 12.89   63.58   12.79   33.69   12.77   26.60   12.93   23.58   12.90   22.90   13.02   22.62   12.98   22.44
-150 18.29   367.57  Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-200 21.78   1403.58 25.63   78.30   25.68   51.79   25.70   29.13   25.68   27.85   25.59   30.62   25.77   25.53
-250 Null    Null    31.58   125.12  Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-300 Null    Null    35.63   447.70  38.38   52.09   38.65   31.84   38.67   30.71   38.59   30.76   38.32   27.86
-400 Null    Null    Null    Null    50.78   93.59   51.40   38.37   51.39   38.50   51.01   36.99   51.32   31.62
-500 Null    Null    Null    Null    59.55   274.28  64.32   47.85   63.91   45.20   63.94   41.50   64.00   43.04
-600 Null    Null    Null    Null    Null    Null    76.73   54.51   77.39   53.95   76.93   54.96   77.10   54.17
-700 Null    Null    Null    Null    Null    Null    87.96   89.98   88.91   75.65   88.50   85.31   89.20   87.62
-800 Null    Null    Null    Null    Null    Null    101.27  112.98  101.03  120.09  101.17  120.91  100.78  132.87
-900 Null    Null    Null    Null    Null    Null    Null    Null    111.77  175.07  Null    Null    Null    Null
+#clientCount    throughput1 latency1    throughput2 latency2    throughput4 latency4    throughput6 latency6    throughput8 latency8    throughput9 latency9    throughput10    latency10   throughput12    latency12
+1   Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
+5   Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
+50  6.41    8.62    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
+100 12.7    16.17   12.7    9.02    12.73   7.86    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
+150 19.07   30.23   19  12.11   Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
+200 25.26   61.94   25.38   16.51   25.38   9.13    Null    Null    25.23   7.71    Null    Null    Null    Null    Null    Null
+250 Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
+300 Null    Null    37.74   31.82   37.95   12.27   Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
+400 Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
+500 Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
+600 Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
+700 Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
+800 Null    Null    Null    Null    100.24  76.33   Null    Null    99.97   18.74   Null    Null    Null    Null    Null    Null
+900 Null    Null    Null    Null    111.3   114.96  Null    Null    112.77  21.76   Null    Null    Null    Null    Null    Null

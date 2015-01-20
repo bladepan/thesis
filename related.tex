@@ -53,4 +53,12 @@ Moreover, LIBERATED only covers simple single-server architecture,
 it is unclear how LIBERATED can support the development of multiple layered distributed web systems.
 % TODO restrictions
 
-
+Meteor~\cite{meteor} is a full stack platform for building web and mobile applications.
+Meteor simplifies web development by providing mechanisms to automatically synchronize model data 
+between client and server,
+the application code needs only to manipulate client side copy of model objects and
+Meteor will synchronize the changes of model objects with server and other clients.
+Like \cb{}, Meteor eliminates boilerplate code in manually writing client server communication code.
+Unlike \cb{}, Meteor's synchronization is in Model data level, this approach
+could reveal internal state to the client side by data synchronization messages if not programmed carefully.
+% template engine, external js libs
