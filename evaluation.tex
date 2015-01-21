@@ -57,15 +57,14 @@ Figure~\ref{fig:clickthroughput} shows the throughput of the application
 under different concurrent levels.
 Each line represents a \cb{} system with different numbers of worker nodes.
 The throughput scales linearly up to 6 workers.
-We stop adding more worker nodes because 
-we are running out of CPU resource on the test box.
-If the master node runs on a single process, 
-it reaches 100\% CPU utilization when the overall throughput goes around 8,000 operations per second.
-So in the benchmark of 4 workers and 6 workers,
-we configure the master node to spawn a child process.
-And the worker nodes is always using 100\% CPU under benchmark workload,
-there would be no gain of stacking more worker nodes on a 8 core machine.
-
+The throughput of 8 workers is suboptimal is because
+the system has exhausted CPU resource on the test box.
+The master node can achieve a throughput of about 8,000 operation per second on a dedicated core for the
+chat application.
+In the benchmark of 6 workers, the master spawns child processes to utilize two cores in the testbed 
+without contending CPU resource with the worker nodes.
+However, in the benchmark of 8 workers, none of the worker nodes can achieve 100\% CPU
+utilization while they can in other experiments.
 
 \clicklatency{}
 
@@ -74,7 +73,8 @@ A usability study shows that the users feel instantaneous if the
 the application response time is below 100ms.
 % TBD more data
 With this criteria,
-\cb{} with 6 workers can sustain 1,000 concurrent users with an acceptable latency (84ms).
+\cb{} can sustain 1,200 concurrent users with an acceptable latency (96ms).
+
 
 This test scenario does not model real clients because real clients cannot 
 interact with user interface with such high speed.
@@ -174,10 +174,15 @@ use HTML elements to declare dynamic views.
 In this application, we also use bootstrap CSS framework for styling.
 
 Fig.\ref{fig:angularchatlatency} shows the latency perceived by benchmark tool
-at different workload.
-The system can support much fewer concurrent clients than the click application.
-With 8 workers, the system can support 700 concurrent users with average latency 
-of 90ms.
+under different workloads.
+With 4 workers, the system can support 800 concurrent users with average latency
+of 76ms.
+We are not able to test the full capacity of 8 workers,
+because when we try to stack 1,400 virtual browsers
+the memory is exhausted on the test bed.
+With 12G memory we have, the system serves 1,200 concurrent clients with a latency of 38ms.
+
+Compare to the click application, the system supports much fewer concurrent clients.
 First of all, it is a much more complex application than the click application,
 the system needs more memory and CPU resource to support each user.
 The increased memory usage would trigger more garbage collection cycles,
@@ -223,13 +228,8 @@ To assess the applications written in simpler \js{} libraries,
 we write an application with exactly the same functionality and 
 appearance with the Angular Chat Application in the previous section.
 In this application, we use JQuery to manipulate DOM elements.
-We also use handlebars.js to create DOM elements based on templates
-because writing code manually to generate DOM elements based on dynamic data 
-is error prone and difficult to maintain.
-To remove compilation overhead of handlebar.js, 
-we pre-compiled templates into \js{} functions and save the compiled code as static files.
-We also use moment.js to do date time formatting as there is no built in support 
-in JQuery.
+% TODO describe how we generate dom objects?
+
 Like the previous application, we use bootstrap for styling.
 Compared to Angular, JQuery is less expressive so we need
 extra libraries to write maintainable code.
@@ -246,8 +246,14 @@ are updated.
 We do not scan over the whole list of messages to find updated ones
 because we know which ones are new and which ones need to be removed.
 Fig.\ref{fig:jquerychatlatency} shows latency of JQuery Chat.
-The system can support 1,800 concurrent users with 99ms latency.
-It is more than two times of the capacity of Angular Chat Application.
+The system can support 1,600 concurrent users with 27ms latency.
+Like the experiments for the Angular Chat Application,
+we are not able to explore the full capacity of the system due to 
+memory constrain.
+When we created 1,800 or more virtual browsers we exhausted the testbed's memory.
+Comparing the capacity of 4 workers, 
+JQuery Chat Application has almost two times the capacity of Angular Chat Application.
+
 
 \jquerychatlatency{}
 
@@ -340,13 +346,14 @@ he is using and deliberately code to avoid using style properties directly.
 A more probable solution would be creating a better implementation of \emph{getComputedStyle} 
 that is comparable with the implementation of a desktop web browser.
 
-Another issue regarding to \jsdom{} is a internal function called \emph{lengthFromProperties} function 
-performs poorly.
-This function computes the children count of a DOM node and it will be called 
-when the program reading a DOM NodeList Object's length property.
-In the CPU profiling in Angular Chat application, 
-this function could take more than 30\% CPU time during benchmark.%FIXME upgraded jsdom on oct.20, need to update this number
-This problem can be avoid by deliberately avoid calling this function if necessary.
-Like we discussed earlier, a better solution would is improving the existing implementation
-of reading NodeList length property.
+% FIXME obsolete
+% Another issue regarding to \jsdom{} is a internal function called \emph{lengthFromProperties} function 
+% performs poorly.
+% This function computes the children count of a DOM node and it will be called 
+% when the program reading a DOM NodeList Object's length property.
+% In the CPU profiling in Angular Chat application, 
+% this function could take more than 30\% CPU time during benchmark.%FIXME upgraded jsdom on oct.20, need to update this number
+% This problem can be avoid by deliberately avoid calling this function if necessary.
+% Like we discussed earlier, a better solution would is improving the existing implementation
+% of reading NodeList length property.
 

@@ -61,4 +61,8 @@ Meteor will synchronize the changes of model objects with server and other clien
 Like \cb{}, Meteor eliminates boilerplate code in manually writing client server communication code.
 Unlike \cb{}, Meteor's synchronization is in Model data level, this approach
 could reveal internal state to the client side by data synchronization messages if not programmed carefully.
+Also, Meteor is less flexible with third party \js{} libraries, 
+developers need to cope with 
+Meteor's script loading mechanism and its modules like HTML template engine
+ to make the third party \js{} is properly loaded and executed.
 % template engine, external js libs
