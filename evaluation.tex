@@ -178,9 +178,10 @@ under different workloads.
 With 4 workers, the system can support 800 concurrent users with average latency
 of 76ms.
 We are not able to test the full capacity of 8 workers,
-because when we try to stack 1,400 virtual browsers
-the memory is exhausted on the test bed.
-With 12G memory we have, the system serves 1,200 concurrent clients with a latency of 38ms.
+because when we try to stack 1,300 virtual browsers
+the memory is exhausted on the test bed(we observe free memory in the system drops to 
+a few megabytes and page swap in swap out).
+With 12G memory we have, the system serves 1,300 concurrent clients with a latency of 88ms.
 
 Compare to the click application, the system supports much fewer concurrent clients.
 First of all, it is a much more complex application than the click application,
@@ -249,8 +250,8 @@ Fig.\ref{fig:jquerychatlatency} shows latency of JQuery Chat.
 The system can support 1,600 concurrent users with 27ms latency.
 Like the experiments for the Angular Chat Application,
 we are not able to explore the full capacity of the system due to 
-memory constrain.
-When we created 1,800 or more virtual browsers we exhausted the testbed's memory.
+memory constrain :
+when we created 1,700 or more virtual browsers we exhausted the testbed's memory.
 Comparing the capacity of 4 workers, 
 JQuery Chat Application has almost two times the capacity of Angular Chat Application.
 
