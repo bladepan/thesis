@@ -1,23 +1,20 @@
-#client count   throughput 1    latency 1   throughput 2    latency 2   throughput 4    latency 4   throughput 8    latency 8   throughput 9    latency 9   throughput 10   latency 10  throughput 12   latency 12
-100 65  2   65  2   Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-200 Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-500 323 4   323 2   Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-800 Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-1000    638 13  644 5   643 4   643 4   Null    Null    Null    Null    Null    Null
-1500    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-2000    1234    66  1277    14  1288    5   1285    4   Null    Null    Null    Null    Null    Null
-3000    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-4000    1395    1457    2428    84  2548    14  2563    5   Null    Null    Null    Null    Null    Null
-5000    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-6000    Null    Null    2581    757 3770    36  3826    9   Null    Null    Null    Null    Null    Null
-7000    Null    Null    2193    1180    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-8000    Null    Null    Null    Null    4706    109 5072    17  Null    Null    Null    Null    Null    Null
-9000    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-10000   Null    Null    Null    Null    Null    Null    6207.21 34.01   Null    Null    Null    Null    Null    Null
-11000   Null    Null    Null    Null    Null    Null    6685.08 87.28   Null    Null    Null    Null    Null    Null
-12000   Null    Null    Null    Null    Null    Null    6967.04 165.06  Null    Null    Null    Null    Null    Null
-13000   Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-14000   Null    Null    Null    Null    Null    Null    6706.0  534.89  Null    Null    Null    Null    Null    Null
-15000   Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null    Null
-16000   Null    Null    Null    Null    5474    1520    7036    813 Null    Null    Null    Null    Null    Null
-18000   Null    Null    Null    Null    Null    Null    7229.81 1075.76 Null    Null    Null    Null    Null    Null
+#clientCount    throughput1 latency1    throughput2 latency2    throughput4 latency4    throughput6 latency6    throughput8 latency8    throughput9 latency9    throughput10    latency10   throughput12    latency12
+100 64.56   1.8 64.93   1.74    null    null    null    null    null    null    null    null    null    null    null    null
+500 321.36  3.45    320.77  2.54    null    null    null    null    null    null    null    null    null    null    null    null
+1000    638.41  12.73   638.39  5.27    639.3   4.28    null    null    639.78  4.12    null    null    null    null    null    null
+1500    937.22  35.71   952.47  11.31   null    null    null    null    null    null    null    null    null    null    null    null
+2000    1232.33 56.76   1267.71 13.32   1275.75 5.59    null    null    1274.85 4.47    null    null    null    null    null    null
+2500    1426.12 192.57  1576.93 22.18   null    null    null    null    null    null    null    null    null    null    null    null
+3000    1449.69 510.03  1871.47 33.57   1903.57 11.41   null    null    1908.61 8.02    null    null    null    null    null    null
+4000    1402.55 1347.2  2461.51 61.36   2535.54 14.05   null    null    2543.31 6.13    null    null    null    null    null    null
+4500    1418.41 1721.45 2682.94 102.31  null    null    null    null    null    null    null    null    null    null    null    null
+5000    1536.45 1920.93 2723.74 205.24  3147.3  23.92   null    null    3161.1  9.03    null    null    null    null    null    null
+6000    null    null    2877.4  493.8   3723.51 36.88   null    null    3790.07 12.4    null    null    null    null    null    null
+7000    null    null    2780.15 911.72  4320.81 48.88   null    null    4420.06 13.55   null    null    null    null    null    null
+8000    null    null    2776.04 1293.46 4883.6  68.26   null    null    5035.94 18.45   null    null    null    null    null    null
+9000    null    null    null    null    5211.53 126.92  null    null    5662.84 19.9    null    null    null    null    null    null
+10000   null    null    null    null    5451.29 211.39  null    null    6223.47 28.85   null    null    null    null    null    null
+12000   null    null    null    null    5581.52 537.49  null    null    7370.68 49.96   null    null    null    null    null    null
+14000   null    null    null    null    null    null    null    null    8389.72 93.38   null    null    null    null    null    null
+16000   null    null    null    null    null    null    null    null    8913.09 199.83  null    null    null    null    null    null
+18000   null    null    null    null    null    null    null    null    9001.97 367.92  null    null    null    null    null    null
