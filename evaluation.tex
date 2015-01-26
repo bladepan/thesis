@@ -307,8 +307,9 @@ experiencing any thrashing.
 
 % FIXME
 In \nodejs{}, we have few options to configure the garbage collector's behavior.
-For example, we do not have the option to specify a minimum heap size to save
-the cost of allocating memory when the system is process client requests.
+For example, we do not have the option to specify a minimum heap size to 
+occupy a certain amount of memory before the system serves client requests
+to save the cost of memory allocation.
 Also, V8 is conservative about requesting more memory from the operating system, % need citation
 it will try to reclaim memory by performing several garbage collection cycles before 
 allocate more memory for heap, % is this true for all garbage collection systems?
