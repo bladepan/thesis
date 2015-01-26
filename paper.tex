@@ -52,12 +52,12 @@
 % maybe put this in a figure.tex
 
 \newcommand{\webscaleout}{
-    \begin{figure*}[ht]
+    \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{figs/web_scale_out}
+    \includegraphics[width=0.5\textwidth]{figs/web_scale_out}
     \caption{Scaling out a web application}
     \label{fig:webscaleout}
-    \end{figure*}
+    \end{figure}
 }
 
 \newcommand{\architectureoverview}{
@@ -96,12 +96,14 @@
 }
 
 
-\newcommand{\multiappservers}{
+\newcommand{\chatappfig}{
     \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.5\textwidth]{figs/multiple_app_servers}
-    \caption{Scaling out a web application}
-    \label{fig:multiappservers}
+    \includegraphics[width=0.5\textwidth]{figs/chat_application}
+    \caption{Chat Application \\ Use App Instance to maintain shared 
+    model object ChatRoom. Each virtual browser keeps a reference to the shared object.
+    }
+    \label{fig:chatapp}
     \end{figure}
 }
 

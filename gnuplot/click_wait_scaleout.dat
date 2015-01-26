@@ -12,9 +12,11 @@
 6000    null    null    2877.4  493.8   3723.51 36.88   null    null    3790.07 12.4    null    null    null    null    null    null
 7000    null    null    2780.15 911.72  4320.81 48.88   null    null    4420.06 13.55   null    null    null    null    null    null
 8000    null    null    2776.04 1293.46 4883.6  68.26   null    null    5035.94 18.45   null    null    null    null    null    null
-9000    null    null    null    null    5211.53 126.92  null    null    5662.84 19.9    null    null    null    null    null    null
-10000   null    null    null    null    5451.29 211.39  null    null    6223.47 28.85   null    null    null    null    null    null
-12000   null    null    null    null    5581.52 537.49  null    null    7370.68 49.96   null    null    null    null    null    null
-14000   null    null    null    null    null    null    null    null    8389.72 93.38   null    null    null    null    null    null
-16000   null    null    null    null    null    null    null    null    8913.09 199.83  null    null    null    null    null    null
+9000    null    null    2898.71 1625.98 5211.53 126.92  null    null    5662.84 19.9    null    null    null    null    null    null
+10000   null    null    2837.32 2030.71 5451.29 211.39  null    null    6239.34 28.56   null    null    null    null    null    null
+12000   null    null    null    null    5581.52 537.49  null    null    7413.06 47.85   null    null    null    null    null    null
+14000   null    null    null    null    5579.58 923.87  null    null    8389.72 93.38   null    null    null    null    null    null
+16000   null    null    null    null    5969.54 1224.13 null    null    8913.09 199.83  null    null    null    null    null    null
 18000   null    null    null    null    null    null    null    null    9001.97 367.92  null    null    null    null    null    null
+20000   null    null    null    null    null    null    null    null    8966.43 580.16  null    null    null    null    null    null
+22000   null    null    null    null    null    null    null    null    8901.07 798.84  null    null    null    null    null    null
