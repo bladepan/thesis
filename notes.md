@@ -82,76 +82,83 @@ Pan-MacBookPro:chat4 pan$ cloc chatboot.js index.html js/lib/application.js
        3 unique files.                              
        0 files ignored.
 
-http://cloc.sourceforge.net v 1.62  T=0.02 s (143.8 files/s, 10880.5 lines/s)
+http://cloc.sourceforge.net v 1.62  T=0.03 s (91.5 files/s, 6802.1 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Javascript                       2              9              2            164
-HTML                             1              5              2             45
+Javascript                       2              9              2            163
+HTML                             1              3              2             44
 -------------------------------------------------------------------------------
-SUM:                             3             14              4            209
+SUM:                             3             12              4            207
 -------------------------------------------------------------------------------
 
 
 
-Pan-MacBookPro:jqueryChat pan$ cloc chatboot.js index.html js/app.js js/template.js 
-       4 text files.
-       4 unique files.                              
+
+Pan-MacBookPro:jqueryChat pan$ cloc chatboot.js index.html js/app.js
+       3 text files.
+       3 unique files.                              
        0 files ignored.
 
-http://cloc.sourceforge.net v 1.62  T=0.02 s (194.6 files/s, 13961.2 lines/s)
+http://cloc.sourceforge.net v 1.62  T=0.02 s (196.6 files/s, 20052.4 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Javascript                       3             22              3            221
-HTML                             1              2              2             37
+Javascript                       2             27              5            235
+HTML                             1              2              2             35
 -------------------------------------------------------------------------------
-SUM:                             4             24              5            258
+SUM:                             3             29              7            270
 -------------------------------------------------------------------------------
 
 ```
 
 ## code size
-click app 341bytes 
-jquery chat 263K
+click app 466bytes 
+jquery chat 247K
+
+```
+pan@hdpv:~/git/cloudbrowser/benchmarks/applications/jqueryChat$ du -shb css js chatboot.js index.html 
+113614  css
+130228  js
+1767    chatboot.js
+1396    index.html
+
+pan@hdpv:~/git/cloudbrowser/benchmarks/applications/benchmark$ du -shb index.html app.js 
+343     index.html
+123     app.js
+
+```
 
 ## memory usage
 
-100 clients
-
-https://www.googledrive.com/host/0B_Ym9nC_RdWxVVpaNE53U1U5UGM/dec30/test1180_data/test1180.md
-
-master max heapUsed 51.14
-
-200 clients
-
-https://www.googledrive.com/host/0B_Ym9nC_RdWxVVpaNE53U1U5UGM/dec30/test1185_data/test1185.md
-
-master max heapUsed 55.85
-
-300 clients
-
-https://www.googledrive.com/host/0B_Ym9nC_RdWxVVpaNE53U1U5UGM/jan03/test1295_data/test1295.md
-
-master max heapUsed 56.56
-
-
----------
-
+Jquery Chat
 
 100 clients
 
 https://www.googledrive.com/host/0B_Ym9nC_RdWxVVpaNE53U1U5UGM/jan14/test1735_data/
 
+worker max heapUsed 695.5
+master max heapUsed 39.86
+
 200 clients
 
 https://www.googledrive.com/host/0B_Ym9nC_RdWxVVpaNE53U1U5UGM/jan14/test1745_data/
+
+worker max heapUsed 1276.62
+master max heapUsed 54.73
 
 300 clients
 
 https://www.googledrive.com/host/0B_Ym9nC_RdWxVVpaNE53U1U5UGM/jan15/test1782_data/
 
-## network
+worker max heapUsed 1888.12
+master max heapUsed 51.2
+
+26,000 clients
+
+www.googledrive.com/host/0B_Ym9nC_RdWxVVpaNE53U1U5UGM/jan30/test2733_data/test2733_master_sysmon.dat
+
+## network --- maybe outdated
 
 https://www.googledrive.com/host/0B_Ym9nC_RdWxVVpaNE53U1U5UGM/dec30/test1180_data/test1180.md
 
