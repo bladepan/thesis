@@ -36,8 +36,8 @@ the simulated user will know a chat message is processed after it received
 a DOM update message containing that chat message's content.
 % TBD
 
-The \cb{} system is deployed on a server with 8 Intel 2.27GHz cores and 12G memory.
-The benchmark tool is deployed on a separate machine.
+The \cb{} system is deployed on a server with 8 Intel 2.27GHz cores and 38G memory.
+The benchmark tool is deployed on a separate machine with 8 AMD 900MHz cores and 16G memory.
 To test the maximum scalability of our system, we use the static load balance strategy
 to eliminate the impact of the work load distribution.
 
@@ -288,16 +288,17 @@ the maximum \emph{heapUsed} value for the worker node is
 We can estimate that each virtual browser adds about 6MB on worker node
 at peak time.
 
-The master node has a much lower memory foot print than worker node
-because of its simple internal state.
-Initially, the master node's \emph{heapUsed} value is about 30.5MB.
-Under workload, the master node will take more space to manage connections and
-copy network packets back and forth.
-Besides that, 
-the master node only add a new entry to the \appins{} to worker node mapping table
-when a new \appins{} is created,
-so the overhead of a new client on the master node is very small.
-For 26,000 \appins{} created, %additional data needed
+% The master node has a much lower memory foot print than worker node
+% because of its simple internal state.
+% Initially, the master node's \emph{heapUsed} value is about 30.5MB.
+% Under workload, the master node will take more space to manage connections and
+% copy network packets back and forth.
+% Besides that, 
+% the master node only add a new entry to the \appins{} to worker node mapping table
+% when a new \appins{} is created,
+% so the overhead of a new client on the master node is very small.
+% For 26,000 \appins{} created, the master node occupies totally 660MB on heap, 
+% that is 25KB per \appins{}.
 
 
 For simple applications with simple application state, the memory footprint would be mush smaller.
