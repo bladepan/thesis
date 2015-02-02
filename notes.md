@@ -29,8 +29,6 @@ With Meteor methods and latency compensation, you get the best of both worlds â€
 ```
 
 
-livedata_connection.js:995 
-
 message protocol
 
 https://github.com/meteor/meteor/blob/devel/packages/ddp/DDP.md
@@ -51,6 +49,7 @@ to make a data structure reative ready, you need to write some boilerplate code
 
 https://atmospherejs.com/meteor/tracker
 
+https://github.com/meteor/meteor/blob/devel/packages/ddp/livedata_connection.js#L995
 ```javascript
   ///
   /// Reactive user system
@@ -72,6 +71,21 @@ https://www.meteor.com/livequery
 Livequery accomplishes this seemingly impossible feat by connecting to the database as a replication slave, or by setting up a set of database triggers, or using whatever native pubsub functionality the database may have, or in the worst case by polling, depending on what a particular database supports.
 ```
 
+https://github.com/meteor/meteor/blob/devel/packages/ddp/livedata_server.js#L593
+
+Meteor may cache the model objects on server side in Session object which is associated with web socket connection, whenever model objects are changed in server side, corresponding callbacks are fired, diffs are computed,  to send messages to the client side
+
+https://github.com/meteor/meteor/blob/devel/packages/ddp/livedata_server.js#L380
+
+added handler would be triggered after we add something
+the added handler also update cached view
+
+#### debugging
+
+```
+export NODE_OPTIONS='--debug-brk'
+export NODE_OPTIONS='--debug'
+```
 
 ## line counts
 
