@@ -42,11 +42,14 @@
 
 % key words
 \newcommand{\cb}{CloudBrowser}
+\newcommand{\cbtwo}{CloudBrowser 2.0}
 \newcommand{\js}{JavaScript}
 \newcommand{\nodejs}{Node.js}
 \newcommand{\appins}{App Instance}
 \newcommand{\jsdom}{JSDOM}
 \newcommand{\citemain}{~\cite{mcdaniel2012cloudbrowser}}
+
+\def\code#1{\texttt{#1}}
 
 % section for figs
 % maybe put this in a figure.tex
@@ -55,7 +58,7 @@
     \begin{figure}[ht]
     \centering
     \includegraphics[width=0.5\textwidth]{figs/web_scale_out}
-    \caption{Scaling out a web application}
+    \caption{Scalable design of multitier applications}
     \label{fig:webscaleout}
     \end{figure}
 }
@@ -195,7 +198,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 \end{figure*}
 }
 
-\title{\Large \bf Multiprocessor \cb}
+\title{\Large \bf Server-oriented web application design with \cbtwo}
 
 \author{Xiaozhong Pan  \qquad  Godmar Back\\
 Department of Computer Science\\ 
@@ -211,8 +214,9 @@ Virginia Tech\\
 
 %% remove newpage here
 \input{abstract}
-\newpage
-\input{introduction}
+% \newpage
+\input{introduction2}
+\input{background}
 \input{motivation}
 \input{implementation}
 \input{evaluation}

@@ -1,0 +1,134 @@
+\section{Motivation}
+\label{sec:moti}
+
+Our motivation is to create a framework that simplifies scalable web application
+development.
+
+% client <---> application ,
+% by providing good abstraction of client server interaction and 
+% server side architecture.
+
+
+\webscaleout{}
+
+Fig.~\ref{fig:webscaleout} shows the architecture of a scalable web system.
+The web layer are servers that generate dynamic web content for clients.
+We refer these servers as web servers because they host web application
+logic.
+The servers in the service layer provide services for the web layer
+like data persistence, data query, message queue, cache, etc. 
+The clients cannot directly access the service layer.
+The load balancer is a logical component that 
+distributes requests from clients to web servers.
+It could be implemented by one or more special purpose hardware like F5's BIG-IP,
+or by reverse proxy software (like nginx, apache HTTP server) deployed on general
+purpose servers.
+The load balancer could also be a conceptual component that does not map to 
+any physical machine in the web system.
+For example, 
+the load balancer could be implemented by Round Robin DNS,
+the web system's owner registers public IP addresses of the web servers
+to DNS server under the same name,
+when clients send name resolution requests for the name,
+the DNS server responses those IP addresses to clients in a round robin fashion,
+so clients' actual requests will be distributed to multiple web servers.
+We will only focus on the dispatch logic of the load balancer without meddling with
+implementation details.
+The client layer is the UI representation and application code running on the
+clients' web browser.
+An actual web system could be much more complex than Fig.~\ref{fig:webscaleout},
+for example, there could be multiple layers inside the service layer,
+there could be web servers that are dedicated to serve static resources.
+We omit these details because they are not relevant to our discussion.
+
+A common strategy for load balancer is to distribute requests in a client-blind manner,
+for example, it pick an web server randomly or in a round robin fashion.
+In this case, the requests from a client could be distributed to any web server.
+The web server needs to reinitialize the client's application state for every request.
+The web server cannot naively cache the application sate in hopes of reducing the
+cost of construct application state, 
+because the user's requests might not be routed to the server again, 
+in this case, caching the user's application state would be a waste of space,
+even if the user's requests hit this server in a future time,
+the application state might have been changed on some other server,
+that would make the cache in this server invalidate.
+One solution would be move as much application state to the Client Layer as possible,
+to make the cost of initializing application state on the server side smaller.
+First, it is improbable to remove all application state from server.
+For example, for security reasons, 
+the server might need the user's profile to check if the user has 
+the privilege to make a certain request.
+In this case, the cost of reinitializing application state cannot be avoid.
+
+To overcome the shortcomings of client-blind load distribution,
+some systems adopt client-aware load balancers.
+These load balancers would dispatch the request from the same
+client to the same web server.
+Thus, the web server could cache application state.
+The load balancers would need to parse HTTP header to get
+a session identifier to discriminate each client.
+The dispatch logic could be achieved by applying a hash function
+on the session identifier and map the hash value to an web server.
+However, 
+this simple method does not work well with collaborative applications
+which require application state being shared with multiple users.
+For example, a user might want to co-edit a document with another user.
+These two user's requests to edit that document would be ideally directed to the same machine 
+so that the synchronization of that document's state between two users
+could be handled in memory.
+Conceivably, the load balancer could distribute the requests based on
+application level entity and the application could embed application level
+entity identifier in HTTP header.
+
+Another aspect that needs to be consider to design a scalable web system
+is the servers' load.
+The servers' load could be drastically uneven if the load balancer
+does not take the servers' state into the distribution process.
+
+% Current web frameworks usually only deals with the Client Layer and the Web Layer,
+% the web application developer should take the distribution policy of the load balancer
+% into consideration when designing web applications, 
+% and they would need to configure or implement the load balancer to support 
+% the needs of the application.
+
+Current web frameworks do not have clear construct to define application state.
+One option for the developer is to rely on session objects provided by frameworks.
+The application developer needs to configure the persistence  of session objects 
+and make sure the configuration works with the load distribution scheme.
+For example, in J2EE the session objects could be configured to be managed in memory or
+high available database~\cite{j2eedoc}; 
+in PHP developers could specify a session save handler to store session objects 
+in database~\cite{phpdoc}.
+By default, these frameworks store session objects in memory or in local file system.
+If the developer adopts a client-blind load balancer, 
+he needs to configure the session objects to use database or other
+synchronization mechanism to make sure the application state could be fetched on every server.
+Another option is to implement his own way of handling application state.
+Regardless of the choices of managing application state,
+the developer needs take the distribution policy of the load balancer
+into consideration when designing web applications,
+and in the other direction,
+the developer needs to find the right load balancer to support his application.
+
+
+
+
+\cb{} provides two abstractions virtual browser and \appins{} to manage application state.
+The developer does not need to worry about the load balancer layer as
+the system takes care of these details naturally.
+The requests for the same \appins{} are forwarded to the same \cb{} process.
+One \appins{} corresponds to one application level entity, 
+the developers could attach multiple virtual browsers to it.
+Thus, the requests are distributed according to application level entities.
+The system will also make the load as evenly distributed to web servers as possible.
+
+% That means the applications will not scale if not configured properly.
+% Second, the load distribution scheme and 
+% Even everything is correctly configured, 
+% the developer also needs to write boilerplate code to retrieve objects from the
+% session object to restore application state for every request.
+
+
+% Also, \cb{} makes it clear how the work load is distributed.
+
+

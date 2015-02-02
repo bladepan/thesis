@@ -1,0 +1,80 @@
+%
+%
+\section{Introduction}
+\label{sec:intro}
+
+Most newly developed applications that provide a user interface to end users 
+are web-based.  Modern browsers provide powerful and expressive user interface 
+elements, allowing for rich applications, and the use of a networked
+platform simplifies the distribution of these applications.  As a result,
+researchers and practitioners alike have devoted a great deal of attention to
+how to architect frameworks on this platform, which is characterized by the
+use of the stateless HTTP protocol to transfer HTML-based user interface 
+descriptions to the client along with JavaScript code, which in turn 
+implements interactivity and communication with application's backend tiers.
+
+In many recently developed frameworks, much of the presentation logic of these applications
+executes within the client's browser.  User input triggers events
+which result in information sent to a server and subsequent user interface updates.
+Such updates are implemented as modifications to an in-memory tree-based
+representation of the UI (the so-called document object model, or DOM), which
+is then rendered by the browser's layout and rendering engine so the user can see it.
+However, the state of the DOM is ephemeral in this model: when a user visits 
+the same application later from the same or another device, or simply reloads the page, the state of the
+DOM must be recreated from scratch.  In most existing applications, this 
+reconstruction is done in an rudimentary and incomplete way, because
+application programmers typically store only application state, and little 
+or no presentation state in a manner that persists across visits.
+As a result, many web applications do not truly feel like persistent,
+``in-cloud'' applications to which a user can connect and disconnect at will.
+By contrast, users are accustomed to features such as Apple's Continuity\cite{apple-continuity}
+that allows them to switch between devices while preserving not only 
+essential data, but enough of the applications' view to create the appearance
+of seamlessly picking up from where they left off.
+
+This paper provides an in-depth exploration of an alternative design that keeps the state 
+of the HTML document in memory on the server in a way that is persistent across visits.
+In this model, presentation state is kept in virtual browsers whose life
+cycle is decoupled from the user's connection state.  When a user is connected,
+a client engine mirrors the state of the virtual browser in the actual browser which
+renders the user interface the user is looking at.  Any events triggered by the
+user are sent to the virtual browser, dispatched there, and any updates
+are reflected in the client's mirror.  This idea is reminiscent of 
+``thin client'' designs used in cloud-based virtual desktop offerings,
+but with the key difference that in this proposed design the presentation state
+that is kept in a virtual browser is restricted to what can be represented at the
+abstract DOM level; no flow layout or rendering is performed by the virtual browser on the 
+server.
+
+This model entails additional potential benefits: since only framework code runs in
+the client engine, the application code running on the server does not need
+to handle any client/server communication and can be written in an event-based
+style similar to that used by desktop user interface frameworks.
+Since the virtual browser has the same JavaScript execution capabilities as a
+standard browser, emerging model-view-controller (MVC) frameworks such as 
+AngularJS can be directly used, further simplifying application development.
+More side benefits include: a lighter weight client engine that can load faster,
+a resulting application that is potentially more secure since no direct access to
+application data needs to be exposed, the ability to cobrowse by broadcasting
+the virtual browser state to multiple clients.
+
+We first introduced the idea of HTML-based server-centric execution
+in~\cite{mcdaniel2012cloudbrowser}.  In \cbtwo, we provide the first
+multi-process implementation of the CloudBrowser concept which enables its use on multiprocessor
+machines and on clusters. We have also investigated and implemented several features
+commonly expected from a framework, such as authentication and administration.
+\cbtwo also includes a model for the deployment of applications and introduces the
+concept of an application instance, which allows multiple virtual browsers to share
+state.  We have implemented a number of sample and benchmark
+applications and profiled them to better understand the intrinsic and extrinsic
+limitations of this design.
+
+%
+%
+%
+%
+%
+
+% move this until you have the desired placement
+\architectureoverview{}
+
