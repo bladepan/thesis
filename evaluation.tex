@@ -10,7 +10,7 @@ the throughput we achieve.
 To test \cbtwo with existing applications, we developed a small expect-like language 
 in which to describe scenarios. A client test tool interprets test scripts written in
 this language and makes RPC calls to a server in the same way the client engine would
-in actual deployment, then check whether the server is making the expected RPC
+in actual deployment, then checks whether the server is making the expected RPC
 calls back that would reflect requests to the client engine to update the DOM the
 user sees.  
 However, to minimize CPU consumption, the tool does not maintain a DOM in the same
@@ -25,7 +25,7 @@ between receiving an expected response and sending the next event.
 
 To create test scenario from actual applications,
 we run those applications using a real browser and record the client/server interactions
-in a log.  We then transform this log manually in a test script that is later run 
+in a log.  We then transform this log manually into a test script that is later run 
 by our test tool.  To avoid limiting throughput when the test client becomes CPU bound,
 we can start multiple instances of the client.
 
@@ -136,9 +136,9 @@ engineering high-level libraries such as AngularJS.
 To eliminate the impact of AngularJS, we also reprototyped the same application with a
 lower-level library, jQuery, which increased its size significantly (and made it significantly
 less readable).  Avoiding AngularJS's method of dirty checking to identify model changes
-roughly doubled performance, as shown in Fig.\ref{fig:jquerychatlatency}.
+roughly doubled performance, as shown in Figure~\ref{fig:jquerychatlatency}.
 AngularJS's developers expect an order of magnitude speedup through direct VM 
-support via \code{Object.observe()} in future JavaScript VMs\cite{angularjsspeedup}.
+support via \code{Object.observe()} in future JavaScript VMs~\cite{angularjsspeedup}.
 
 A second example of a disproportionate impact of specific implementation limitations
 is the handling of style attributes.  For instance, jQuery's \code{toggle()} method changes an element's
