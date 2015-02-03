@@ -299,6 +299,35 @@ And using local object referencing is much faster than those alternatives.
 % The application could use the \appins{} object directly to render the document for every user, 
 % and each user can have his own view of the editor.
 
+
+\subsubsection{\appins{} Strategies}
+We defined three strategies for applications to specify when the system should 
+allocate new \appins{}.
+
+\begin{enumerate}
+\item \emph{singleAppInstance}. Where the whole application creates only a singleton \appins{}.
+All the clients of the application will share the exactly the same view and model state. This is useful
+for applications provides bulletin like features, for example, a weather application or newsletter 
+application might want to create only one view for all the users.
+
+\item \emph{multiInstance}. Where the application creates can create multiple \appins{} for a user.
+This is useful for applications that have different views on different application entities.
+Like a document editing application might have separate views for each document, a chat room application 
+contains different views for each chat room.
+If authentication is enabled, 
+after the user logs in the application, he will be redirected first to a landing page 
+containing all the \appins{}es accessible for the user.
+The user could create multiple virtual browsers under an \appins{} and share
+\appins{} and virtual browsers.
+
+
+\item \emph{singleUserInstance}. Where the application creates only one \appins{} for each authenticated user.
+This is the typical strategy for most applications where each user has his own view and the application
+is organized in a single page application style. 
+After the user logs in the application, he will be redirected to his own view.
+\end{enumerate}
+
+
 % MARK
 \subsection{Remote Method Invocation}
 In \cb{} programming API and some internal module, there are use cases like list all the App Instances in an application
