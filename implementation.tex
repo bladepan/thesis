@@ -110,7 +110,7 @@ virtual browsers created as part of that instance must be located on the worker 
 was placed, as emphasized in Figure~\ref{fig:appidhierarchy}.
 
 Multiple reverse proxy processes are bound to the socket that accepts client requests, allowing
-the OS to distributed pending client connections in a round-robin fashion.  
+the OS to distribute pending client connections in a round-robin fashion.  
 When a proxy process accepts a client, it parses the incoming HTTP request to extract the application
 id, which is part of the request's URL.  Each proxy process maintains a table of known mappings from 
 application ids to workers.  If the requested id is already cached in that table, the request is directly
