@@ -23,11 +23,11 @@ set ytics nomirror in
 set yrange [0:* < 200]
 
 # filename is a parameter
-plot filename  u 1:3 t 'Latency - 1 worker' with linespoints axes x1y1,\
-"" u 1:5 t 'Latency - 2 workers' with linespoints axes x1y1,\
-"" u 1:7 t 'Latency - 4 workers' with linespoints axes x1y1,\
-"" u 1:9 t 'Latency - 6 workers' with linespoints axes x1y1,\
-"" u 1:11 t 'Latency - 8 workers' with linespoints axes x1y1,\
-"" u 1:13 t 'Latency - 9 workers' with linespoints axes x1y1,\
-"" u 1:15 t 'Latency - 10 workers' with linespoints axes x1y1
+plot filename  u 1:3 t '1 worker' with linespoints axes x1y1,\
+"" u 1:5 t '2 workers' with linespoints axes x1y1,\
+"" u 1:7 t '4 workers' with linespoints axes x1y1,\
+"" u 1:9 t '6 workers' with linespoints axes x1y1,\
+"" u 1:11 t '8 workers' with linespoints axes x1y1,\
+"" u 1:13 t '9 workers' with linespoints axes x1y1,\
+"" u 1:15 t '10 workers' with linespoints axes x1y1
 #
