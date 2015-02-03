@@ -12,16 +12,19 @@ in which to describe scenarios. A client test tool interprets test scripts writt
 this language and makes RPC calls to a server in the same way the client engine would
 in actual deployment, then check whether the server is making the expected RPC
 calls back that would reflect requests to the client engine to update the DOM the
-user sees.  Like a (patient) human user, the script will not send the next event until after the
+user sees.  
+However, to minimize CPU consumption, the tool does not maintain a DOM in the same
+way a real browser would.
+
+Like a (patient) human user, the script will not send the next event until after the
 previous event resulted in the expect DOM update.  
 Our test language allows us to express repetition and has the ability to check
 the correctness of expected responses.  
 To simulate human processing speed, a programmable ``thinking delay'' can be introduced 
 between receiving an expected response and sending the next event.
 
-However, the tool does not maintain a DOM in the same
-way a real browser would.  To create test scenario from actual applications,
-we run those applications using a real browser and record the client/server interactions
+To create test scenario from actual applications,
+e run those applications using a real browser and record the client/server interactions
 in a log.  We then transform this log manually in a test script that is later run 
 by our test tool.  To avoid limiting throughput when the test client becomes CPU bound,
 we can start multiple instances of the client.
@@ -33,7 +36,7 @@ This system is connected via Gigabit Ethernet to a 8 core AMD
 machine with 16GB of RAM on which the test client(s) execute. Both machines run 
 Ubuntu 14.04 with a stock Linux 3.13 kernel.  We use \nodejs{} 0.10.33 and the version
 of JSDOM 2.0 we customized.  We use the static load balancing strategy discussed in 
-Section~\label{sec:distribution} to ensure an exactly predictable distribution of application
+Section~\ref{sec:distribution} to ensure an exactly predictable distribution of application
 instances onto workers.
 
 %
