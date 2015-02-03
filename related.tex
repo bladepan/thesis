@@ -1,16 +1,42 @@
 \section{Related Work}
 \label{sec:related}
-ItsNat~\cite{santamariaitsnat} is a server-centric framework that also adopts server side DOM tree
-and has a similar client server DOM synchronization mechanism.
-However, the application developers need to register event handlers using Java
-language, thus they cannot use the existing client side \js{} libraries.
-Moreover, to horizontally scale up, ItsNat introduces a stateless mode which
-constructs the whole server side DOM tree for every client side request,
-which could be expensive if the DOM tree is big.
-Another option is to introduce a load balancer that 
-keeps session affinity when distributes requests.
-In our system, scaling up is handled transparently by the framework.
 
+ZK~\cite{ChenCheng:book2007},
+which we use as part of our motivation in Section\ref{sec:background}
+is a Java-based server-centric web framework that is in wide use.
+ZK applications are constructed using components, which are represented
+using the ZK User Interface Markup Language (ZUML).  ZUML components
+are translated into HTML and CSS when a page is rendered.
+A client-side library handles synchronization between the client's 
+view of and interaction with components and their server-side 
+representation.  Our extensive experience deploying applications
+with ZK~\cite{Tilevich:aop2008,EdwardsBack:csc2011} inspired the 
+work on \cb.  As discussed, ZK does not maintain a representation
+of the server document across page reloads, which means that
+all presentation state must be tied to session or persistent state.
+To scale ZK to multiple processes or servers, this session state must
+be replicated.
+
+Unlike \projectname{}, ZK aims to support layout attributes, but
+we have found that the complexity of its client engine leads to 
+numerous layout and compatibility bugs developers must work around,
+particularly when the server-side document and the client-side
+document are not identical.  By contrast, \cb uses identical, HTML-based
+documents on the client and the server.
+
+ItsNat~\cite{JoseMariaArranzSantamariaItsNat} is a Java-based AJAX
+component framework similar to ZK, although it uses HTML instead of
+ZUML to express server documents, along with the Java W3C implementation.  
+Unlike \projectname, it also does not maintain the server document 
+state across visits, and cannot make use of existing JavaScript libraries.
+
+The Google Web Toolkit~\cite{GWT} allows the implementation of
+AJAX applications in Java that are compiled to JavaScript (or other
+targets).  Like \projectname, it provides an environment similar to 
+that provided by desktop libraries, but focuses on the client-side only; 
+communication with the server is outside its scope.
+
+% Fiz~\cite{OusterhoutFiz2009} is a server centric component based web framework
 
 % http://itsnat.sourceforge.net/index.php?_page=overview
 
@@ -21,56 +47,31 @@ In our system, scaling up is handled transparently by the framework.
 
 % http://books.zkoss.org/wiki/Small_Talks/2007/April/How_to_Run_ZK_on_Apache_%2B_Tomcat_clustering,_Part_I
 % session replication "replication costly while cluster nodes more then three (it's about math, think about fully connected graph K3~K4"
-ZK~\cite{chen2007zk} is a Java-based server-centric framework that is widely adopted in enterprise web projects.
-Developers define UI interface using a XML markup language ZUML or in Java code.
-Then the UI definition is translated to HTML and CSS and transmitted to the client side
-when the page is requested.
-% TODO how zk works
-ZK use session replication to scale up(ZK store UI states in session objects).
-First, developers need make sure that objects referenced by UI must implement Serializable.
-It also requires lengthy configuration to make the cluster nodes 
-replicate session objects to each other,
-you need different configuration for different types of Java Application Servers.
-Besides of development effort, session replication is costly and memory consuming, 
-the cost of session replication is proportional to the size of the cluster,
-and memory consumption for each cluster node is proportional to the number of active
-clients,
-this seriously limits ZK's scalability.
 % TODO every node pick an arbitrary node to replicate is also an option, wonder why they do not use this option
 
-LIBERATED~\cite{lipman2011liberated} creates a development environment that runs server side code and 
-client side code inside web browser.
-The developers could test the whole stack of the web application use just the browser.
-With the help of \js{} debug tools provided by web browser, the developers could also
-debug and step into server side code.
-Although it is much easier to test the application logic,
-the developers still need to face the dichotomy of client side and server side state.
-Because LIBERATED needs to run server inside the web browser,
-it greatly restricts the flexibility of server side.
-For example, the applications could only use the database features that are supported by
-browser databases.
-Moreover, LIBERATED only covers simple single-server architecture, 
-it is unclear how LIBERATED can support the development of multiple layered distributed web systems.
-% TODO restrictions
+A closely related project that pursues similar goals in simplifying the development
+of rich web applications is Meteor~\cite{meteor}, a full stack platform for building 
+web and mobile applications.  Meteor provides mechanisms that tie a client's presentation
+state directly to model state that is kept in a server-side database, which in turn is 
+partially replicated on the client.  As such, user input can be handled, optimistically, before 
+the server roundtrip has completed. If an update is rejected by the server, the optimistic 
+application is undone. Like with client-centric frameworks, no presentation state is kept on
+the server. Asynchronous updates to model data is pushed to clients.
 
-Meteor~\cite{meteor} is a full stack platform for building web and mobile applications.
-Meteor simplifies web development by providing mechanisms to automatically synchronize model data 
-between client and server,
-the application code needs only to manipulate client side copy of model objects and
-Meteor will synchronize the changes of model objects with server and other clients.
-Like \cb{}, Meteor eliminates boilerplate code in manually writing client server communication code.
-Unlike \cb{}, Meteor's synchronization is in Model data level, this approach
-could reveal internal state to the client side by data synchronization messages if not programmed carefully.
-Also, Meteor is less flexible with third party \js{} libraries, 
-developers need to cope with 
-Meteor's script loading mechanism and its modules like HTML template engine
- to make the third party \js{} is properly loaded and executed.
-% template engine, external js libs
+Meteor will have lower server-side cost, and thus higher scalability, than \cb, as well
+as the ability to reduce user-perceived latency because of its optimistic processing.
+However, we believe that this comes at a high price of complexity and increased risk.
+For instance, programmers would be extremely careful to not leak sensitive data to the 
+client, and they may easily expose (unintentionally) sensitive business logic to the client.  
+Meteor also does not focus on the problem of simplifying the retention of presentation
+state across visits, either making that state ephemeral, or requiring the programmer
+use session state or store all necessary model variables in the database.
 
-The Goole Web Toolkit~\cite{GWT} allows implementing UI widges using Java language.
-It provides an environment that developers can write web appliations 
-like native GUI appliations. 
-But it only generates
+Lastly, our system shares ideas with traditional thin-client and remote display 
+systems, going back to ``dumb terminals'' based on the X Window 
+System~\cite{ScheiflerGettys:acmtg1986}.  Compared to these systems, \cb{} is 
+unique in that it uses a markup document and differential update to it to 
+describe the structure and evolution of the user interface that is rendered 
+to the user.  
 
 
-Fiz~\cite{OusterhoutFiz2009} is a server centric component based web framework
