@@ -1,5 +1,5 @@
 #clientCount    throughput1 latency1    throughput2 latency2    throughput4 latency4    throughput6 latency6    throughput8 latency8    throughput9 latency9    throughput10    latency10   throughput12    latency12
-100 1949.39 49.46   4048.16 22.25   7633.6  11.53   null    null    null    null    null    null    null    null    null    null
+100 1949.39 49.46   4048.16 22.25   7633.6  11.53   11770.49    7.61    11949.10    7.17    null    null    null    null    null    null
 200 1874.25 104.8   3815.51 46.8    7640.17 23.61   11635.03    15.73   12222.91    14.61   null    null    null    null    null    null
 400 1834.89 214.87  3703.07 96.24   7592.23 48.06   11497.33    32.43   11728.84    30.17   null    null    null    null    null    null
 800 1710.98 458.5   3423.66 206.87  7368.47 98.02   11063.53    67.06   11263.88    63.04   null    null    null    null    null    null
