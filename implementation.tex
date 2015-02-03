@@ -20,14 +20,76 @@ layered on top of a bidirectional web socket communication.
 Stylesheets, images, etc. are provided to the client through a resource
 proxy.
 
-\subsection{Application Instances}
+\subsection{Application Deployment}
+
+We designed an application deployment model for \cbtwo{} that allows different
+instantiation strategies.
+Application programmers can create CloudBrowser applications in the same way in which 
+they create the client-side portion of a client-centric application, using low or high level
+JavaScript libraries such as jQuery or AngularJS.  A descriptor in the application's
+manifest describes their application's required instantiation strategy.
+When a user instantiates an application, the allocated application instance object 
+represents metadata about this application
+instance, such as ownership and access permissions, along with application data that
+the application's code can directly access.  Application instances are created manually
+and can be seen in an administration panel (which itself is written as a \cb application).
+At any given time, an application instance may have zero or more virtual browsers attached 
+to it.  Each virtual browser has its own server-side document and its own global scope, 
+but all browsers belonging to an application instance have direct, shared access to the 
+application data.  If the application object provides appropriate methods, the application 
+data can be saved periodically or upon exit and restored upon server restart.
+
+\chatappfig{}
+As an example, consider a scenario for a Chat application developed using AngularJS, 
+depicted in Figure~\ref{fig:chatapp}.
+A system administrator of a \cb deployment would install the application, which give users the
+ability to create application instances. To start a chat site, a user would create
+an application instance and share its URL with chat participants.  As the participants join
+the chat site, a virtual browser is created on demand for each participant, which is connected 
+to the application instance (the users can bookmark their virtual browser's URL to later return.)
+The shared application instance data in such an application 
+consist of the chatroom(s), users and their associated messages.  The advantage of this design 
+is that AngularJS's dirty-checking mechanism will reflect updates to the shared instance data 
+in each virtual's browsers document automatically, thus ensuring that new message are broadcast 
+to each.
 
 % As shown in Figure~\ref{fig:cb2arch}, 
+The hierarchy that results from applications, application instances, and virtual browsers is
+depicted in Figure~\ref{fig:appidhierarchy}.  This figure shows the general case in which an
+application might allow multiple instances, and in which each user can create multiple virtual
+browsers.  We also found it useful to support more specialized instantiation modes, which are
+related to the user's authentication state.   These include
+
+\apphierarchyfig{}
+\begin{enumerate}
+\item \emph{singleAppInstance}. The application supports only one instance and single virtual browser.
+    All connected clients will share a single server-side document in this singleton - this can be
+    used for applications that display data, such as a weather application. These applications will not
+    typically react to user input and users do not need to be authenticated.  
+    
+\item \emph{singleUserInstance}.  This application requires authentication to establish a
+    user identity, which we provide through a local database as well as through external OpenID
+    authentication.   In this mode, users may not create more than one virtual browser per
+    application instance.  When a user accesses the application instance's URL, they will either
+    be forwarded to their virtual browser or a virtual browser will be instantiated for them.
+    
+\item \emph{multiInstance}. 
+    Allows users to have multiple, separate virtual browsers connected to an application
+    instance. For instance, a user may have to be in two separate chatrooms offered by one chat site.
+    In those cases, the user has the largest flexibility, but will need to manage whether
+    to join an existing virtual browser or create a new one when they visit the application instance
+    - similar to the choice a user may have when deciding whether to navigate to a new site in 
+    an existing browser tab or open a new one.
+\end{enumerate}
+Except for multiInstance applications, the existence of virtual browsers is not exposed to 
+end users that merely join existing application instances.
+
+Figure~\ref{fig:cb2arch}
 
 \newarchitectureoverview{}
 
 \requestdispatchdiagram{}
 
-\appinstancefig{}
+% \appinstancefig{}
 
 
