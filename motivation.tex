@@ -11,7 +11,7 @@ present, in which their actions took immediate effect~\cite{BaileyBack:igi2013}.
 Notably, the latency introduced by server round trips did not present a
 barrier to usability.
 
-We soon felt hampered the lack of persistence across visits and no obvious way 
+We soon felt hampered by the lack of persistence across visits and no obvious way 
 to solve it, other than to tie all variables controlling the application's
 view to model variables that were, in turn, stored persistently in some way.
 We hesitated to do that since we did not want to pollute our relatively clean
@@ -43,8 +43,8 @@ traits:
 
 \subsection{Challenges}
 \webscaleout{}
-Successfully applying the idea of preserving presentation state in virtual
-browsers kept in memory on the server imposes a number of challenges which this work 
+Successfully applying the idea of preserving presentation state using virtual
+browsers in server memory imposes a number of challenges which this work 
 makes an attempt to better understand.
 These are related to user interface implementation, latency, 
 resource consumption, scalability, and behavior in the presence of faults.
@@ -86,8 +86,8 @@ consumption.
 A fourth concern, and which this paper particularly focuses on, is how to implement
 scalability across multiple processes and/or machines. Related to that is the 
 behavior of the system if server processes fail or must be restarted for other reasons.
-Fig.~\ref{fig:webscaleout} shows the basic components of a scalable, multitier web 
-application, which exists in numerous variations.  Scalability is achieved
+Fig.~\ref{fig:webscaleout} shows a canonical architecture used for scalable, multi-tier web 
+applications, of which numerous variations exist.  Scalability is achieved
 by having a load balancer spread individual HTTP requests across multiple
 web or application servers, which in turn talk to databases or other storage
 providers.  In this model, the load balancer must be able to dispatch requests 
@@ -98,16 +98,22 @@ in a web server's memory, it is stored in a way that allows for server processes
 to restart.  At the same time, loss of session state is not catastrophic
 as essential user data is stored in a separate storage layer.
 
-In a scalable virtual browser environment, the load balancer is restricted
-in the choice of web server to which to forward requests as soon as a virtual
-browser is allocated.  Moreover, a crash or restart of a process housing a
-virtual browser leads to the loss of all presentation state.  To prevent this
-from catastrophic, applications will, as before, decide which part of their
+A scalable virtual browser environment can be implemented in similar fashion;
+however, here the load balancer is restricted in the choice of web server to 
+which to forward requests as soon as a server process is chosen on which the
+virtual browser is allocated.  A crash or restart of such a process 
+to the loss of all presentation state.  To prevent this from becoming 
+catastrophic, applications will, as before, decide which part of their
 state is deemed essential data that must be stored in the separate storage
-layer.  In our lifecycle model, we have included a way in which such state
-can be saved in checkpoints and restored upon restart.
+layer.  This can be done by communicating with existing storage layers,
+but we also added a facility that allows applications to save a snapshot
+of their state and resume from it later.
+
 From a practical point of view, this model means that detailed presentation
-state may be lost in the case of a web server failure.
-However, the perceived user impact of a loss of detailed presentation state 
-is likely to decrease for virtual browsers that were less recently visited.
+state may be lost in the case of a web server failure or restart.
+However, unless the user recently visited the application, the expected 
+impact may be small: for instance, the user may have worked with temporary 
+data that they must recreate anyway: an example in our application would be
+the results obtained from an exterior search engine that are presented 
+to the user in one part of the application.
 
