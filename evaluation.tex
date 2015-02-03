@@ -55,9 +55,11 @@ We consider two possible scenarios, a fast ``Back-to-back'' click application
 with no thinking times between clicks, and a more ``Human-paced'' click application
 in which there is a think time drawn from a uniform distribution in the range of
 1 to 2 seconds.  We perform 5 runs for each data point and report the mean.
-For all benchmarks, the variance was small, with a relative standard error below X\%.
+For all benchmarks, the variance was small. The vast majority of data points incurred
+a relative standard error below 5\%, the maximum relative standard error was 11\%.
 
 \clickthroughput{}
+\clicklatency{}
 
 We measure throughput in terms of operations per second and average latency.  
 Figure~\ref{fig:clickthroughput} shows the throughput of the application for different
@@ -71,8 +73,8 @@ does not increase beyond 6 workers since this machine has only 8 cores.
 We carefully monitor the CPU usage on the benchmark client machine, adding new
 test driver instances as needed, up to 8.
 
-\clicklatency{}
 \clickwaitthroughput{}
+\clickwaitlatency{}
 
 For the back-to-back scenario, throughput is limited by the CPU capacity available
 to the workers for 100 clients or more.  Throughput stays relatively constant as
@@ -83,13 +85,12 @@ accordingly.  As such, in this scenario, a single worker may support up to 200 c
 and 6 workers can handle about 1,200 clients before latency increases to unacceptable
 levels. 
 
-\clickwaitlatency{}
 When introducing think times to simulate ``human-paced'' clients, we obtain the
 throughput and latency shown in Figures~\ref{fig:clickwaitthroughput} 
-and~\ref{fig:clickwaitlatency}.  In those cases, a larger number clients can be
+and~\ref{fig:clickwaitlatency}.  In those cases, a larger number of clients can be
 supported, and maximum throughput will not be reached until the number of
 clients ramps up.  For each worker configuration, the maximum acceptable latency 
-is reached slightly before maximum throughput is reached.  In the experiments,
+is reached slightly before maximum throughput is reached.  In these experiments,
 we do not increase the number of clients further if latency has already reached
 unacceptable levels.
 We must note that the latency reported here does not include a wide-area network (WAN) delay;
@@ -97,277 +98,56 @@ which when taken into account would reduce the bounds on acceptable processing d
 Nevertheless, we conclude that our method of scaling to multiple processes is effective 
 and that the reverse proxy in particular does not become a bottleneck.
 
-CONTINUE HERE
-
 % ----------------------------------------------------------------------------------------------
-\subsection{Chat Applications}
+\subsection{Chat Application w/ AngularJS}
+
+A key part of the productivity promise for using the server-centric \cb framework
+is the ability to reuse high-level libraries such as AngularJS with little or
+no changes, so that applications prototyped in AngularJS can be directly
+executed in virtual browsers.  These libraries are designed for client-side
+use, however.  We prototyped a Chat application using to investigate the overhead
+of this usage scenario, a screenshot is shown in Figure~\ref{fig:chatapp}.  
+The application is only 207 lines of HTML and JS code while providing features such as 
+creating chatrooms, joining them, chatting and changing the desired display name.
+
 \chatroomfig{}
-As in Fig.\ref{fig:chatapp},
-we use \appins{}s to maintain application state of chat rooms.
-The virtual browsers use the \emph{ChatRoom} objects inside their \appins{}s
-directly to render the chat history window.
-The user can request \emph{Application URL} http://example.com/chat
-to create a new chat room.
-For example, if
-\emph{userA} requests http://example.com/chat,
-an \appins{} and a virtual browser will be created.
-Let's say the \appins{}'s id is \emph{appins1},
-the virtual browser's id is \emph{vb1}.
-\emph{appins1} has an \emph{ChatRoom} object that is used to store
-a chat room's application state.
-\emph{vb1} represents \emph{userA}'s view of the newly created
-chat room.
-If another user \emph{userB} wants to join the chat room,
-he needs to request \emph{appins1}'s \emph{\appins{} URL}
-http://example.com/chat/a/appins1.
-The system will create a new virtual browser inside \emph{appins1}
-as \emph{userB}'s view.
 
-
-In the benchmark,
-the simulated users will be grouped into groups of five.
-At the beginning of the benchmark,
-for every group one user will request for Application URL to make
-\cb{} create an \appins{},
-after that, the remaining users in the group will use the \appins{} URL to start
-their own session.
-In essence, in the benchmark every five simulated user will share a chat room.
-
-Each simulated user will send 100 chat messages in the chat room it is in.
-Each chat message is a sentence of 15-20 characters.
-Every time after a simulated user send a message,
-it would wait for this message rendered on the chat history window,
-pause for 5-10 seconds,
-and then send another message.
-The pause is simulating the time for a human to think and type a message.
-In the beginning to the benchmark,
-we add a 0-10 seconds wait time for each client before they get started.
-
-We measure the time between the moment
-the user hit the enter key to send the message and
-when the message is echoed back as latency of the chat application.
-
-
-% The simulated user will perform the following actions:
-% \begin{enumerate}
-% \item Sleeps for 0-20 seconds. This is simulating the users enter the
-% chat room at different times.
-
-% \item Double click the welcome panel to show the user name editing input box.
-
-% \item Input a new name in the user name editing input box and hit enter.
-
-% \item \label{itm:chatinput} Input a 15-20 character sentence in the chat message input box and hit enter.
-
-% \item Sleeps for 5-10 seconds and repeat step ~\ref{itm:chatinput}
-% until the user has sent 300 messages.
-% This is simulating the time for the user to think and type a message.
-
-% \end{enumerate}
-
-
-% In section \ref{sec:angular} and \ref{sec:jquery},
-% we will discuss the benchmark
-
-% http://www.ng-newsletter.com/posts/directives.html
-
-\subsubsection{Angular Chat Application}
-\label{sec:angular}
-Angular.js~\cite{angular} is a \js{} framework that enable the developers to
-use HTML elements to declare dynamic views.
-In this application, we also use bootstrap CSS framework for styling.
-
-Fig.\ref{fig:angularchatlatency} shows the latency perceived by benchmark tool
-under different workloads.
-With 8 workers, the system can support 1,550 concurrent users with average latency
-of 84ms.
-
-Compare to the click application, the system supports much fewer concurrent clients.
-First of all, it is a much more complex application than the click application,
-the system needs more memory and CPU resource to support each user.
-The increased memory usage would trigger more garbage collection cycles,
-which would further slows down the application.
-Second, every time the user sends a message, the view of other virtual browsers
-in the same chat room needs to be updated as well.
-Third, Angular.js brings a substantial overhead
-to pay for the price of friendly programming interface: % confirm, compile ~ link
-Angular will walk through the messages list to find out newly created
-message objects,
-then Angular appends template DOM elements for each new message objects,
-finally Angular updates the template DOM elements with the real content of the
-message objects.
-Even for desktop web browsers, the list rendering speed of Angular.js
-receives widely complaints.% FIXME citation
-
-Some extra effort is required to make Angular work in our system.
-First, if the model object is shared in multiple virtual browsers like this application,
-we need to notify other virtual browsers to update their view.
-A typical Angular application does not need to update the view explicitly because
-Angular would detect model object change and update the view automatically
-after every method's invocation(to be precise, these methods should be declared using Angular's API).
-In our environment, angular code in one virtual browser does not know the model object
-is changed by some methods in another virtual browser.
-However, the code for notify and update the view is just 23 lines of code.
-Second, angular use an incremented counter to generate ids to identify objects in an array when the
-array is used in a \emph{ng-repeat} loop.
-As we have shared objects for multiple virtual browsers,
-different objects created in different virtual browsers could be assigned with duplicate
-ids by different Angular instances.
-We create an API to assign unique ids to objects to avoid this problem.
-The programmer must call this API before put an object into a data structure that is shared
-by multiple virtual browsers.
-This problem could also be avoid by letting Angular tracking objects by their position in the array,
-we do not use this solution for performance considerations.
-
+We make use of shared application instance data as discussed in Section~\ref{sec:appmodel}
+to hold the last 50 chat messages.  Each application instance is visited by 5 simulated users,
+each instantiating their own virtual browser.  Each user sends 100 chat messages in our
+script, consisting of a sentence of 15-20 characters.  We set the think time to 5-10 seconds
+between messages.  We define latency as the time taken to hit enter and when the  message
+appears in the chat window.
 
 \angularchatlatency{}
 
-\subsubsection{JQuery Chat Application}
-\label{sec:jquery}
-To assess the applications written in simpler \js{} libraries,
-we write an application with exactly the same functionality and
-appearance with the Angular Chat Application in the previous section.
-In this application, we use JQuery to manipulate DOM elements.
-% TODO describe how we generate dom objects?
-
-Like the previous application, we use bootstrap for styling.
-Compared to Angular, JQuery is less expressive so we need
-extra libraries to write maintainable code.
-The \js{} plus HTML code for Angular Chat Application is 207 lines long,
-for this application it is 270 lines long.
-Even taking account of 4 lines API support for Angular.js,
-using Angular.js requires less coding than JQuery.
-The code in Angular Chat Application is also more readable,
-thanks to the data DOM binding in Angular.
-
-However, this application has a much better performance than Angular
-Chat Application because we have more control over how the view
-are updated.
-We do not scan over the whole list of messages to find updated ones
-because we know which ones are new and which ones need to be removed.
-Fig.\ref{fig:jquerychatlatency} shows latency of JQuery Chat.
-The system can support 2,800 concurrent users with 93ms latency.
-JQuery Chat Application has almost two times the capacity of Angular Chat Application.
-
+Fig.\ref{fig:angularchatlatency} shows the latency perceived by benchmark tool
+under different numbers of clients.  While scaling to multiple workers is remains effective,
+the use of AngularJS imposes a significant cost, reducing the number of concurrent users 
+that can be supported with the same hardware.  Most of the time is spent in the AngularJS
+framework, which we discovered through profiling.  Optimizations made in successive revisions
+of AngularJS heavily impacted our performance; for instance, a single commit to optimize
+needless reexecution of so-called filters in AngularJS improved benchmark performance by 20\%.
+As such, our numbers provide limited information about the performance envelope of
+server-side environments; rather, they provide a snapshot into the current state of
+engineering high-level libraries such as AngularJS.  
 
 \jquerychatlatency{}
+To eliminate the impact of AngularJS, we also reprototyped the same application with a
+lower-level library, jQuery, which increased its size significantly (and made it significantly
+less readable).  Avoiding AngularJS's method of dirty checking to identify model changes
+roughly doubled performance, as shown in Fig.\ref{fig:jquerychatlatency}
+AngularJS's developers expect an order of magnitude speedup through direct VM 
+support via \code{Object.observe()} in future JavaScript VMs\cite{angularjsspeedup}.
 
-
-% code space is part of heapTotal. http://jayconrod.com/posts/55/a-tour-of-v8-garbage-collection
-\subsection{Memory Consumption}
-We use \nodejs{} process.memoryUsage() API to measure the memory usage of each process
-of the system.
-The function will return \emph{rss}, \emph{heapTotal}, and \emph{heapUsed} of the process.
-The \emph{rss} is the size of memory held in RAM by the process.
-The \emph{heapTotal} is the size of V8's heap, it is further divided into
-multiple spaces for generational garbage collector and JIT compiler.
-The \emph{heapUsed} is the size of heap that the process is currently using,
-it includes the size of all live objects and dead objects that have not been garbage collected yet.
-For our system, the memory consumption is affected by multiple factors:
-the code size of web applications, the request rate of clients,
-the number of virtual browsers, how web applications allocate objects, etc.
-
-\memfig{}
-
-\cb{} processes call \emph{process.memoryUsage} method every five seconds and record
-the result.
-We present memory statistics of \cb{} processes from three benchmark experiments
- to demonstrate system memory usage under different client workload.
-All three experiments have a minimum \cb{} system(one master and one worker) on server side.
-The benchmark tool simulates 100, 200 and 300 users using JQuery Chat Application
-respectively for these three experiments.
-Figure~\ref{fig:mem} shows memory statistics of worker node from these three experiments.
-When the system starts up, the worker node's \emph{heapUsed} is about 80MB.
-When the benchmark tool sending events,
-the maximum \emph{heapUsed} value for the worker node is
-695.5MB, 1276.6MB and 1888.1MB.
-We can estimate that each virtual browser adds about 6MB on worker node
-at peak time.
-
-% The master node has a much lower memory foot print than worker node
-% because of its simple internal state.
-% Initially, the master node's \emph{heapUsed} value is about 30.5MB.
-% Under workload, the master node will take more space to manage connections and
-% copy network packets back and forth.
-% Besides that, 
-% the master node only add a new entry to the \appins{} to worker node mapping table
-% when a new \appins{} is created,
-% so the overhead of a new client on the master node is very small.
-% For 26,000 \appins{} created, the master node occupies totally 660MB on heap, 
-% that is 25KB per \appins{}.
-
-
-For simple applications with simple application state, the memory footprint would be mush smaller.
-The JQuery Chat application's code size is 247KB, while the click application is only 0.47KB.
-We have run more than 16,000 virtual browsers running click application in a 12GB box without
-experiencing any thrashing.
-
-% FIXME
-In \nodejs{}, we have few options to configure the garbage collector's behavior.
-For example, we do not have the option to specify a minimum heap size to
-occupy a certain amount of memory before the system serves client requests
-to save the cost of memory allocation.
-Also, V8 is conservative about requesting more memory from the operating system, % need citation
-it will try to reclaim memory by performing several garbage collection cycles before
-allocate more memory for heap, % is this true for all garbage collection systems?
-which further slows down the application.
-
-Figure~\ref{fig:mem} also implies the system would spend more time on garbage collection if
-the application accumulates memory in a faster pace.
-Under 300 concurrent clients, the system experience more garbage collection cycles as
-well as higher CPU usage during garbage collection.
-% TODO
-
-
-\subsection{Third Party Libraries}
-Although we have not done an extensive evaluation of third party libraries we use,
-we notice several issues that could greatly hurt the overall performance.
-
-We use \jsdom{} to implement the server side DOM tree,
-\jsdom{}'s implementation of \emph{getComputedStyle} function runs slow in our test applications.
-This function computes an element's CSS properties by apply all active style rules~\cite{wilson2000document}.
-The very first invocation of \emph{getComputedStyle} in a virtual browser when it
-is initializing and loading style rules takes more than 390ms by average,
-after that each invocation takes about 60ms.
-The situation is exacerbated by the fact that some functions might call \emph{getComputedStyle}
-multiple times.
-For example, JQuery's \emph{toggle} function calls \emph{getComputedStyle} three times.
-There are many ways to get around this problem:
-We could use less style rules in our applications, the less styles we define,
-the faster \emph{getComputedStyle} executes;
-We could modify libraries like JQuery to call \emph{getComputedStyle} less often
-by cache the return of \emph{getComputedStyle} whenever possible;
-Another way is to avoid \emph{getComputedStyle} by using less expansive approaches, for example,
-instead of calling JQuery's \emph{toggle} to hide or show an element,
-we could add or remove CSS classes to manipulate the element's visibility,
-say define one class that displays the element and define another class to set the element's visibility
-as hidden.
-
-
-
-
-The first two solutions are not feasible because that requires us to either give up
-mature CSS frameworks like Bootstrap or patching a huge number of existing \js{} libraries.
-The third solution is easy enough to carry on as CSS frameworks like Bootstrap already provides
-CSS classes to manipulate the DOM element's visibility.
-The experiments shows that controlling an element's visibility by
-adding and removing CSS classes takes only 2ms.
-An ultimate solution would be creating a better implementation of \emph{getComputedStyle}
-that is comparable with the implementation of a desktop web browser.
-However, 
-avoid calling \emph{getComputedStyle} altogether conforms to our ideal 
-that the server side should not compute for rendering,
-we should only assign high level CSS classes and let the client side
-to figure out what the actual style would be.
-
-% FIXME obsolete
-% Another issue regarding to \jsdom{} is a internal function called \emph{lengthFromProperties} function
-% performs poorly.
-% This function computes the children count of a DOM node and it will be called
-% when the program reading a DOM NodeList Object's length property.
-% In the CPU profiling in Angular Chat application,
-% this function could take more than 30\% CPU time during benchmark.%FIXME upgraded jsdom on oct.20, need to update this number
-% This problem can be avoid by deliberately avoid calling this function if necessary.
-% Like we discussed earlier, a better solution would is improving the existing implementation
-% of reading NodeList length property.
+A second example of a disproportionate impact on specific implementation limitations
+is the handling of styles.  For instance, jQuery's \code{toggle()} changes an element's
+visibility by changing a style attribute.  To obtain the current value, it uses the
+\code{getComputedStyle()} function, which triggers the application of CSS selectors.
+This is a well-known performance bottleneck~\cite{Meyerovich+:WWW2010} in browser
+layout engines and not optimized at all in JSDOM.  A third example we encountered 
+is the original implementation of a frequently called function \emph{lengthFromProperties}
+which determines the number of children of a DOM node.  Profiling showed 30\% of CPU
+spent in this function, which disappeared after an upgrade that substituted a
+constant time $O(1)$ implementation.
 
