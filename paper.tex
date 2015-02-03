@@ -51,6 +51,7 @@
 \newcommand{\citemain}{~\cite{mcdaniel2012cloudbrowser}}
 
 \def\code#1{\texttt{#1}}
+\def\nodermi{\texttt{nodermi\xspace}}
 
 % section for figs
 % maybe put this in a figure.tex
@@ -104,8 +105,10 @@
     \begin{figure}[ht]
     \centering
     \includegraphics[width=0.5\textwidth]{figs/chat_application}
-    \caption{Chat Application \\ Use App Instance to maintain shared 
-    model object ChatRoom. Each virtual browser keeps a reference to the shared object.
+    \caption{This figure shows how multiple virtual browsers can directly,
+        and seamlessly share relevant application data, in this case chat messages,
+        which then become part of the model that drives the presentation
+        MVC framework.
     }
     \label{fig:chatapp}
     \end{figure}
@@ -143,7 +146,7 @@
 
 
 \newcommand{\clickwaitlatency}{
-    \begin{figure}[ht]
+    \begin{figure}[tb]
     \centering
     \includegraphics[width=0.5\textwidth]{gnuplot/click_wait_latency}
     \caption{Latency of click application, after introducing artificial delay.}
@@ -154,7 +157,7 @@
 
 
 \newcommand{\angularchatlatency}{
-    \begin{figure}[ht]
+    \begin{figure}[tb]
     \centering
     \includegraphics[width=0.5\textwidth]{gnuplot/angularchat_latency}
     \caption{Latency of chat application with Angular.js.}
@@ -164,7 +167,7 @@
 
 
 \newcommand{\jquerychatlatency}{
-    \begin{figure}[ht]
+    \begin{figure}[tb]
     \centering
     \includegraphics[width=0.5\textwidth]{gnuplot/jquerychat_latency}
     \caption{Latency of chat application with JQuery.}
@@ -174,7 +177,7 @@
 
 
 \newcommand{\chatroomfig}{
-    \begin{figure}[ht]
+    \begin{figure}[tb]
     \centering
     \includegraphics[width=0.5\textwidth]{figs/chatroom}
     \caption{Chat Room Application}
@@ -183,7 +186,7 @@
 }
 
 \newcommand{\apphierarchyfig}{
-    \begin{figure}[ht]
+    \begin{figure}[tb]
     \centering
     \includegraphics[width=0.5\textwidth]{figs/application_hierarchy}
     \caption{Hierarchy of applications, application instances, and virtual browsers.
