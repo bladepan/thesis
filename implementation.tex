@@ -87,6 +87,7 @@ end users that merely join existing application instances.
 \newarchitectureoverview{}
 %
 \subsection{Distributed Implementation}
+\label{sec:distribution}
 Figure~\ref{fig:cb2arch} shows the distributed design of \cbtwo, which consists of a single
 master process, multiple reverse proxies, and multiple worker processes.  The number of workers 
 is determined by the number of CPUs available, due to the event-based (nonblocking) implementation

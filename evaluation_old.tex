@@ -1,104 +1,109 @@
 \section{Evaluation}
 \label{sec:eval}
+We have wrote several web applications on top of \cb{} to test its
+performance and scalability.
+One application is click application,
+it increments and prints a counter on HTML whenever the user clicks.
+This application represents applications with simple user interactions and small amount of DOM elements.
+Other applications are chat applications.
+A user can join a chat room to chat with other people,
+changes his nickname, send messages, view recent messages in the chat room.
+Whenever the number of messages in a chat room reaches 100, the first 50 messages
+are discarded.
+The chat applications represents more sophisticated applications.
+We implemented the chat applications use popular web frameworks Angular and JQuery
+to assess how \cb{} performs with real world web technology stack.
 
-% \cite{mcdaniel2012cloudbrowser}
-Our main focus in this evaluation is to demonstrate that the multiprocess implementation
-in \cbtwo can scale with the number of available cores on which to place separate workers.
-Our secondary focus is to investigate the cost of using different client libraries on 
-the throughput we achieve.
 
-To test \cbtwo with existing applications, we developed a small expect-like language 
-in which to describe scenarios. A client test tool interprets test scripts written in
-this language and makes RPC calls to a server in the same way the client engine would
-in actual deployment, then check whether the server is making the expected RPC
-calls back that would reflect requests to the client engine to update the DOM the
-user sees.  Like a (patient) human user, the script will not send the next event until after the
-previous event resulted in the expect DOM update.  
-Our test language allows us to express repetition and has the ability to check
-the correctness of expected responses.  
-To simulate human processing speed, a programmable ``thinking delay'' can be introduced 
-between receiving an expected response and sending the next event.
+\chatroomfig{}
 
-However, the tool does not maintain a DOM in the same
-way a real browser would.  To create test scenario from actual applications,
-we run those applications using a real browser and record the client/server interactions
-in a log.  We then transform this log manually in a test script that is later run 
-by our test tool.  To avoid limiting throughput when the test client becomes CPU bound,
-we can start multiple instances of the client.
+We implemented a benchmark tool to simulate multiple users.
+Each simulated user sends HTTP requests the same way as
+a web browser does when an actual user is interacting with a web application.
+In the benchmarks, each simulated user will wait for its action taking effect before
+sending the next one.
+For example, in the click application, the client will wait for the counter
+to be refreshed before clicking again.
+In the chat application, the client will wait for
+the chat message appearing on the chat window before sending another one.
+To be efficient, the simulated user does not render the view,
+it just analyzes server's response messages to assess
+if its action has been processed by the server.
+For example, after processing a chat message,
+the chat application will create a new DIV element with the chat message content
+and append that DIV element to the DOM tree,
+the simulated user will know a chat message is processed after it received
+a DOM update message containing that chat message's content.
+% TBD
 
-We used a dual-socket, 8 core Intel Xeon 2.27GHz processor with 38GB of RAM on the machine
-on which we run \cbtwo{}'s master, worker, and proxies.  We colocate the first proxy with
-the master in the same process.
-This system is connected via Gigabit Ethernet to a 8 core AMD
-machine with 16GB of RAM on which the test client(s) execute. Both machines run 
-Ubuntu 14.04 with a stock Linux 3.13 kernel.  We use \nodejs{} 0.10.33 and the version
-of JSDOM 2.0 we customized.  We use the static load balancing strategy discussed in 
-Section~\label{sec:distribution} to ensure an exactly predictable distribution of application
-instances onto workers.
-
-%
-%
+The \cb{} system is deployed on a server with 8 Intel 2.27GHz cores and 38G memory.
+The benchmark tool is deployed on a separate machine with 8 AMD 900MHz cores and 16G memory.
+To test the maximum scalability of our system, we use the static load balance strategy
+to eliminate the impact of the work load distribution.
 
 \subsection{Click Application}
-Our first benchmark is a simple click application that increments a counter on a page
-whenever the user clicks.  It is written without any libraries, making direct use of
-the JavaScript DOM API.  It only has 14 lines of HTML and 5 lines of JavaScript code.
-As such it most closely measures the overhead of our
-framework only, e.g. the overhead of making RPC calls, serialization and deserialization,
-and dispatching events into the server-side DOM, observing any DOM changes occurring as
-a result, and relaying those to the client.
-
-We consider two possible scenarios, a fast ``Back-to-back'' click application 
-with no thinking times between clicks, and a more ``Human-paced'' click application
-in which there is a think time drawn from a uniform distribution in the range of
-1 to 2 seconds.  We perform 5 runs for each data point and report the mean.
-For all benchmarks, the variance was small, with a relative standard error below X\%.
-
+In this benchmark,
+we allocate a separate virtual browser for each simulated user,
+the simulated user will click on the page,
+then wait for the counter to be refreshed and click again.
+The application is just a 14 lines HTML document with 5 lines in-line \js{} code.
+The \js{} code registers a \emph{onclick} handler on a DIV element,
+the \emph{onclick} handler increment a \emph{counter} variable and set the DIV's text as
+the counter every time it is invoked.
+% one DOMRemove one DOMInsert event
 \clickthroughput{}
 
-We measure throughput in terms of operations per second and average latency.  
-Figure~\ref{fig:clickthroughput} shows the throughput of the application for different
-numbers of workers. In those cases, all workers become CPU bound, adding more workers
-that can use additional cores increases throughput near linearly up to 6 workers. 
-In this scenario, a single proxy is sufficient to support up to
-8,000 operations per second at which point it becomes CPU bound;
-for the 6 and 8 worker cases, we add a second proxy process.
-Since the reverse proxy processes run on the same machine as the workers, throughput 
-does not increase beyond 6 workers since this machine has only 8 cores.
-We carefully monitor the CPU usage on the benchmark client machine, adding new
-test driver instances as needed, up to 8.
+Figure~\ref{fig:clickthroughput} shows the throughput of the application
+under different concurrent levels.
+Each line represents a \cb{} system with different numbers of worker nodes.
+The throughput scales linearly up to 6 workers.
+The throughput of 8 workers is suboptimal is because
+the system has exhausted CPU resource on the test box.
+The master node can achieve a throughput of about 8,000 operation per second on a dedicated core for the
+chat application.
+In the benchmark of 6 workers, the master spawns child processes to utilize two cores in the testbed
+without contending CPU resource with the worker nodes.
+However, in the benchmark of 8 workers, none of the worker nodes can achieve 100\% CPU
+utilization while they can in other experiments.
 
 \clicklatency{}
+
+Figure~\ref{fig:clicklatency} is the latency of the application.
+A usability study shows that the users feel instantaneous if the
+the application response time is below 100ms.
+% TBD more data
+With this criteria,
+\cb{} can sustain 1,200 concurrent users with an acceptable latency (96ms).
+
+
+This test scenario does not model real clients because real clients cannot
+interact with user interface with such high speed.
+To model real users, we configure the simulated users to pause for a while
+after it received the server's response for the previous action.
+The pause time is uniformly distributed from 1 second to 2 seconds.
+The throughput and latency for this configuration is shown
+in Figure~\ref{fig:clickwaitthroughput} and Figure~\ref{fig:clickwaitlatency} respectively.
+In this setting, the capacity of the system is much greater than before.
+The capacity when the latency is under 100ms scales linearly up to 6 workers.
+With 1 worker,
+the system could support 2,000 concurrent clients with the average latency 57ms.
+With 6 workers, the number is 12,000 concrrent clients with latency 69ms.
+With 8 workers, however, the CPU resource of the client machine went exausted when we
+have 14,000 or more conncurrent clients(we have 8 benchmark processes all running with more than
+90\% CPU utilization).
+The benchmark result shows with 8 workers, the system can sustain 14,000 clients with 93ms latency,
+but we believe the benchmark underestimate the system's capacity because of CPU resource constrains
+on the client machine.
+The Figure~\ref{fig:clickwaitthroughput} shows the throughput for this setting
+scales to 6 workers as well.
+% FIXME more analysis
+% http://rnikola.cs.vt.edu:2000/logs/jan03/test1284_data/test1284.md
+
+
 \clickwaitthroughput{}
-
-For the back-to-back scenario, throughput is limited by the CPU capacity available
-to the workers for 100 clients or more.  Throughput stays relatively constant as
-the number of client increases, but the observed latency increases, which is
-shown in Figure~\ref{fig:clicklatency}.  Note that we consider a latency of more than
-100ms unacceptable~\cite{Nielsen1993Usability}, which is why we cut off the y-axis
-accordingly.  As such, in this scenario, a single worker may support up to 200 clients,
-and 6 workers can handle about 1,200 clients before latency increases to unacceptable
-levels. 
-
 \clickwaitlatency{}
-When introducing think times to simulate ``human-paced'' clients, we obtain the
-throughput and latency shown in Figures~\ref{fig:clickwaitthroughput} 
-and~\ref{fig:clickwaitlatency}.  In those cases, a larger number clients can be
-supported, and maximum throughput will not be reached until the number of
-clients ramps up.  For each worker configuration, the maximum acceptable latency 
-is reached slightly before maximum throughput is reached.  In the experiments,
-we do not increase the number of clients further if latency has already reached
-unacceptable levels.
-We must note that the latency reported here does not include a wide-area network (WAN) delay;
-which when taken into account would reduce the bounds on acceptable processing delay.
-Nevertheless, we conclude that our method of scaling to multiple processes is effective 
-and that the reverse proxy in particular does not become a bottleneck.
 
-CONTINUE HERE
-
-% ----------------------------------------------------------------------------------------------
 \subsection{Chat Applications}
-\chatroomfig{}
 As in Fig.\ref{fig:chatapp},
 we use \appins{}s to maintain application state of chat rooms.
 The virtual browsers use the \emph{ChatRoom} objects inside their \appins{}s
