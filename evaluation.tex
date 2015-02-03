@@ -99,7 +99,7 @@ Nevertheless, we conclude that our method of scaling to multiple processes is ef
 and that the reverse proxy in particular does not become a bottleneck.
 
 % ----------------------------------------------------------------------------------------------
-\subsection{Chat Application w/ AngularJS}
+\subsection{Chat Application} 
 
 A key part of the productivity promise for using the server-centric \cb framework
 is the ability to reuse high-level libraries such as AngularJS with little or
@@ -140,13 +140,13 @@ roughly doubled performance, as shown in Fig.\ref{fig:jquerychatlatency}
 AngularJS's developers expect an order of magnitude speedup through direct VM 
 support via \code{Object.observe()} in future JavaScript VMs\cite{angularjsspeedup}.
 
-A second example of a disproportionate impact on specific implementation limitations
-is the handling of styles.  For instance, jQuery's \code{toggle()} changes an element's
+A second example of a disproportionate impact of specific implementation limitations
+is the handling of style attributes.  For instance, jQuery's \code{toggle()} method changes an element's
 visibility by changing a style attribute.  To obtain the current value, it uses the
 \code{getComputedStyle()} function, which triggers the application of CSS selectors.
 This is a well-known performance bottleneck~\cite{Meyerovich+:WWW2010} in browser
 layout engines and not optimized at all in JSDOM.  A third example we encountered 
-is the original implementation of a frequently called function \emph{lengthFromProperties}
+is the original implementation of a frequently called function \code{length\-From\-Properties}
 which determines the number of children of a DOM node.  Profiling showed 30\% of CPU
 spent in this function, which disappeared after an upgrade that substituted a
 constant time $O(1)$ implementation.
