@@ -105,7 +105,7 @@ A key part of the productivity promise for using the server-centric \cb framewor
 is the ability to reuse high-level libraries such as AngularJS with little or
 no changes, so that applications prototyped in AngularJS can be directly
 executed in virtual browsers.  These libraries are designed for client-side
-use, however.  We prototyped a Chat application using to investigate the overhead
+use, however.  We prototyped a Chat application to investigate the overhead
 of this usage scenario, a screenshot is shown in Figure~\ref{fig:chatapp}.  
 The application is only 207 lines of HTML and JS code while providing features such as 
 creating chatrooms, joining them, chatting and changing the desired display name.
@@ -122,7 +122,7 @@ appears in the chat window.
 \angularchatlatency{}
 
 Fig.\ref{fig:angularchatlatency} shows the latency perceived by benchmark tool
-under different numbers of clients.  While scaling to multiple workers is remains effective,
+under different numbers of clients. While scaling to multiple workers remains effective,
 the use of AngularJS imposes a significant cost, reducing the number of concurrent users 
 that can be supported with the same hardware.  Most of the time is spent in the AngularJS
 framework, which we discovered through profiling.  Optimizations made in successive revisions
@@ -136,7 +136,7 @@ engineering high-level libraries such as AngularJS.
 To eliminate the impact of AngularJS, we also reprototyped the same application with a
 lower-level library, jQuery, which increased its size significantly (and made it significantly
 less readable).  Avoiding AngularJS's method of dirty checking to identify model changes
-roughly doubled performance, as shown in Fig.\ref{fig:jquerychatlatency}
+roughly doubled performance, as shown in Fig.\ref{fig:jquerychatlatency}.
 AngularJS's developers expect an order of magnitude speedup through direct VM 
 support via \code{Object.observe()} in future JavaScript VMs\cite{angularjsspeedup}.
 
