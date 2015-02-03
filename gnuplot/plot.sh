@@ -20,8 +20,8 @@ plot_file(){
 
 echo plot latency graphs
 i_conf=$i_scirptdir/scaleout_latency.gp
-plot_file click_scaleout.dat "Click application" "client count" "click_latency"
-plot_file click_wait_scaleout.dat "Click application with delay" "client count" "click_wait_latency"
+plot_file click_scaleout.dat "Click back to back" "client count" "click_latency"
+plot_file click_wait_scaleout.dat "Human paced click application" "client count" "click_wait_latency"
 plot_file jquerychat_scaleout.dat "Chat application with JQuery" "client count" "jquerychat_latency"
 plot_file angularchat_scaleout.dat "Chat application with Angular.js" "client count" "angularchat_latency"
 
