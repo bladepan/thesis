@@ -7,10 +7,10 @@
 2500    1426.12 192.57  1576.93 22.18   null    null    null    null    null    null    null    null    null    null    null    null
 3000    1449.69 510.03  1871.47 33.57   1903.57 11.41   null    null    1908.61 8.02    null    null    null    null    null    null
 4000    1402.55 1347.2  2461.51 61.36   2535.54 14.05   2544.17 6.92    2543.31 6.13    null    null    null    null    null    null
-4500    1418.41 1721.45 2682.94 102.31  null    null    null    null    null    null    null    null    null    null    null    null
-5000    1536.45 1920.93 2723.74 205.24  3147.3  23.92   null    null    3161.1  9.03    null    null    null    null    null    null
-6000    1650.4  2263.16 2877.4  493.8   3723.51 36.88   3793.9  14.21   3790.07 12.4    null    null    null    null    null    null
-7000    1453.01 3442.85 2780.15 911.72  4320.81 48.88   null    null    4420.06 13.55   null    null    null    null    null    null
+4500    null    null    2682.94 102.31  null    null    null    null    null    null    null    null    null    null    null    null
+5000    null    null    2723.74 205.24  3147.3  23.92   null    null    3161.1  9.03    null    null    null    null    null    null
+6000    null    null    2877.4  493.8   3723.51 36.88   3793.9  14.21   3790.07 12.4    null    null    null    null    null    null
+7000    null    null    2780.15 911.72  4320.81 48.88   null    null    4420.06 13.55   null    null    null    null    null    null
 8000    null    null    2776.04 1293.46 4883.6  68.26   5017.59 25.13   5035.94 18.45   null    null    null    null    null    null
 9000    null    null    2898.71 1625.98 5211.53 126.92  null    null    5662.84 19.9    null    null    null    null    null    null
 10000   null    null    2837.32 2030.71 5451.29 211.39  null    null    6239.34 28.56   null    null    null    null    null    null
@@ -20,5 +20,5 @@
 18000   null    null    null    null    null    null    8355.07 542.05  9001.97 367.92  null    null    null    null    null    null
 20000   null    null    null    null    null    null    8576.53 791 8966.43 580.16  null    null    null    null    null    null
 22000   null    null    null    null    null    null    9014.21 973.8   8901.07 798.84  null    null    null    null    null    null
-24000   null    null    null    null    null    null    11289.13    1013.27 8959.12 1029.79 null    null    null    null    null    null
+24000   null    null    null    null    null    null    null    null    8959.12 1029.79 null    null    null    null    null    null
 26000   null    null    null    null    null    null    null    null    9451.5  1236.55 null    null    null    null    null    null
