@@ -9,7 +9,7 @@ running server side.  When the user visits the application, the client engine
 code is downloaded and restores the current view of the application by
 copying the current state of the server document.  Subsequently, user input 
 is captured, forwarded to the server engine inside the virtual browser, 
-which then dispatches it to the document.  All application logic runs
+which then dispatches events to the document.  All application logic runs
 in the global scope associated with the virtual browser's window object.
 Since the server environment faithfully mimics a real browser, libraries
 such as AngularJS can be used unchanged to implement the user interface.
