@@ -2,7 +2,7 @@
 \label{sec:related}
 
 ZK~\cite{ChenCheng:book2007},
-which we use as part of our motivation in Section\ref{sec:background}
+which we use as part of our motivation in Section~\ref{sec:background}
 is a Java-based server-centric web framework that is in wide use.
 ZK applications are constructed using components, which are represented
 using the ZK User Interface Markup Language (ZUML).  ZUML components
@@ -61,7 +61,7 @@ the server. Asynchronous updates to model data is pushed to clients.
 Meteor will have lower server-side cost, and thus higher scalability, than \cb, as well
 as the ability to reduce user-perceived latency because of its optimistic processing.
 However, we believe that this comes at a high price of complexity and increased risk.
-For instance, programmers would be extremely careful to not leak sensitive data to the 
+For instance, programmers must be extremely careful to not leak sensitive data to the 
 client, and they may easily expose (unintentionally) sensitive business logic to the client.  
 Meteor also does not focus on the problem of simplifying the retention of presentation
 state across visits, either making that state ephemeral, or requiring the programmer
@@ -69,9 +69,10 @@ use session state or store all necessary model variables in the database.
 
 Lastly, our system shares ideas with traditional thin-client and remote display 
 systems, going back to ``dumb terminals'' based on the X Window 
-System~\cite{ScheiflerGettys:acmtg1986}.  Compared to these systems, \cb{} is 
+System~\cite{ScheiflerGettys:acmtg1986}.  We note that VMWare's Horizon product provides
+a way to see the user interface of actual virtual machines via a browser, with its
+BLAST protocol.  Compared to these systems, \cb{} is 
 unique in that it uses a markup document and differential update to it to 
 describe the structure and evolution of the user interface that is rendered 
 to the user.  
-
 
