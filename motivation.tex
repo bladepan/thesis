@@ -103,19 +103,20 @@ as essential user data is stored in a separate storage layer.
 A scalable virtual browser environment can be implemented in similar fashion;
 however, here the load balancer is restricted in the choice of web server to 
 which to forward requests as soon as a server process is chosen on which the
-virtual browser is allocated.  A crash or restart of such a process 
+virtual browser is allocated.  A crash or restart of such a process leads
 to the loss of all presentation state.  To prevent this from becoming 
-catastrophic, applications will, as before, decide which part of their
+catastrophic, applications developers must, as before, decide which part of their
 state is deemed essential data that must be stored in the separate storage
-layer.  This can be done by communicating with existing storage layers,
+layer.  This can be done by accessing existing storage layers,
 but we also added a facility that allows applications to save a snapshot
 of their state and resume from it later.
 
-From a practical point of view, this model means that detailed presentation
-state may be lost in the case of a web server failure or restart.
-However, unless the user recently visited the application, the expected 
-impact may be small: for instance, the user may have worked with temporary 
-data that they must recreate anyway: an example in our application would be
-the results obtained from an exterior search engine that are presented 
-to the user in one part of the application.
+Nevertheless, from a practical point of view, we encountered multiple
+examples where application developers might designate state that is only
+stored transiently in the server process, assuming that crashes or restarts
+are not frequent.  For example, in an application that presents to the
+user results obtained from an exterior search engine, it may be reasonable
+to save those only in-memory as this information can be recreated, and likely
+should be recreated anyway, especially if the users revisits the application
+after a significant pause.
 
