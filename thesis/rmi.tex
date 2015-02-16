@@ -1,1 +1,105 @@
-\chapter{Nodermi: A Remote Method Invocation Package for \nodejs{}}
+\chapter{nodermi: A Remote Method Invocation Library for \nodejs{}}
+
+Masters and workers need to communicate with each other.
+We developed nodermi~\cite{nodermi}, a remote method invocation(RMI) library to
+to hide the complexity of interprocess communication away from
+framework code.
+A object or function resides in another process
+could be treated like a local object or function,
+the encoding, decoding and message transmission are all hidden
+under the hood of plain method calls.
+% pic
+
+We use the term \emph{local object}
+to refer a object that is created by the process in context.
+We use the term \emph{remote object} to represent a object that is
+created by other processes.
+We use \emph{stub} to refer to a special object that is created
+by nodermi or other remote method invocation system that
+acts like a proxy to a \emph{remote object}.
+In \js{}, function is the first class citizen, it is legal
+to pass a function as a parameter or return a function as a result.
+So we will use the term object to refer to orthodox objects as well as
+functions unless specially noted.
+A \emph{stub} is a \emph{local object}, so the process
+could directly reference to it.
+
+
+\section{Usage}
+First, the developer needs to create a nodermi instance by passing a configuration
+object to a factory method.
+The nodermi instance will listen on a TCP port as specified in the configuration
+to accept messages from other nodermi instances.
+The nodermi instance provides three public methods : \emph{createSkeleton},
+\emph{retriveObj}, and \emph{close}.
+The \emph{createSkeleton} method allows the developer to register local objects
+with names.
+The \emph{retriveObj} method fetch a remote object on another process by name.
+The \emph{close} method shuts down the nodermi instance.
+
+Usually, the developer would expose several service objects to other process
+by \emph{createSkeleton} method.
+These service objects often serve as bootstrapping points for clients.
+The client could obtain these objects by \emph{retriveObj},
+it could fetch even more server side objects or passing its own objects to server
+by calling methods on these service objects.
+In the upper layer of the application code,
+there is no distinction of a local object and a remote object stub,
+the developer does not need to write any code explicitly calling nodermi.
+
+% desc list browser ...
+In \projectname{}, we use nodermi extensively. 
+For example, in the administrator dash board application, 
+we need to list all the application instances of a given application,
+we would also want to list all the virtual browsers of a given application instance,
+we also need the option to shut down an application instance or a virtual browser.
+It is unlikely that the worker node that is executing these logic would contain
+all the application instances.
+Instead of designing internal message protocols for all the necessary
+operations we want to have and writing communication code all over 
+the place, 
+we could grab stubs of all the application instances by a method call
+to the stub of an master's application object, 
+and we could also grab stubs of virtual browsers by calling a method 
+on the application instance stubs.
+We do not have to add a lot of code because we only need to 
+implement necessary logic on the corresponding classes,
+nodermi takes care of all the communication.
+
+\nodermifig{}
+
+\section{Design}
+Figure~\ref{fig:nodermi} is a diagram of nodermi's design.
+A stub is created to have the same set of properties and methods as the remote object
+it represents.
+Nodermi adds a few hidden fields in the stub such as the host of the remote object,
+and the id of the remote object.
+The stub's methods are pointing to a nodermi's internal method,
+let's call it \emph{invoke remote}.
+When the process calls a stub's method, 
+it essentially calls nodermi's \emph{invoke remote} method. 
+In \emph{invoke remote}, nodermi first serialize the parameters passed
+to the method.
+Then nodermi constructs a \emph{method invocation} message that contains
+the serialized parameters.
+Finally, nodermi sends the message via the transportation layer.
+On the other side, when nodermi receives a \emph{method invocation} message,
+the \emph{method invocation handler} will finish the job of remote method invocation.
+In the \emph{method invocation handler},
+nodermi extracts serialized parameters and pass it to decoder.
+For each parameter,
+the decoder either creates a stub if it is remote to this process,
+or locate a local object if it points to a local object.
+The reason that a parameter from a remote site could point to a local object is that,
+we have no restriction as how stubs could be used in the code, 
+a stub could be used as a parameter or be returned as a result of a method.
+
+\nodrmimethodinvokefig{}
+\nodrmicallbackfig{}
+
+Figure~\ref{fig:nodermimethodinvoke},~\ref{fig:nodermicallback} shows a simple example
+of a remote method invocation. 
+In these two figures, process B hosts a object \emph{objB} that 
+
+
+\section{Distributed Garbage Collection}
