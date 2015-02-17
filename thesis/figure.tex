@@ -169,16 +169,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_method_invoke}
-    \caption{Process A invoke a method of a stub object\\
-    The stub object stubB represents objB on Process B.
-    nodermi constructs a method invocation message and sends the message
-    to Process B.
-    The message contains the encoding of the parameter of this method call,
-    a function named \emph{callback} on Process A.
-    The Process B decodes the message, 
-    creates a stub object represents the function \emph{callback} and pass the stub object
-    to objB.
-    }
+    \caption{Process A invoke a method of a stub object}
     \label{fig:nodermimethodinvoke}
     \end{figure}
 }
@@ -190,5 +181,23 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_callback}
     \caption{Process B invoke a method that itself is a stub}
     \label{fig:nodermicallback}
+    \end{figure}
+}
+
+\newcommand{\nodrmiobjmapfig}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figs/nodermi_objectmap}
+    \caption{Nodermi object map and stub map}
+    \label{fig:nodermiobjmap}
+    \end{figure}
+}
+
+\newcommand{\nodrmiracefig}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figs/nodermi_race}
+    \caption{Race in dereference remote reference}
+    \label{fig:nodermirace}
     \end{figure}
 }
