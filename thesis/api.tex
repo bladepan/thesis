@@ -1,4 +1,23 @@
 \chapter{Application Programming Interface}
 \markright{Application Programming Interface}
+Besides DOM API and built in types and methods,
+we created a set of API for the developers to access server side resource.
+We do not directly expose server side objects to the developers for many reasons.
+First, we want to protect the internal state of the framework from 
+being tampered by application code.
+Second, 
+we want to create a multi-tenant environment that 
+the system could impose rules about what kind of resource a user could access and how
+he could access it.
+Moreover, 
+the internal objects are prone to refactoring and 
+too low-level for writing application code.
+There are three objectives for API design:
+\begin{enumerate}
+\item The application code should not obtain reference to internal objects.
+\item The system should 
+\end{enumerate}
+
+
 
 \section{Memory Management}

@@ -95,3 +95,71 @@ while O is being transmitted. When the sending process P is O's
 owner, this is accomplished by putting P into O.dirtySet until an acknowledgment from Q indicates that the reference has been received. S
 ```
 
+needs to protect against failed dirty calls and out of order clean calls.
+a failed dirty call could add the client on dirty set even the client failed to create a surrogate, to protect this, sequence number and strong clean calls are used
+
+### Pyro4
+https://github.com/irmen/Pyro4/tree/master/examples/autoproxy
+
+needs register as remote object before return
+```python
+class Factory(object):
+    def createSomething(self, number):
+        # create a new item
+        thing = Thingy(number)
+        # connect it to the Pyro daemon to make it a Pyro object
+        self._pyroDaemon.register(thing)
+        # Return it. Pyro's autoproxy feature turns it into a proxy automatically.
+        # If that feature is disabled, the object itself (a copy) is returned,
+        # and the client won't be able to interact with the actual Pyro object here.
+        return thing
+```
+
+
+support attribute manipulation
+https://github.com/irmen/Pyro4/tree/master/examples/attributes
+
+no distribute garbage collection. confirmed by test, *no proper garbage collection*
+http://sourceforge.net/p/pyro/mailman/message/3542174/
+
+remote stubs of the same object got the same identity. remote references needs to be registered
+
+https://pythonhosted.org/Pyro4/clientcode.html
+```
+By default (when not using the pickle serialization protocol), custom classes are serialized into a dict. They are not deserialized back into instances of your custom class. This avoids possible security issues. An exception to this however are certain classes in the Pyro4 package itself (such as the URI and Proxy classes). They are deserialized back into objects of that certain class, because they are critical for Pyro to function correctly.
+```
+
+
+### Druby -- drb
+
+need to define object explicitly using druby when you want it to be created as remote object at the other end in return statement or as method parameters
+http://ruby-doc.org/stdlib-1.9.3/libdoc/drb/rdoc/DRb.html
+```
+Any type of object can be passed as an argument to a dRuby call or returned as its return value. By default, such objects are dumped or marshalled at the local end, then loaded or unmarshalled at the remote end. The remote end therefore receives a copy of the local object, not a distributed reference to it; methods invoked upon this copy are executed entirely in the remote process, not passed on to the local original. This has semantics similar to pass-by-value.
+
+However, if an object cannot be marshalled, a dRuby reference to it is passed or returned instead. This will turn up at the remote end as a DRbObject instance. All methods invoked upon this remote proxy are forwarded to the local object, as described in the discussion of DRbObjects. This has semantics similar to the normal Ruby pass-by-reference.
+
+The easiest way to signal that we want an otherwise marshallable object to be passed or returned as a DRbObject reference, rather than marshalled and sent as a copy, is to include the DRb::DRbUndumped mixin module.
+```
+
+needs the programmer to hold reference to objects to prevent them from prematurely garbage collected
+
+
+### Dbus
+
+http://dbus.freedesktop.org/doc/dbus-specification.html#type-system
+
+http://www.rubydoc.info/gems/ruby-dbus/0.11.0/frames
+
+object name is required for method invocation ?????
+
+
+### weborb
+
+http://www.themidnightcoders.com/products/weborb-for-rails/faqs.html
+
+calling ruby class from FLEX
+
+
+
+

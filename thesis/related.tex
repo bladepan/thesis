@@ -1,2 +1,58 @@
 \chapter{Related Work}
 \markright{Related Work}
+
+\section{Remote Procedure Call(RPC) Frameworks}
+Some remote procedure call frameworks deals similar problems as nodermi,
+such as object oriented remote method calls,
+distributed garbage collection, etc.
+
+Dnode~\cite{dnode} is a RPC framework for \nodejs{}. 
+Like nodermi, it is object oriented and it allows remote objects to be 
+returned in a function or be passed as function parameters.
+However, it does not distinguish remote stubs from local objects 
+when marshaling them into messages.
+As a consequence, a remote stub could point to a remote stub on another process,
+a remote method call can cause a long chain of request round trips.
+Even when a process is passing a remote stub is referencing a local object in the client,
+the client will also create a stub point to the stub that is pointing to its local object.
+Because of it does not deal with the problem brought by copying remote reference,
+the garbage collection scheme is straightforward in dnode.
+Dnode keeps reference to the object in a reference map when the object
+ is serialized as a message,
+on the client side,
+whenever a remote reference is garbage collected, 
+a \emph{cull} message(similar to our dereference message) 
+is sent to inform the host to remove the object from 
+the reference map.
+There is a reference map for every client so the \emph{cull} messages from
+different clients do not conflict with each other.
+ 
+Pyro~\cite{pyro} is a object oriented RPC framework for python programming language.
+Because python supports interception of creating, deleting and changing object properties,
+and because python is not a ``non-blocking'' language like \js{},
+pyro is able to support property manipulation on remote stubs in the exact same semantics as manipulating 
+properties of local objects.
+The downside of pyro is that every object needs to be registered in pyro manually
+if you want it to be passed to another process as remote reference.
+If a object is not registered,
+pyro will serialize it as a \emph{dict} structure, i.e., a hash map equivalent data structure in python.
+Also, there is no garbage collection mechanism in pyro, 
+objects are kept in server by pyro even no client or other server component is referencing them.
+
+Druby(drb)~\cite{druby} is a object oriented RPC framework that is built in ruby's standard library.
+Druby has two modes of transmitting a object to client : by value and by reference.
+If a object is transferred by value, the client will create a copy of that object and method
+invocation on that object will only take place on the client.
+The by reference mode creates a remote stub on the client side, and the stub will proxy 
+method calls to the server.
+Like pyro, it is the programmer's responsibility to explicitly define if a object could be
+remotely referenced.
+It also requires user to explicitly hold reference to remote objects to prevent them from being 
+prematurely garbage collected. 
+
+Network objects~\cite{birrell1993distributed} is a distribute programming paradigm
+that provides RPC in a object oriented style.
+The major difference between network objects and nodermi is that 
+a client cannot directly read or write a remote object's properties,
+and a client only keeps one stub per remote object.
+As we explained in %FIXME

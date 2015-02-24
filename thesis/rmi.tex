@@ -19,7 +19,8 @@ to pass a function as a parameter or return a function as a result.
 So we will use the term object to refer to orthodox objects as well as
 functions unless specially noted.
 For a given object, the process that creates that object is referred 
-as host, the process that holds the \emph{stub} to that object is called \emph{client}.
+as \emph{host} or \emph{sever}, 
+the process that holds the \emph{stub} to that object is called \emph{client}.
 
 
 \section{Usage}
@@ -284,6 +285,35 @@ the object is surely held in the object map,
 and it will not be removed before the new \emph{stub} becomes garbage.
 
 
+\section{Semantics}
+For a remote stub, only method calls are forwarded to the server,
+local change to the properties has no effect on the server,
+nor the server's update to the properties will be synchronized to the clients.
+The remote stub is a snapshot of the state of the remote object before it is sent.
+
+For remote method calls, the return value is not defined. 
+That is because \js{} code runs on a single thread, so we should not block
+a remote method call to wait for the server side to return.
+The method on the server side will still be invoked, 
+but its return value is ignored.
+The client could get result of a method call 
+from server via callback functions like in Figure~\ref{fig:nodermimethodinvoke}.
+So refactoring is necessary if the caller needs the result and 
+the original method does not accept callback function.
+
+In \js{}, reading or writing properties is synchronous. 
+Although we can intercept writing existing properties of a stub using
+\emph{setter}, we could not make these operations non-blocking if we decided to update
+the remote object as well.
+Vice visa, we cannot synchronize the properties of remote object with its clients without
+blocking the access to properties.
+Moreover, there is no way in \js{} to intercept the operation of adding a new property or delete 
+a property.
+So the property manipulations only take effect locally.
+
+In some remote object systems~\cite{birrell1993distributed},
+the client can read or write properties of remote stubs via their methods.
+We think this behavior unacceptable in our system.
 
 % FIXME comparison
 
@@ -293,4 +323,4 @@ and it will not be removed before the new \emph{stub} becomes garbage.
 \section{Issues}
 
 % async 
-% network partition, server restart
+% network partition, transmission failure, server restart
