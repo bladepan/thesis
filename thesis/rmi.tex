@@ -329,6 +329,17 @@ because if the new remote reference is created in the receiver,
 the object is surely held in the object map,
 and it will not be removed before the new \emph{stub} becomes garbage.
 
+Nodermi also remove a remote process's references to local objects if
+it detects that remote process is terminated.
+Nodermi keeps a table of last response time of remote processes it contacted,
+it updates the table every time it receives a request or a response from a remote 
+process. 
+When the table entry for a process is not updated for more than 60 seconds, nodermi
+will send a ping message to that process.
+If the ping message is unanswered, all references of that process will be removed
+from the object map.
+This strategy ensures that a terminated process will not cause memory leak on
+other processes.
 
 \section{Semantics}
 For a stub, only method calls are forwarded to the server,
