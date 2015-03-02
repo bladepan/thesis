@@ -1,15 +1,15 @@
 \chapter{nodermi: A Remote Procedure Call Framework for \nodejs{}}
 \markright{nodermi}
 
-Inter-process communication is prevalent in \cb{} as 
+Inter-process communication is prevalent in \cb{} as
 many features requires coordination among processes.
-For example, a administrator application needs to talk to master to 
+For example, a administrator application needs to talk to master to
 get the full list of application instances,
-it would also need to communicate with individual worker process to 
+it would also need to communicate with individual worker process to
 shutdown an application instance.
-We developed nodermi~\cite{nodermi}, a object-oriented 
+We developed nodermi~\cite{nodermi}, a object-oriented
 remote procedure call(RPC) framework to
-to hide the complexity of interprocess communication away from programmers. 
+to hide the complexity of interprocess communication away from programmers.
 Nodermi allows us to get reference to remote objects and
 call methods of remote objects like calling methods of a local object.
 Remote references are created automatically as a result of
@@ -20,7 +20,7 @@ In our system, the master expose its application management objects via nodermi,
 workers only have the master's nodermi host and port in configuration.
 A worker registers its application instance to master using remote method call.
 It could also obtain reference to any remote application instance by invoking
-master's application management object's methods, 
+master's application management object's methods,
 after that it could directly communicate to that application instance's host worker
 process by calling methods on that application instance,
 even it does not have other workers' addresses in configuration.
@@ -28,7 +28,7 @@ even it does not have other workers' addresses in configuration.
 % pic
 
 To describe RPC systems,
-we use the term \emph{local object} 
+we use the term \emph{local object}
 to refer objects that are local to the process.
 We use the term \emph{remote object} to represent objects that are
 living on other processes.
@@ -44,8 +44,8 @@ So we will use the term object to refer to ordinary objects as well as
 functions unless specially noted.
 When we talk about methods, it could mean a function that is a property
 of a object or it could be a standalone function like a closure function.
-For a given object, the process that creates that object is referred 
-as \emph{host} or \emph{sever}, 
+For a given object, the process that creates that object is referred
+as \emph{host} or \emph{sever},
 the process that holds the \emph{stub} to that object is called \emph{client}.
 There is no clear distinction between \emph{server} and \emph{client},
 it depends on the context of which object is under discussion.
@@ -58,7 +58,7 @@ to accept incoming messages from nodermi in other processes.
 Nodermi has only three public methods : \emph{createSkeleton},
 \emph{retrieveObj}, and \emph{close}.
 The \emph{createSkeleton} method registers local objects with names,
-we use this method to register service objects that we want to expose to 
+we use this method to register service objects that we want to expose to
 remote process.
 The \emph{retriveObj} method looks up a remote object by name and creates
 a \emph{stub} to that object,
@@ -68,19 +68,19 @@ The \emph{close} method shuts down nodermi.
 
 \emph{Stub}s have exactly the same signature as their remote objects,
 so the developers could use them like local objects except for one caveat:
-the \emph{return} statement does not work. 
-Because of the single thread nature of \js{}, 
+the \emph{return} statement does not work.
+Because of the single thread nature of \js{},
 a method invocation should not block.
 Unlike calling a local method which we could expect it returns instantly,
 a remote method call involves network IO and the client cannot get the
 return value immediately.
-Nodermi will return immediately on a remote method call without waiting for 
+Nodermi will return immediately on a remote method call without waiting for
 the remote response, the return value of a remote method call is undefined.
-However, this is not a big issue as we could use callbacks to 
+However, this is not a big issue as we could use callbacks to
 implement the logic we want to execute after a remote method call takes effect,
 the computation result from a remote method could also be passed to the client by callbacks.
 As a matter of fact, methods that involves IO operations already use callbacks instead
-of return statements, 
+of return statements,
 and adding an optional callback parameter to a existing method is not hard
 either.
 
@@ -89,7 +89,7 @@ a \emph{stub} pointing to this object will be created on the server side,
 and this \emph{stub} will be passed to the original method.
 The other side could call methods on the new \emph{stub}, which
 in turn could create new \emph{stub}s.
-As the \emph{stub}s are created transparently 
+As the \emph{stub}s are created transparently
 as a result of remote method calls,
 it appears that all processes are in a single address space,
 the developer does not need to write code explicitly calling nodermi except
@@ -102,140 +102,148 @@ getting entry point remote objects.
 Figure~\ref{fig:nodermi} is a diagram of nodermi's design.
 The stubs are created such that their methods would invoke nodermi to do
 the actual work of remote method invocation.
+The stubs also store the information of its host and its remote object's id
+so nodermi could find the corresponding object on the server side.
+When a stub method is called,
+nodermi would encode the parameters and the stub's information into a method invocation
+message,
+then this message is send to the server side via the transportation component.
+During encoding, nodermi will assign id to the parameter objects(if there is any) and
+ keep references to these objects in a object map,
+because the server will create stubs pointing to these objects and the
+server could call these objects' methods later.
+On the server side, when a method invocation message is received,
+the server will first decode the message to construct parameters,
+stubs are created if necessary.
+Then the server looks up the original object use the object's id in its object map.
+Finally, the server invokes the original method with the parameters.
 
-A stub is created to have the same set of properties and methods as the remote object
-it represents.
-Nodermi adds a few hidden fields in the stub such as the host of the remote object,
-and the id of the remote object.
-The stub's methods are pointing to a nodermi's internal method,
-let's call it \emph{invoke remote}.
-When the process calls a stub's method, 
-it essentially calls nodermi's \emph{invoke remote} method. 
-In \emph{invoke remote}, nodermi first serialize the parameters passed
-to the method.
-Then nodermi constructs a \emph{method invocation} message that contains
-the serialized parameters.
-Finally, nodermi sends the message via the transportation layer.
-On the other side, when nodermi receives a \emph{method invocation} message,
-the \emph{method invocation handler} will finish the job of remote method invocation.
-In the \emph{method invocation handler},
-nodermi extracts serialized parameters and pass it to decoder.
-For each parameter,
-the decoder either creates a stub if it is remote to this process,
-or locate a local object if it points to a local object.
-The reason that a parameter from a remote site could point to a local object is that,
-we have no restriction as how stubs could be used in the code, 
-a stub could be used as a parameter or be returned as a result of a method.
+The stubs created by \emph{retriveObj} API using a similar procedural:
+First, the client send a message with a object name.
+The server side find the object registered by \emph{createSkeleton} earlier and
+encode it into a message. The client decode the message to create stubs.
+
+The design of creating a separate layer of transportation component allows
+us to use a object represented abstraction of messages in encoder and decoder.
+The transportation component serialize and de-serialize the object representations
+and manages network communications.
+Right now we use ProtoBuf~\cite{protobuf} to convert message objects to binary
+formats and send the binary data on long running TCP connections.
+Because of this separation, we could change the transportation component without
+changing other components.
+
 
 \nodrmimethodinvokefig{}
 \nodrmicallbackfig{}
 
 Figure~\ref{fig:nodermimethodinvoke},~\ref{fig:nodermicallback} shows a simple example
-of a remote method invocation. 
+of a remote method invocation.
 In these two figures, process B has a local object \emph{objB} that has a method called \emph{method1},
 suppose process A has a stub representing \emph{objB} called \emph{stubB}.
 As shown in the code snippet on the top left of Figure~\ref{fig:nodermimethodinvoke},
 process A invokes \emph{method1} with a parameter a function named \emph{callbackA}.
-Methods of stub objects are generated by nodermi 
-First nodermi will encode \emph{callbackA} into a internal presentation
+First nodermi will create a method invocation message that contains
+the ids of \emph{method1} and \emph{objB} and a representation of \emph{callbackA}.
+Process B receives the message and creates a stub of \emph{callbackA},
+the stub is a function that stores \emph{callbackA}'s id and Process A's nodermi host and port,
+we denote this stub as \emph{stubCallbackA}.
+Then process B finds \emph{objB} and \emph{method1} by the ids in the message.
+Then process B invokes the \emph{method1} with \emph{stubCallbackA} as parameter.
+The \emph{method1} will invoke \emph{stubCallbackA} with a parameter \emph{result}.
+In Figure~\ref{fig:nodermicallback}, \emph{callbackA} is invoked
+via a remote method call by process B,
+and the result computed in process B is printed in process A.
+In the whole process, there is no difference for the programmer that \emph{objB}
+is in process A or not, the code just passes objects around using plain method calls.
+% Notice that the variable \emph{result} is not necessary B's local object,
+% it could be a stub reference to an object
 
-The implementation of \emph{method1} is shown on the top right of the figure,
-\emph{method1} first call another function and store the return value to variable \emph{result}, 
-then it calls its own parameter \emph{callback} with \emph{result} as the second parameter
-of \emph{callback}.
-The implementation of \emph{callbackA} is just print out the second parameter it receives.
-It is common practice in \js{} that a function does not send its result to the caller using ``return'' 
-statement,
-instead it accepts a callback function from the caller as a parameter 
-and pass the result to that callback function.
-The callback function could be invoked synchronously or at some other time in the future.
-It is also  
-common practice that the first parameter of a callback function is reserved for errors.
-In our example, \emph{method1} adopts those common idiom to ``return'' its result.
-Conceivably, if \emph{objB} lives on the process A, calling \emph{method1} with
-\emph{callbackA} would directly print out \emph{result}.
-In our example, calling \emph{stubB}'s \emph{method1} will invoke nodermi to 
-encode the \emph{callbackA} and send a \emph{method invocation} message to process B.
-In process B, nodermi finds out process A wants to execute \emph{method1} and
-there is a function parameter, 
-then nodermi realizes the function parameter is living on process A,
-so it creates a stub \emph{stubCallbackA} to represent \emph{callbackA} and pass
-\emph{stubCallbackA} to \emph{method1}.
-In Figure~\ref{fig:nodermicallback}, 
-\emph{method1} calls \emph{stubCallbackA} with the \emph{result} variable,
-\emph{result} is serialized by nodermi and a \emph{method invoke} message is sent
-by process B to process A, finally, \emph{callbackA} on process A is invoked.
-In the whole process, there is no difference for the programmer that \emph{nodeB}
-is on process A or not.
+
 
 \section{Encode and Decode}
+As we mentioned earlier, nodermi will assign ids to local
+objects that are referenced remotely.
+An object id is written to the object in a hidden field
+so an object's id remains the same throughout the lifetime of the process.
+When creating a stub,
+the host process's nodermi host and port as long as the remote object's id
+are written in hidden fields of the stub.
+To avoid conflict with user defined fields, these hidden fields are prefixed
+with ``\_\_r'' and they are not enumerable or modifiable.
 
-Nodermi encodes the parameters of remote method calls as well as
-the result of API \emph{retirveObj} to a format called object descriptor
-before transmission.
-The object descriptor for a object includes a id which is unique
-among all the local objects created by its host process.
-For regular objects, the object descriptor also includes
-its host process's identifier, the object descriptors of its properties and methods.
-The object descriptor for a function includes
-its id and its source process's identifier and port as well.
+Normally nodermi will encode the whole object graph of an object recursively.
+Cyclic reference is handled by encoding the cyclic reference as
+a special ``ref'' object.
+Nodermi assumes properties with ``_'' prefixed names are private
+properties and omit them during the encoding.
+Programmers could also explicitly tell nodermi skip or include
+certain properties during encoding by assign
+``\_\_r\_skip'' and ``\_\_r\_include'' properties to objects.
+The properties listed in ``\_\_r\_skip'' will be omitted and
+properties in ``\_\_r\_include'' will be encoded.
+Programmers could also set a ``\_\_r\_mode'' property to ``methods''
+to enforce nodermi only encode methods.
 
-The object's id is assigned during the encoding process, the id is written to the object
-using a hidden field so the same object will not be assigned with different ids.
-Nodermi also handles cyclic references by encoding cyclic reference as a special \emph{ref}
-type.
+When the decoder creates a stub object, it first writes hidden fields as mentioned
+earlier. Then the decoder reads the definition of properties encoded by the remote
+process.
+Simple properties like numbers or strings are directly set in the stub.
+For methods, stub methods are created. For object property,
+new stubs are created recursively and set in the container stub.
 
-Nodermi use several policies to minimize the size of object descriptors:
-if the object is a local object, then process identifier will be ignored 
-in the object descriptor because the receiving site could infer these values;
-if the object is a stub represents an object from the destination,
-nodermi will not write its properties and methods in the object descriptor 
-because the receiving site has the original object;
-simple structured objects that has no methods are treated as
-ephemeral objects, they are encoded directly using JSON representation; etc.
+% better connection here
+Nodermi also adopts several policies to minimize the size of messages:
+When encoding objects of type Error, Date and Buffer,
+only the value of these objects are encoded,
+and they are decoded as new local objects instead of creating stubs,
+because it makes little sense to invoke remote method call for these objects.
+When encoding a stub that references objects from the receiver,
+only object id is encoded,
+and the receiver could decode this object as the original local object.
+Objects of Socket type are discarded entirely, because
+there is little reason that a socket should be exposed as a remote object.
+Some methods inherit from Object class are omitted like ``toLocaleString''
+and ``toJSON'', because it makes no sense to call these methods remotely.
+For similar reasons, more objects and methods could be omitted or specially encoded
+in the future.
 
-By default, the encoder of nodermi ignores properties and methods inside 
-an object that has a prefix of `\_', 
-because by conversion these are private.
-Programmers can also explicitly tell should nodermi skip or include 
-certain properties or methods during encoding by assign 
-``\_\_r\_skip'' or ``\_\_r\_include'' property.
-
-The decoding process creates stubs or find local objects based on
-the object descriptors received.
 
 \section{Distributed Garbage Collection}
-\js{} relies on garbage collection to reclaim memory used by 
-objects that are not used anymore in the program.
-However, the garbage collector does not aware a local object
+\js{} relies on garbage collection to reclaim memory taken by
+objects that are not referenced anymore in the program.
+However, the garbage collector is not aware a local object
 could also be referenced by another process through nodermi.
 In the example shown in Figure~\ref{fig:nodermimethodinvoke},
-after \emph{method1} of \emph{stubB} is called, 
-\emph{callbackA} is out of scope in process A, 
-it is not referenced anymore by any application code.
+after \emph{method1} of \emph{stubB} is called,
+\emph{callbackA} is out of scope in process A,
+it is not referenced anymore by the user code.
 If nodermi does not hold reference to \emph{callbackA},
 it could be garbage collected before it is invoked in Figure~\ref{fig:nodermicallback}.
-In fact, in practice the callback function like \emph{callbackA} is almost
-immediately garbage collected because it is likely that \emph{callbackA}
-lives on the new space of a generational garbage collector heap that is frequently
+In fact, in practice callback functions like \emph{callbackA} are almost
+immediately garbage collected because it is likely that these functions
+live on the new space of a generational garbage collector heap that is frequently
 garbage collected.
 However, if we naively keep reference to the \emph{callbackA} in nodermi,
-our application is surely prone to memory leak as objects like \emph{callbackA}
-will never be garbage collected.
-Setting a timeout for these references is not going to work either,
-there is no guarantee that when the stub is going to be used,
-for example, a process could register a function to be invoked when
-a remote event happens and the event could happen in arbitrarily moment in the future.
+our application is surely prone to memory leak as objects that are once remotely
+referenced
+will never be garbage collected even when local or remote processes no longer hold their reference.
+Setting a timeout to automatically clean these objects from nodermi
+ is not going to work either,
+there is no guarantee that when the remote site is going to use the object.
+For example,
+a stub to a listener function could be stored in a remote process
+to be invoked when a event in the remote process happens,
+the event could happen multiple times in arbitrarily moments in the future.
 
 There are many researches related to garbage collection in a distributed
 environment~\cite{abdullahi1998garbage}, ~\cite{birrell1993distributed}.
-We designed a mechanism that is similar to the sequence reference counting algorithm 
+We designed a mechanism that is similar to the sequence reference counting algorithm
 of Birrell et al.~\cite{birrell1993distributed}.
 We will discuss the difference between our work and ~\cite{birrell1993distributed}
-in this section.
+in section~\ref{sec:relatedrpc}.
 
 For each process, nodermi keeps a map of the objects that clients still hold
-their \emph{stub}s. 
+their \emph{stub}s.
 The map could prevent garbage collector from prematurely garbage collecting
 these objects by creating strong references to them.
 This map is also necessary to look up for local object when handling \emph{method invocation} messages.
@@ -245,31 +253,29 @@ Unlike regular reference, the garbage collector could collect an object if it is
 referenced by weak reference.
 The node-weak package provides a way to register a callback function which will
 be executed when the object is garbage collected.
-When a new \emph{stub} is created, nodermi creates a new weak reference to 
-the \emph{stub} and register a callback function to the weak reference,
-then the upper layer code get the strong reference of the \emph{stub}.
-When \emph{stub} is not referenced anymore, 
+When a new \emph{stub} is created, nodermi creates a new weak reference to
+the \emph{stub} and registers a callback function to the weak reference,
+then the upper layer code gets the strong reference of the \emph{stub}.
+When \emph{stub} is not referenced anymore,
 the callback will be executed to send a dereference message to the server.
 After the server receives dereference message from all the clients of a object,
-the object is removed from object map and is subject to garbage collector.
+the object is removed from the object map and is subject to garbage collector.
 
 
 \nodrmiobjmapfig{}
 
-Nodermi creates new \emph{stub} object for a remote object every time
+Nodermi creates a new \emph{stub} object for a remote object every time
 the process obtains a new reference to that object.
 This design choice greatly simplifies the implementation of nodermi decoder and
 the communication between processes.
-To differentiate the \emph{stub}s for the same remote object, 
-nodermi generate session id each time it invokes the encoder.
-Because the host needs to remember the remote references for a local object,
-a local object is wrapped in a reference object before it is put into the object map.
-When the host encodes a local object,
-the current session id is added to the object's reference object.
-On the other side, 
+To differentiate the \emph{stub}s for the same remote object,
+nodermi generates a session id each time it invokes the encoder.
+Every time an object is encoded, nodermi adds the current session id
+to the object's reference list.
+On the other side,
 the client will write the session id as a hidden property of the \emph{stub}.
-As in Figure~\ref{fig:nodermiobjmap}, the object map hods reference to 
-the local objects that still has remote references, 
+As in Figure~\ref{fig:nodermiobjmap}, the object map holds reference to
+the local objects that still has remote references,
 the remote references are recorded as a list of session ids,
 the \emph{stub} map holds weak references to \emph{stub} objects,
 multiple \emph{stub}s could point to the same remote object.
@@ -277,9 +283,9 @@ Whenever a \emph{stub} is garbage collected,
 the callback registered in the weak reference is fired to send a dereference message
 to the host.
 The dereference message includes the object's id and the \emph{stub}'s session id.
-When the host receives a dereference message, it removes a session id record from 
-a corresponding reference object.
-When a reference object has no session ids left, it is removed from the object map.
+When the host receives a dereference message, it removes a session id record from
+the corresponding reference list.
+When a object's reference list becomes empty, it is removed from the object map.
 After that, the underneath local object could be garbage collected.
 In this design, a local object will not be garbage collected if there is
 remote reference, and it is at the disposal of garbage collector once there is
@@ -292,7 +298,7 @@ First, let's assume we only record the remote reference in the process level,
 that is recording only the process identifier of a remote reference.
 Consider the case in Figure~\ref{fig:nodermirace},
 Process A reference remote object \emph{objB} twice,
-the host Process B receives a dereference message 
+the host Process B receives a dereference message
 after it sends out the second reference to \emph{objB},
 so \emph{objB} could be garbage collected even process A still holds a remote
 reference.
@@ -301,7 +307,7 @@ the client needs to send a message to the host before creating the \emph{stub},
 and the server makes sure the remote object's reference record contains the client.
 In this case, the client should create only one \emph{stub} per remote object,
 so the client needs proper synchronization between invocation of decoders to
-avoid creating duplicate \emph{stub}s. This is basically the implementation 
+avoid creating duplicate \emph{stub}s. This is basically the implementation
 of ~\cite{birrell1993distributed}. %TODO
 
 
@@ -310,15 +316,15 @@ objects.
 It is also possible that a process would send a \emph{stub} to another process.
 If the \emph{stub} is from receiver, than there is no problem because no remote
 reference is created.
-If the \emph{stub} is not from receiver(it cannot from the sender),
+If the \emph{stub} is not from receiver(it could not be from the sender either),
 then we need one more type of messages.
 When a process is sending a \emph{stub} that is not from the receiver,
 it will first send reference message to the host to ask the host
 to generate a new session id and put that session id into its object map,
-after that, the sender will put the session id in the object descriptor of that 
+after that, the sender will put the session id in the object descriptor of that
 stub and send to the receiver,
 the receiver will create a \emph{stub} with the new session id.
-This grantees the remote object will not be prematurely garbage collected 
+This grantees the remote object will not be prematurely garbage collected
 because if the new remote reference is created in the receiver,
 the object is surely held in the object map,
 and it will not be removed before the new \emph{stub} becomes garbage.
@@ -330,23 +336,23 @@ local change to the properties has no effect on the server,
 nor the server's update to the properties will be synchronized to the clients.
 The remote stub is a snapshot of the state of the remote object before it is sent.
 
-For remote method calls, the return value is not defined. 
+For remote method calls, the return value is not defined.
 That is because \js{} code runs on a single thread, so we should not block
 a remote method call to wait for the server side to return.
-The method on the server side will still be invoked, 
+The method on the server side will still be invoked,
 but its return value is ignored.
-The client could get result of a method call 
+The client could get result of a method call
 from server via callback functions like in Figure~\ref{fig:nodermimethodinvoke}.
-So refactoring is necessary if the caller needs the result and 
+So refactoring is necessary if the caller needs the result and
 the original method does not accept callback function.
 
-In \js{}, reading or writing properties is synchronous. 
+In \js{}, reading or writing properties is synchronous.
 Although we can intercept writing existing properties of a stub using
 \emph{setter}, we could not make these operations non-blocking if we decided to update
 the remote object as well.
 Vice visa, we cannot synchronize the properties of remote object with its clients without
 blocking the access to properties.
-Moreover, there is no way in \js{} to intercept the operation of adding a new property or delete 
+Moreover, there is no way in \js{} to intercept the operation of adding a new property or delete
 a property.
 So the property manipulations only take effect locally.
 
@@ -361,5 +367,5 @@ We think this behavior unacceptable in our system.
 
 \section{Issues}
 
-% async 
+% async
 % network partition, transmission failure, server restart
