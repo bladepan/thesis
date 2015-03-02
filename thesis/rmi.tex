@@ -174,7 +174,7 @@ with ``\_\_r'' and they are not enumerable or modifiable.
 Normally nodermi will encode the whole object graph of an object recursively.
 Cyclic reference is handled by encoding the cyclic reference as
 a special ``ref'' object.
-Nodermi assumes properties with ``_'' prefixed names are private
+Nodermi assumes properties with ``\_'' prefixed names are private
 properties and omit them during the encoding.
 Programmers could also explicitly tell nodermi skip or include
 certain properties during encoding by assign
@@ -331,34 +331,42 @@ and it will not be removed before the new \emph{stub} becomes garbage.
 
 
 \section{Semantics}
-For a remote stub, only method calls are forwarded to the server,
-local change to the properties has no effect on the server,
-nor the server's update to the properties will be synchronized to the clients.
-The remote stub is a snapshot of the state of the remote object before it is sent.
-
-For remote method calls, the return value is not defined.
-That is because \js{} code runs on a single thread, so we should not block
-a remote method call to wait for the server side to return.
-The method on the server side will still be invoked,
-but its return value is ignored.
-The client could get result of a method call
-from server via callback functions like in Figure~\ref{fig:nodermimethodinvoke}.
-So refactoring is necessary if the caller needs the result and
-the original method does not accept callback function.
+For a stub, only method calls are forwarded to the server,
+local change to the properties has no effect on the server.
+Vice versa, the server's update to the properties of a local object will 
+not be synchronized to its stubs either.
+The stub's properties is a snapshot of the state of 
+the remote object before it is encoded.
 
 In \js{}, reading or writing properties is synchronous.
 Although we can intercept writing existing properties of a stub using
 \emph{setter}, we could not make these operations non-blocking if we decided to update
 the remote object as well.
-Vice visa, we cannot synchronize the properties of remote object with its clients without
+Vice versa, we cannot synchronize the properties of remote object with its clients without
 blocking the access to properties.
 Moreover, there is no way in \js{} to intercept the operation of adding a new property or delete
 a property.
 So the property manipulations only take effect locally.
 
-In some remote object systems~\cite{birrell1993distributed},
-the client can read or write properties of remote stubs via their methods.
-We think this behavior unacceptable in our system.
+Some RPC systems~\cite{birrell1993distributed} only expose methods in stubs.
+In these systems the developers can only read or write a remote object's
+non method properties through methods.
+Nodermi does not adopt this strategy because it puts many limitations on the
+application layer and it introduces more network round trips.
+For example, in \js{}, it is common that a function would accept
+a option object as its parameter. 
+The option object contains several simple properties like string or number 
+and one callback method.
+If we only expose methods for remote objects, we would define several getters 
+for these objects, and the functions that accept these objects 
+need to change the reading of option properties to asynchronous getter method calls.
+It would greatly complicate development not to mention the performance penalty.
+
+
+As mentioned before, for remote method calls, the return value is not defined.
+The client could get result of a method call
+from server via callback functions like in Figure~\ref{fig:nodermimethodinvoke}.
+
 
 % FIXME comparison
 
