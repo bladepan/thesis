@@ -1,2 +1,66 @@
 \chapter{Background}
 \markright{Background}
+
+This chapter gives background information to understand the concept of \cb.
+We assume the reader has the basic knowledge of web development.
+The reader should understand the meaning of HTTP, HTML, \js and CSS.
+
+
+\section{Web Cluster}
+
+
+A web cluster is a group of servers that  
+A web server is a instance of software that processes HTTP 
+
+
+\section{\nodejs}
+
+\cb is written in \nodejs.
+\nodejs~\cite{tilkov2010node} is a platform that built on Google Chrome's V8~\cite{v8} \js engine.
+Simply put, \nodejs is a standalone \js runtime that allows \js code to be
+executed without a web browser.
+It is also regarded as server side \js in contrast to typical \js code that executed in 
+web browsers.
+\nodejs comes with a standard library that provides a rich set of API 
+such as file system access, network IO, binary data manipulation, etc. 
+that makes it possible to write server side network applications using \js.
+\nodejs uses a non-blocking event driven IO model that makes it appealing to
+build high performance scalable web applications.
+\nodejs also has abundant third party packages
+and a great module management system that eases the effort to organize and reuse code.
+Another bonus for using \nodejs is that the \cb framework code and application code
+is written in the same language, there is language crossing cost.
+
+
+\begin{listing}[ht,width=\columnwidth]
+\begin{minted}[
+frame=lines,
+fontsize=\scriptsize,
+linenos
+]
+{javascript}
+var fs = require('fs');
+fs.readFile('/etc/passwd', function (err, data) {
+  if (err) throw err;
+  console.log(data);
+});
+console.log("Reading file");
+\end{minted}
+\caption{Reading file and printing the content on console using \nodejs.}
+\label{code:nodefile}
+\end{listing}
+
+Listing~\ref{code:nodefile} shows the non-block IO concept in \nodejs.
+Because the IO API such as \emph{readFile} does not
+block, line 6 will be executed before line 3.
+To execute code after the IO operation completes,
+the developer needs to register a callback function to be fired asynchronously.
+In this example, after the file's content is read the callback function is placed on the
+event loop,
+then the runtime would dequeue this callback sometime in the future and execute it.
+Like in a web browser, \nodejs execute \js code in a single thread,
+and the runtime will not halt the current execution in the middle to execute something in
+the event loop, so it is easy to write concurrent safe programs.
+The event based non-blocking IO and simple execution semantics 
+is key to the performance of \nodejs, 
+the downside is that any operation that waits for IO must be implemented as a callback.
