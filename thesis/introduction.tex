@@ -1,6 +1,8 @@
 \chapter{Introduction}
 \markright{Introduction}
 
+\section{Motivation}
+
 Most newly developed applications that provide a user interface to end users 
 are web-based.  Modern browsers provide powerful and expressive user interface 
 elements, allowing for rich applications, and the use of a networked
@@ -30,8 +32,9 @@ that allows them to switch between devices while preserving not only
 essential data, but enough of the applications' view to create the appearance
 of seamlessly picking up from where they left off.
 
-This paper provides an in-depth exploration of an alternative design that keeps the state 
-of the HTML document in memory on the server in a way that is persistent across visits.
+\cb{}~\cite{mcdaniel2012cloudbrowser} is a server-centric web framework 
+that keeps the state of the HTML document in memory 
+on the server in a way that is persistent across visits.
 In this model, presentation state is kept in virtual browsers whose life
 cycle is decoupled from the user's connection state.  When a user is connected,
 a client engine mirrors the state of the virtual browser in the actual browser which
@@ -53,16 +56,64 @@ standard browser, emerging model-view-controller (MVC) frameworks such as
 AngularJS~\cite{hevery2009angular} can be directly used, further simplifying application development.
 More side benefits include: a lighter weight client engine that can load faster,
 a resulting application that is potentially more secure since no direct access to
-application data needs to be exposed, the ability to cobrowse by broadcasting
+application data needs to be exposed, the ability to co-browse by broadcasting
 the virtual browser state to multiple clients.
 
-We first introduced the idea of HTML-based server-centric execution
-in~\cite{mcdaniel2012cloudbrowser}.  In \cbtwo, we provide the first
-multi-process implementation of the CloudBrowser concept which enables its use on multiprocessor
-machines and on clusters. We have also investigated and implemented several features
-commonly expected from a framework, such as authentication and administration.
-\cbtwo also includes a model for the deployment of applications and introduces the
-concept of an application instance, which allows multiple virtual browsers to share
-state.  We have implemented a number of sample and benchmark
+The original implementation of \cb{} is single threaded and
+only supports deployment on one process.
+It could not scale horizontally by adding more processors or more machines
+to increase the system's capacity.
+To enable \cb{} to host large scale web applications,
+we designed and implemented \cbtwo which could distribute and manage
+virtual browsers on CPU cores of a multiprocessor machine or on a cluster of machines.
+We have implemented a number of sample and benchmark
 applications and profiled them to better understand the intrinsic and extrinsic
 limitations of this design.
+
+% benchmark results
+
+\webscaleoutfig{}
+
+\section{Core Contributions}
+
+We have implemented \cbtwo that distributes and manages virtual browsers
+to multiple processes.
+We managed to make this upgrade transparent for application developers.
+Most of the existing applications could automatically scale to 
+multiple processors without modifying the code.
+We need to modify other applications because we updated part of
+the \cb{} API that these applications depend on,
+not because these applications need to be aware that they might run on
+multiple processes.
+\cb{} applications are still developed in a way that as if they are run in
+a web browser that users could remotely connect to.
+
+There are several challenges to achieve this transparent upgrade.
+First, \cb{} is stateful in nature, 
+the application state and UI representation resides in virtual browsers,
+so the users' requests have to be directed to the corresponding virtual browser
+to make things work.
+It is trivial if all virtual browsers are in the same process.
+In a multiple process design,
+the framework to make sure the users' requests go to the process that holds the
+corresponding virtual browser.
+Second, we need to make useful features like application instance and
+deployment configuration work in the new multi-process design.
+For instance, application instance is a feature that allows multiple virtual browsers
+to share objects, we need to make sure the virtual browsers of the same application 
+instance are on the same process.
+Third, as we break the functionalities to multiple processes,
+some intra-process method calls need to be transformed to inter-process message
+communication.
+We do not want to write message passing code directly in our framework as it
+will damage the code readability, and it is cumbersome to design message protocol
+and write sending receiving code for every possible methods.
+
+Chapter~\ref{ch:impl} and Chapter~\ref{ch:api} will discuss the implementation detail
+of \cbtwo that deals with the first two challenges.
+In chapter~\ref{ch:rmi}, 
+we introduce a remote procedure call framework nodermi~\cite{nodermi} that we developed
+to face the third challenge.
+Although it is developed to support \cbtwo,
+nodermi is a general purpose RPC framework that could be utilized by
+any \nodejs project.
