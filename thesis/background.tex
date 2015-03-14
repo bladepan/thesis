@@ -1,16 +1,129 @@
 \chapter{Background}
 \markright{Background}
 
-This chapter gives background information to understand the concept of \cb.
+This chapter gives background information to understand the concept of \cbtwo.
 We assume the reader has the basic knowledge of web development.
 The reader should understand the meaning of HTTP, HTML, \js and CSS.
 
+\webscaleoutfig{}
 
-\section{Web Cluster}
+\section{Web Systems}
+
+Web systems are system platforms that host web applications.
+For example, a web system could be a machine running a web
+server software serving static contents.
+
+Scalability is an important issue for web systems.
+Even in the early 90s, the first web system experienced a load rose by a factor
+of 10 every year~\cite{berners1998world}.
+Even without the increasing user access,
+web applications could demand more resource as new features are added.
+The single server example we mentioned earlier would not scale well.
+Figure~\ref{fig:webscaleout} shows a diagram of scalable web systems.
+In a scalable web system, the server side is divided to layers of servers.
+The web layer consists multiple web servers to process the HTTP requests from users
+and generate HTTP response.
+The web servers would usually offload storage and computation tasks to a storage layer
+of database servers and other types of servers.
+This layered design makes web servers light weight and the whole system modular.
+The system owner could improve only the parts that become bottleneck without interfering
+other parts.
+Sitting in between the clients and the web layer is the load balancer.
+The load balancer distributes user's requests web servers
+and return the response from the web servers to users.
+From the user's point of view, he only needs one identifier to 
+access the web system, that is a DNS name or an IP address.
+It is the load balancer's job to hide multiple web servers from the user.
+There are many kinds of implementations for load balancer~\cite{cardellini2002state}.
+For example, we could deploy reverse proxy software (like nginx~\cite{nginx})
+and configure the system's DNS name pointing to the reverse proxy,
+then all the client's traffic will be directed to the reverse proxy 
+and the reverse proxy will distribute the traffic to the web server layer.
+It is also possible that the load balancer layer is purely logical with no
+dedicated server side components:
+the system owner could register all the web servers' public IP addresses to the DNS server
+and rely on the DNS server return these IP addresses to clients in a round-robin 
+fashion.
+From now on, we will only discuss the distribution algorithm without meddling too much
+in the implementation details of the load balancer layer.
 
 
-A web cluster is a group of servers that  
-A web server is a instance of software that processes HTTP 
+\subsection{Load balancer}
+
+In this section we discuss the design choices of load balancer in a web system
+and how the implementation of load balancer impacts the application development.
+
+We use the taxonomy from the survey of Cardellini et al.~\cite{cardellini2002state}
+to categorize the load balancer as client-blind or client-aware based on if 
+the load balancer uses any information from client request to perform the dispatch.
+
+A client-blind load balancer does not use information from client.
+For example, it could select a web server in a random probability or using a round robin algorithm.
+In this case, the requests from the same client could be distributed to any web server.
+The web server needs to reinitialize the client's application state for every request.
+The web server cannot naively cache the application sate in hopes of reducing the
+cost of reconstruction, 
+because the user's requests might not be routed to the server again.
+Even if the user's requests hit this server in a future time,
+caching the user's application state would be a waste of space,
+because the application state might have been changed on some other server
+and the cached application state needs to be invalidated anyway.
+One solution would be move as much application state to the client side as possible,
+then the client would attach its part of application state 
+with the requests to reduce the cost of constructing application sate on the server side.
+However, the server side still needs to construct part of the application state
+because it is risky to construct application state using only the data from 
+the client side.
+For example,
+the server might need the client's user profile to check if the client has 
+the privilege to do a certain task.
+It is obvious that server should not trust the user profile passed by the client
+as a misbehaved client could forge a user profile in its requests.
+
+A client-aware load balancer dispatches the request from the same
+client to the same web server.
+In this model, the web server could cache application state for each client.
+The downside is the load balancer needs to discriminate each client 
+to make the correct routing decision.
+One way to do it is parsing the HTTP request header to get
+a session identifier which is identical for each client,
+then the load balancer computes a hash value of 
+the session identifier and map the hash value to a web server.
+
+% Another aspect that needs to be consider to design a scalable web system
+% is the servers' load.
+% The servers' load could be drastically uneven if the load balancer
+% does not take the servers' state into the distribution process.
+
+% Current web frameworks usually only deals with the Client Layer and the Web Layer,
+% the web application developer should take the distribution policy of the load balancer
+% into consideration when designing web applications, 
+% and they would need to configure or implement the load balancer to support 
+% the needs of the application.
+
+
+% Current web frameworks do not have clear construct to define application state.
+% One option for the developer is to rely on session objects provided by frameworks.
+% The application developer needs to configure the persistence  of session objects 
+% and make sure the configuration works with the load distribution scheme.
+% For example, in J2EE the session objects could be configured to be managed in memory or
+% high available database~\cite{j2eedoc}; 
+% in PHP developers could specify a session save handler to store session objects 
+% in database~\cite{phpdoc}.
+% By default, these frameworks store session objects in memory or in local file system.
+% If the developer adopts a client-blind load balancer, 
+% he needs to configure the session objects to use database or other
+% synchronization mechanism to make sure the application state could be fetched on every server.
+% Another option is to implement his own way of handling application state.
+% Regardless of the choices of managing application state,
+% the developer needs take the distribution policy of the load balancer
+% into consideration when designing web applications,
+% and in the other direction,
+% the developer needs to find the right load balancer to support his application.
+
+
+
+
 
 
 \section{\nodejs}
@@ -64,3 +177,26 @@ the event loop, so it is easy to write concurrent safe programs.
 The event based non-blocking IO and simple execution semantics 
 is key to the performance of \nodejs, 
 the downside is that any operation that waits for IO must be implemented as a callback.
+
+
+
+\section{\cb}
+
+\architectureoverview{}
+
+In this section we sketch the implementation of 
+the original single process version \cb{}~\cite{mcdaniel2012cloudbrowser}.
+Figure \ref{fig:cb1arch} shows the relationship 
+between the client engine running in the user's browser and the virtual browser
+running server side.  When the user visits the application, the client engine
+code is downloaded and restores the current view of the application by
+copying the current state of the server document.  Subsequently, user input 
+is captured, forwarded to the server engine inside the virtual browser, 
+which then dispatches events to the document.  All application logic runs
+in the global scope associated with the virtual browser's window object.
+Since the server environment faithfully mimics a real browser, libraries
+such as AngularJS can be used unchanged to implement the user interface.
+Client and server communicate through a lightweight RPC protocol that is 
+layered on top of a bidirectional web socket communication. 
+Stylesheets, images, etc. are provided to the client through a resource
+proxy.
