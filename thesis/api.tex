@@ -50,8 +50,63 @@ Second,
 the application code could call methods of the internal objects directly
 thus bypass the authentication check we put in the API methods.
 
+API objects themselves are just proxies of the internal objects,
+they need to keep reference to these internal objects.
+We cannot store the internal objects as properties of the API objects,
+because there is no language support for private properties in \js,
+the application code could get reference to internal objects
+via reading properties.
+Using hidden non-enumerable property is not safe because the application
+code could guess the property name.
+We use closure visibility to implement a equivalence of private property as
+shown in Listing~\ref{code:apiconstructor}.
+We store internal objects as local variables in the API objects' constructors
+and define API methods inside the constructors.
+Then in the API methods we could reference internal objects directly 
+because the API methods
+and the variables reference to the internal objects are in the same closure.
+The application code cannot get the references to internal objects because
+they cannot be read as properties or be revealed by reflection.
 
-The API objects is an example of proxy design pattern.
+
+\begin{listing}[ht,width=\columnwidth]
+\begin{minted}[
+frame=lines,
+fontsize=\scriptsize,
+linenos
+]
+{javascript}
+// constructor. virtualBrowser is the actual virtual browser object
+function APICloudBrowser(virtualBrowser){
+    // store the internal object as a local variable
+    var virtualbrowser = virtualBrowser;
+    // define API methods here
+    this.close = function(){
+        // check if the user has the privilege to close this virtual browser
+        privilegeCheckingCode();
+        // forward the operation to the internal object
+        virtualbrowser.close();
+    };
+}
+\end{minted}
+\caption{Snippet of Class APIBrowser: the API Class for virtual browsers}
+\label{code:apiconstructor}
+\end{listing}
 
 
-\section{Memory Management}
+As the application code could hold reference to internal objects indirectly
+through API,
+it is possible that a virtual browser hogs large amount of memory
+because it keeps alive internal objects that are no longer needed in
+the framework.
+To avoid this issue, the API objects only keep weak references to the
+internal objects(See Figure~\ref{fig:apireference}).
+We use a \nodejs{} package node-weak~\cite{nodeweak} to implement weak reference.
+Unlike ordinary references, the objects referenced only by weak references are
+free to be garbage collected.
+Using this method, 
+the internal objects could be garbage collected if they are no longer needed in
+the framework.
+
+
+\apireferencefig{}

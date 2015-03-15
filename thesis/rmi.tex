@@ -249,7 +249,7 @@ The map could prevent garbage collector from prematurely garbage collecting
 these objects by creating strong references to them.
 This map is also necessary to look up for local object when handling \emph{method invocation} messages.
 Nodermi also holds a map of \emph{stub}s it created using weak reference.
-We use a \nodejs{} package called node-weak~\cite{nodeweak} to implement weak reference.
+We use a \nodejs{} package node-weak~\cite{nodeweak} to implement weak reference.
 Unlike regular reference, the garbage collector could collect an object if it is only
 referenced by weak reference.
 The node-weak package provides a way to register a callback function which will
