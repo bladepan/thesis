@@ -3,22 +3,55 @@
 \markright{Application Programming Interface}
 Besides DOM API and built in types and methods,
 we created a set of API for the developers to access server side resource.
-We do not directly expose server side objects to the developers for many reasons.
+We want programmers be able to manipulate server side objects like
+applications, application instances and virtual browsers.
+For example, in the administration dashboard(which is a \cb application),
+we want to list all the applications and modify applications' descriptions.
+For other applications, it is reasonable to give the programmer
+the ability to control the server side objects to accomplish
+tasks like closing a view(virtual browser) when it is no longer needed.
+We design a separate API instead of letting developers directly use the internal
+API of the framework because we want to enforce authentication check so that 
+the user could only do what he has the right to do.
+For example, we want ensure the current user could only close the virtual browser
+he owns.
+
+\section{Overall Design}
+We have four classes in the API represents internal objects in the framework.
+To avoid confusion, we add API prefix to these class names.
+
+\begin{enumerate}
+\item APICloudBrowser: An entry point API object, 
+has a method to list all the applications. 
+For every virtual browser one APICloudBrowser is created and injected as
+a global variable in the browser's window.
+
+\item APIApplication: Represents an application in the framework.
+Contains a method to list the application's application instances.
+Has methods to manipulate the application, such as modify the application's
+description, change its owner, un-install the application, etc.
+
+\item APIAppInstance: Represents an application instance in the framework.
+Contains a method to list the application instance's virtual browsers.
+Has methods to manipulate the application instance.
+
+\item APIBrowser: Represents a virtual browser in the framework.
+Has methods to manipulate the virtual browser.
+\end{enumerate}
+The internal objects are always wrapped in API objects before handed
+to the application code.
+For example, when the caller invokes \emph{list applications} method
+of \emph{APICloudBrowser}, a list of \emph{APIApplication} objects 
+are returned instead of actual application objects.
+The reason we do not return the internal objects is obvious:
 First, we want to protect the internal state of the framework from 
 being tampered by application code.
 Second, 
-we want to create a multi-tenant environment that 
-the system could impose rules about what kind of resource a user could access and how
-he could access it.
-Moreover, 
-the internal objects are prone to refactoring and 
-too low-level for writing application code.
-There are three objectives for API design:
-\begin{enumerate}
-\item The application code should not obtain reference to internal objects.
-\item The system should 
-\end{enumerate}
+the application code could call methods of the internal objects directly
+thus bypass the authentication check we put in the API methods.
 
+
+The API objects is an example of proxy design pattern.
 
 
 \section{Memory Management}

@@ -8,6 +8,7 @@ The reader should understand the meaning of HTTP, HTML, \js and CSS.
 \webscaleoutfig{}
 
 \section{Web Systems}
+\label{sec:websys}
 
 Web systems are system platforms that host web applications.
 For example, a web system could be a machine running a web
@@ -31,18 +32,18 @@ other parts.
 Sitting in between the clients and the web layer is the load balancer.
 The load balancer distributes user's requests web servers
 and return the response from the web servers to users.
-From the user's point of view, he only needs one identifier to 
+From the user's point of view, he only needs one identifier to
 access the web system, that is a DNS name or an IP address.
 It is the load balancer's job to hide multiple web servers from the user.
 There are many kinds of implementations for load balancer~\cite{cardellini2002state}.
 For example, we could deploy reverse proxy software (like nginx~\cite{nginx})
 and configure the system's DNS name pointing to the reverse proxy,
-then all the client's traffic will be directed to the reverse proxy 
+then all the client's traffic will be directed to the reverse proxy
 and the reverse proxy will distribute the traffic to the web server layer.
 It is also possible that the load balancer layer is purely logical with no
 dedicated server side components:
 the system owner could register all the web servers' public IP addresses to the DNS server
-and rely on the DNS server return these IP addresses to clients in a round-robin 
+and rely on the DNS server return these IP addresses to clients in a round-robin
 fashion.
 From now on, we will only discuss the distribution algorithm without meddling too much
 in the implementation details of the load balancer layer.
@@ -54,7 +55,7 @@ In this section we discuss the design choices of load balancer in a web system
 and how the implementation of load balancer impacts the application development.
 
 We use the taxonomy from the survey of Cardellini et al.~\cite{cardellini2002state}
-to categorize the load balancer as client-blind or client-aware based on if 
+to categorize the load balancer as client-blind or client-aware based on if
 the load balancer uses any information from client request to perform the dispatch.
 
 A client-blind load balancer does not use information from client.
@@ -62,20 +63,20 @@ For example, it could select a web server in a random probability or using a rou
 In this case, the requests from the same client could be distributed to any web server.
 The web server needs to reinitialize the client's application state for every request.
 The web server cannot naively cache the application sate in hopes of reducing the
-cost of reconstruction, 
+cost of reconstruction,
 because the user's requests might not be routed to the server again.
 Even if the user's requests hit this server in a future time,
 caching the user's application state would be a waste of space,
 because the application state might have been changed on some other server
 and the cached application state needs to be invalidated anyway.
 One solution would be move as much application state to the client side as possible,
-then the client would attach its part of application state 
+then the client would attach its part of application state
 with the requests to reduce the cost of constructing application sate on the server side.
 However, the server side still needs to construct part of the application state
-because it is risky to construct application state using only the data from 
+because it is risky to construct application state using only the data from
 the client side.
 For example,
-the server might need the client's user profile to check if the client has 
+the server might need the client's user profile to check if the client has
 the privilege to do a certain task.
 It is obvious that server should not trust the user profile passed by the client
 as a misbehaved client could forge a user profile in its requests.
@@ -83,11 +84,11 @@ as a misbehaved client could forge a user profile in its requests.
 A client-aware load balancer dispatches the request from the same
 client to the same web server.
 In this model, the web server could cache application state for each client.
-The downside is the load balancer needs to discriminate each client 
+The downside is the load balancer needs to discriminate each client
 to make the correct routing decision.
 One way to do it is parsing the HTTP request header to get
 a session identifier which is identical for each client,
-then the load balancer computes a hash value of 
+then the load balancer computes a hash value of
 the session identifier and map the hash value to a web server.
 
 % Another aspect that needs to be consider to design a scalable web system
@@ -97,21 +98,21 @@ the session identifier and map the hash value to a web server.
 
 % Current web frameworks usually only deals with the Client Layer and the Web Layer,
 % the web application developer should take the distribution policy of the load balancer
-% into consideration when designing web applications, 
-% and they would need to configure or implement the load balancer to support 
+% into consideration when designing web applications,
+% and they would need to configure or implement the load balancer to support
 % the needs of the application.
 
 
 % Current web frameworks do not have clear construct to define application state.
 % One option for the developer is to rely on session objects provided by frameworks.
-% The application developer needs to configure the persistence  of session objects 
+% The application developer needs to configure the persistence  of session objects
 % and make sure the configuration works with the load distribution scheme.
 % For example, in J2EE the session objects could be configured to be managed in memory or
-% high available database~\cite{j2eedoc}; 
-% in PHP developers could specify a session save handler to store session objects 
+% high available database~\cite{j2eedoc};
+% in PHP developers could specify a session save handler to store session objects
 % in database~\cite{phpdoc}.
 % By default, these frameworks store session objects in memory or in local file system.
-% If the developer adopts a client-blind load balancer, 
+% If the developer adopts a client-blind load balancer,
 % he needs to configure the session objects to use database or other
 % synchronization mechanism to make sure the application state could be fetched on every server.
 % Another option is to implement his own way of handling application state.
@@ -132,10 +133,10 @@ the session identifier and map the hash value to a web server.
 \nodejs~\cite{tilkov2010node} is a platform that built on Google Chrome's V8~\cite{v8} \js engine.
 Simply put, \nodejs is a standalone \js runtime that allows \js code to be
 executed without a web browser.
-It is also regarded as server side \js in contrast to typical \js code that executed in 
+It is also regarded as server side \js in contrast to typical \js code that executed in
 web browsers.
-\nodejs comes with a standard library that provides a rich set of API 
-such as file system access, network IO, binary data manipulation, etc. 
+\nodejs comes with a standard library that provides a rich set of API
+such as file system access, network IO, binary data manipulation, etc.
 that makes it possible to write server side network applications using \js.
 \nodejs uses a non-blocking event driven IO model that makes it appealing to
 build high performance scalable web applications.
@@ -174,8 +175,8 @@ then the runtime would dequeue this callback sometime in the future and execute 
 Like in a web browser, \nodejs execute \js code in a single thread,
 and the runtime will not halt the current execution in the middle to execute something in
 the event loop, so it is easy to write concurrent safe programs.
-The event based non-blocking IO and simple execution semantics 
-is key to the performance of \nodejs, 
+The event based non-blocking IO and simple execution semantics
+is key to the performance of \nodejs,
 the downside is that any operation that waits for IO must be implemented as a callback.
 
 
@@ -184,19 +185,100 @@ the downside is that any operation that waits for IO must be implemented as a ca
 
 \architectureoverview{}
 
-In this section we sketch the implementation of 
+In this section we sketch the implementation of
 the original single process version \cb{}~\cite{mcdaniel2012cloudbrowser}.
-Figure \ref{fig:cb1arch} shows the relationship 
+Figure \ref{fig:cb1arch} shows the relationship
 between the client engine running in the user's browser and the virtual browser
 running server side.  When the user visits the application, the client engine
 code is downloaded and restores the current view of the application by
-copying the current state of the server document.  Subsequently, user input 
-is captured, forwarded to the server engine inside the virtual browser, 
+copying the current state of the server document.  Subsequently, user input
+is captured, forwarded to the server engine inside the virtual browser,
 which then dispatches events to the document.  All application logic runs
 in the global scope associated with the virtual browser's window object.
 Since the server environment faithfully mimics a real browser, libraries
-such as AngularJS can be used unchanged to implement the user interface.
-Client and server communicate through a lightweight RPC protocol that is 
-layered on top of a bidirectional web socket communication. 
+such as AngularJS~\cite{hevery2009angular} can be used unchanged to implement the user interface.
+Client and server communicate through a lightweight RPC protocol that is
+layered on top of a bidirectional web socket communication.
 Stylesheets, images, etc. are provided to the client through a resource
 proxy.
+
+\subsection{Application Instance}
+\label{sec:appins}
+
+\appinstancefig{}
+
+Application instance allows multiple virtual browsers to share data structure.
+As in Figure~\ref{fig:appinstance} shows, 
+every virtual browser is created inside an application instance
+and virtual browsers inside an application instance share application instance object.
+The application instance itself
+consists metadata about the application instance object
+ such as ownership and access permissions.
+The application instance object is created by a factory method provided by the application developer.
+The system will create the application instance object when creating a application instance.
+When a virtual browser is created in the application instance,
+the application instance object is injected into that virtual browser
+and the application code could reference it directly.
+
+
+\chatappfig{}
+
+As an example, consider a scenario for a Chat application developed using AngularJS,
+depicted in Figure~\ref{fig:chatapp}.
+A system administrator of a \cb deployment would install the application, which give users the
+ability to create application instances. To start a chat site, a user would create
+an application instance and share its URL with chat participants.  As the participants join
+the chat site, a virtual browser is created on demand for each participant, which is connected
+to the application instance (the users can bookmark their virtual browser's URL to later return.)
+The shared application instance data in such an application
+consist of the chatroom(s), users and their associated messages.  The advantage of this design
+is that AngularJS's dirty-checking mechanism will reflect updates to the shared instance data
+in each virtual browsers' document automatically, thus ensuring that new message are broadcast
+to each.
+
+
+
+\subsection{Application Instantiation Strategy}
+\label{sec:appinstantiation}
+
+The application instantiation strategy specifies
+how the application instance and virtual browsers are instantiated.
+
+Application programmers can create CloudBrowser applications in the same way in which
+they create the client-side portion of a client-centric application, using low or high level
+JavaScript libraries such as jQuery~\cite{jquery} or AngularJS.  
+A descriptor in the application's manifest describes 
+their application's instantiation strategy.
+The supported strategies include
+
+\begin{enumerate}
+\item \emph{singleAppInstance}. The application supports only one instance and single virtual browser.
+    All connected clients will share a single server-side document in this singleton - this can be
+    used for applications that display data, such as a weather application. These applications will not
+    typically react to user input and users do not need to be authenticated.
+
+\item \emph{singleUserInstance}.  This application requires authentication to establish a
+    user identity, which we provide through a local database as well as through external OpenID
+    authentication.   In this mode, users may not create more than one virtual browser per
+    application instance.  When a user accesses the application instance's URL, they will either
+    be forwarded to their virtual browser or a virtual browser will be instantiated for them.
+
+\item \emph{multiInstance}.
+    Allows users to have multiple, separate virtual browsers connected to an application
+    instance. For instance, a user may have to be in two separate chatrooms offered by one chat site.
+    In those cases, the user has the largest flexibility, but will need to manage whether
+    to join an existing virtual browser or create a new one when they visit the application instance
+    - similar to the choice a user may have when deciding whether to navigate to a new site in
+    an existing browser tab or open a new one.
+\end{enumerate}
+Except for multiInstance applications, the existence of virtual browsers is not exposed to
+end users that merely join existing application instances.
+
+\apphierarchyfig{}
+
+The hierarchy that results from applications, application instances, and virtual browsers is
+depicted in Figure~\ref{fig:appidhierarchy}.  This figure shows the general case in which an
+application might allow multiple instances, and in which each user can create multiple virtual
+browsers.
+
+

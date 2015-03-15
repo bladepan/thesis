@@ -2,126 +2,81 @@
 \label{ch:impl}
 \markright{Implementation}
 
-
-Full details of a single process implementation of the \cb architecture
-are available in~\cite{mcdaniel2012cloudbrowser}.  We highlight only the
-essential design here.  Figure \ref{fig:cb1arch} shows the relationship 
-between the client engine running in the user's browser and the virtual browser
-running server side.  When the user visits the application, the client engine
-code is downloaded and restores the current view of the application by
-copying the current state of the server document.  Subsequently, user input 
-is captured, forwarded to the server engine inside the virtual browser, 
-which then dispatches events to the document.  All application logic runs
-in the global scope associated with the virtual browser's window object.
-Since the server environment faithfully mimics a real browser, libraries
-such as AngularJS can be used unchanged to implement the user interface.
-Client and server communicate through a lightweight RPC protocol that is 
-layered on top of a bidirectional web socket communication. 
-Stylesheets, images, etc. are provided to the client through a resource
-proxy.
-
-\subsection{Application Deployment Model}
-\label{sec:appmodel}
-
-We designed an application deployment model for \cbtwo{} that allows different
-instantiation strategies.
-Application programmers can create CloudBrowser applications in the same way in which 
-they create the client-side portion of a client-centric application, using low or high level
-JavaScript libraries such as jQuery~\cite{jquery} or AngularJS.  A descriptor in the application's
-manifest describes their application's required instantiation strategy.
-When a user instantiates an application, the allocated application instance object 
-represents metadata about this application
-instance, such as ownership and access permissions, along with application data that
-the application's code can directly access.  Application instances are created manually
-and can be seen in an administration panel (which itself is written as a \cb application).
-At any given time, an application instance may have zero or more virtual browsers attached 
-to it.  Each virtual browser has its own server-side document and its own global scope, 
-but all browsers belonging to an application instance have direct, shared access to the 
-application data.  If the application object provides appropriate methods, the application 
-data can be saved periodically or upon exit and restored upon server restart.
-
-\chatappfig{}
-As an example, consider a scenario for a Chat application developed using AngularJS, 
-depicted in Figure~\ref{fig:chatapp}.
-A system administrator of a \cb deployment would install the application, which give users the
-ability to create application instances. To start a chat site, a user would create
-an application instance and share its URL with chat participants.  As the participants join
-the chat site, a virtual browser is created on demand for each participant, which is connected 
-to the application instance (the users can bookmark their virtual browser's URL to later return.)
-The shared application instance data in such an application 
-consist of the chatroom(s), users and their associated messages.  The advantage of this design 
-is that AngularJS's dirty-checking mechanism will reflect updates to the shared instance data 
-in each virtual's browsers document automatically, thus ensuring that new message are broadcast 
-to each.
-
-% As shown in Figure~\ref{fig:cb2arch}, 
-The hierarchy that results from applications, application instances, and virtual browsers is
-depicted in Figure~\ref{fig:appidhierarchy}.  This figure shows the general case in which an
-application might allow multiple instances, and in which each user can create multiple virtual
-browsers.  We also found it useful to support more specialized instantiation modes, which are
-related to the user's authentication state.   These include
-
-\begin{enumerate}
-\item \emph{singleAppInstance}. The application supports only one instance and single virtual browser.
-    All connected clients will share a single server-side document in this singleton - this can be
-    used for applications that display data, such as a weather application. These applications will not
-    typically react to user input and users do not need to be authenticated.  
-    
-\item \emph{singleUserInstance}.  This application requires authentication to establish a
-    user identity, which we provide through a local database as well as through external OpenID
-    authentication.   In this mode, users may not create more than one virtual browser per
-    application instance.  When a user accesses the application instance's URL, they will either
-    be forwarded to their virtual browser or a virtual browser will be instantiated for them.
-    
-\item \emph{multiInstance}. 
-    Allows users to have multiple, separate virtual browsers connected to an application
-    instance. For instance, a user may have to be in two separate chatrooms offered by one chat site.
-    In those cases, the user has the largest flexibility, but will need to manage whether
-    to join an existing virtual browser or create a new one when they visit the application instance
-    - similar to the choice a user may have when deciding whether to navigate to a new site in 
-    an existing browser tab or open a new one.
-\end{enumerate}
-Except for multiInstance applications, the existence of virtual browsers is not exposed to 
-end users that merely join existing application instances.
-
-\apphierarchyfig{}
-%
 %
 \newarchitectureoverview{}
-%
-\subsection{Distributed Implementation}
-\label{sec:distribution}
-Figure~\ref{fig:cb2arch} shows the distributed design of \cbtwo, which consists of a single
-master process, multiple reverse proxies, and multiple worker processes.  The number of workers 
-is determined by the number of CPUs available, due to the event-based (nonblocking) implementation
-of the node.js platform on which \cb is implemented.
-All processes communicate via standard TCP/IP sockets, so they can be located on a shared multiprocessor 
-machine or in a cluster.
 
-The master process maintains a table of which application instances have been created and which
-worker is responsible for which application instance.  When a new application instance is created,
-the master will apply a load balancing algorithm to decide on which worker to place this instance.  
-We support two load balancing strategies: first, the master can assign application instances
-to workers in a simple round-robin fashion.  However, since application instances may vary
-widely in terms of the actual cost they impose on a worker, we also implemented a load-based
-scheme in which workers periodically report a measure of current load to the master.
-The master will select the worker with the lowest load when placing a new application instance.
-We have found the amount of heap memory that is currently in use a good measure of a worker's 
-momentary load.  Once the placement of an instance has been decided, all
-virtual browsers created as part of that instance must be located on the worker on which the instance
-was placed, as emphasized in Figure~\ref{fig:appidhierarchy}.
+Figure~\ref{fig:cb2arch} shows the design of \cbtwo, which consists of a single
+master process, multiple reverse proxies, and multiple worker processes.
+All processes communicate via standard TCP/IP sockets, 
+so they can be located on a shared multiprocessor machine or in a cluster.
+The master is responsible for application management and request dispatch logic.
+The workers host virtual browsers and serves user requests.
+The reverse proxies are child processes of master responsible for the actual
+dispatch job: copying messages back and forth from users to workers.
+When a worker process starts up, it will contact the master to register itself
+and fetch applications' metadata.
+Then it will initialize application logic and listens on a HTTP port for user requests.
+The master dispatches the user requests to workers through reverse proxies.
+As in Figure~\ref{fig:webscaleout}, the master process is equivalent to the load balancer
+and the workers are the web layer.
 
+\section{Master}
+
+
+\subsection{Request Dispatch}
+To preserve the semantics of 
+Application Instance(see section~\ref{sec:appins}),
+each application instance and its virtual browsers need to be allocated in
+the same worker process as emphasized in Figure~\ref{fig:appidhierarchy},
+so the requests associated with the same application instance needs
+to be dispatched to the worker that has that application instance.
+We implemented the request dispatch algorithm 
+to dispatch the requests in application instance level.
+The master process maintains a 
+table of which worker is responsible for which application instance.
 Multiple reverse proxy processes are bound to the socket that accepts client requests, allowing
 the OS to distribute pending client connections in a round-robin fashion.  
-When a proxy process accepts a client, it parses the incoming HTTP request to extract the application
-id, which is part of the request's URL.  Each proxy process maintains a table of known mappings from 
-application ids to workers.  If the requested id is already cached in that table, the request is directly
-relayed to the worker.  Otherwise, the master is contacted to find out which worker is assigned
-to that application id, triggering an initial assignment if necessary.  The reverse proxy can 
+When a proxy process accepts a client, it parses the incoming HTTP request 
+to extract the application instance id, which is part of the request URL.  
+If the application instance id is already in the master's table, the request is directly
+relayed to the corresponding worker.  
+Otherwise, the master finds a worker using a load balancing algorithm(described in Section~\ref{sec:lb})
+, the worker will then either create a new application instance 
+or redirect the request to an existing application instance
+or reject the request based on application specific settings.  
+The reverse proxy can 
 relay both HTTP requests/responses as well as the bidirectional web socket protocol after the
 connection has been upgraded.  Once established, the majority of traffic will be web socket
 messages for which there is relatively little per-message overhead.  We implemented the proxy 
 using the \nodejs{} module note-http-proxy~\cite{nodeproxy}.
-Lastly, worker processes are responsible for maintaining application instances as well as the
-creation and management of virtual browser instances.
+
+
+\subsection{Load Balancing}
+\label{sec:lb}
+When a new application instance is going to be created,
+the master will apply a load balancing algorithm to decide on which worker to place this instance.  
+We support two load balancing strategies: first, the master can assign application instances
+to workers in a simple round-robin fashion.  
+However, since application instances may vary
+widely in terms of the actual cost they impose on a worker, we also implemented a load-based
+scheme in which workers periodically report a measure of current load to the master.
+The master will select the worker with the lowest load when placing a new application instance.
+We have found the amount of heap memory that is currently in use a good measure of a worker's 
+momentary load.
+
+In the load-based mode, it is impossible for the master to get
+the load of the worker in real time.
+It is possible that a burst of application instances will 
+be assigned to the same worker that has the lowest load at that moment.
+This could cause extremely uneven load distribution.
+To mitigate this issue, the master adds an empirical value to the cached
+load value of a worker after it assigns a new application instance to it.
+This empirical value reflects our estimation about an application instance's 
+effect on a worker.
+Even under bursts of new requests, 
+the load distribution between the workers would not vary greatly.
+
+
+\subsection{Worker}
+
 
