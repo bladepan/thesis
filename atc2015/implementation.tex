@@ -126,3 +126,28 @@ creation and management of virtual browser instances.
 % \requestdispatchdiagram{}
 % \appinstancefig{}
 
+% MARK
+\subsection{Interprocess Communication}
+Masters, proxies, and workers need to be able communicate with one another. 
+This communication takes places at the level of JavaScript method calls.
+To facilitate the invocation of JavaScript methods that belong to objects residing 
+in other processes, we developed \nodermi, a remote method invocation (RMI) 
+library~\cite{nodermi}.
+
+\nodermi uses JavaScript's reflection facilities to transparently create client-side 
+stubs for remote objects on the fly.
+Since JavaScript does not use static typing and heavily uses variadic functions,
+it serializes method arguments dynamically via reflection.  Our system supports all
+primitive JavaScript types, objects, and arrays; it can handle cyclic 
+object graphs.  It also recognizes when arguments refer to remote objects, in which case 
+the receiving side will create its own stub that directly refers to the remote object.
+If an argument is a function, a stub will be created on the remote side that, when 
+invoked, will make a RPC request back to the requestor.
+
+As a consequence of using RMI, most of the management code in \cbtwo, including the
+code implementing the \cb API that is used by the authentication and management applications,
+required few changes from their single process version.  A notable exception is that 
+methods that return results must do so asynchronously by providing a callback that
+is invoked when the result has been obtained.  Changing synchronous method invocations
+to asynchronous ones introduce more complex control flow, even in already heavily
+asynchronous applications.
