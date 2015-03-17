@@ -77,6 +77,24 @@ Even under bursts of new requests,
 the load distribution between the workers would not vary greatly.
 
 
-\subsection{Worker}
+\section{Worker}
+
+Worker processes is responsible for serving the client requests.
+When a worker receives a request,
+it first extracts application instance id from the request.
+If the request has an application instance id
+and it matches a local application instance,
+then the application instance is fetched to serve the request.
+If the application instance id doesn't match any local application instance,
+it would responds a internal error message to the user.
+If there is no application instance id 
+in the request,
+then the worker would handle the request based on application instantiation strategy
+mentioned in section~\ref{sec:appinstantiation}.
+In this situation,
+the worker would either, ask master for existing application instances and
+redirect the request to existing instances,
+or create an new application instance for this request.
+
 
 

@@ -185,7 +185,6 @@ is in process A or not, the code just passes objects around using plain method c
 % it could be a stub reference to an object
 
 
-
 \section{Encode and Decode}
 As we mentioned earlier, nodermi assigns ids for local
 objects that are referenced remotely.
@@ -378,43 +377,42 @@ other processes.
 
 \section{Semantics}
 
-
-
+For pragmatic reasons,
+we do not implement \emph{stub}s to have the same semantics
+as local references.
 For a stub, only method calls are forwarded to the server,
-local change to the properties has no effect on the server.
+changes made to the properties of a stub have no effect on the remote object.
 Vice versa, the server's update to the properties of a local object will 
 not be synchronized to its stubs either.
-The stub's properties is a snapshot of the state of 
-the remote object before it is encoded.
-
+The stub's properties are merely a snapshot of the state of 
+the remote object when it is encoded.
 In \js{}, reading or writing properties is synchronous.
-Although we can intercept writing existing properties of a stub using
-\emph{setter}, we could not make these operations non-blocking if we decided to update
-the remote object as well.
-Vice versa, we cannot synchronize the properties of remote object with its clients without
-blocking the access to properties.
+Although we can intercept writing existing properties using
+\emph{setter}, we could not make these operations non-blocking if we decided to 
+synchronize the changes to other processes.
 Moreover, there is no way in \js{} to intercept the operation of adding a new property or delete
 a property.
-So the property manipulations only take effect locally.
 
 Some RPC systems~\cite{birrell1993distributed} only expose methods in stubs.
 In these systems the developers can only read or write a remote object's
 non method properties through methods.
-Nodermi does not adopt this strategy because it puts many limitations on the
+Nodermi does not adopt this strategy because it puts limitations on the
 application layer and it introduces more network round trips.
-For example, in \js{}, it is common that a function would accept
-a option object as its parameter. 
-The option object contains several simple properties like string or number 
-and one callback method.
-If we only expose methods for remote objects, we would define several getters 
-for these objects, and the functions that accept these objects 
-need to change the reading of option properties to asynchronous getter method calls.
+For example, in \js{}, it is common practice to call a method with
+a container object that wraps simple value parameters and callback parameters,
+the method would read parameters from the container object and invoke callback
+extracted from the container object.
+If we only expose methods for remote objects, we would need to define several 
+getter methods for these container objects, 
+and the code that reading properties of the container objects
+needs to be replaced with to asynchronous getter method calls.
 It would greatly complicate development not to mention the performance penalty.
 
 
-As mentioned before, for remote method calls, the return value is not defined.
-The client could get result of a method call
-from server via callback functions like in Figure~\ref{fig:nodermimethodinvoke}.
+As mentioned before, 
+all remote method calls are asynchronous,
+so the return value of remote method calls are not defined.
+
 
 
 % FIXME comparison
@@ -422,7 +420,7 @@ from server via callback functions like in Figure~\ref{fig:nodermimethodinvoke}.
 % semantics of properties, methods, this  field accesses, object identity
 % caja, druby, javascript , python
 
-\section{Issues}
+% \section{Issues}
 
 % async
 % network partition, transmission failure, server restart
