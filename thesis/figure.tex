@@ -2,7 +2,7 @@
     \begin{figure}[tb]
     \centering
     \includegraphics[width=\textwidth]{../figs/web_scale_out}
-    \caption{Scalable design of web systems}
+    \caption{Scalable web server architecture}
     \label{fig:webscaleout}
     \end{figure}
 }
@@ -25,29 +25,32 @@
     \end{figure*}
 }
 
-\newcommand{\requestdispatchdiagram}{
-    \begin{figure}[ht]
-    \includegraphics[width=\textwidth]{../figs/request_dispatch}
-    \caption{Request Dispatch Diagram}
-    \label{fig:dispatch}
-    \end{figure}
-}
 
 \newcommand{\appinstancefig}{
     \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../figs/appInstance}
-    \caption{Detailed view of an App Instance}
+    \includegraphics[width=0.8\textwidth]{../figs/appInstance}
+    \caption{Application Instance}
     \label{fig:appinstance}
     \end{figure}
 }
 
 
+\newcommand{\appprojectfig}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../figs/application_project}
+    \caption{Folder structure of a \cb application}
+    \label{fig:appproject}
+    \end{figure}
+}
+
 \newcommand{\chatappfig}{
     \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../figs/chat_application}
-    \caption{This figure shows how multiple virtual browsers can directly,
+    \includegraphics[width=0.8\textwidth]{../figs/chat_application}
+    \caption[Sharing data among multiple virtual browser via application instance]
+        {This figure shows how multiple virtual browsers can directly,
         and seamlessly share relevant application data, in this case chat messages,
         which then become part of the model that drives the presentation
         MVC framework.
@@ -131,7 +134,7 @@
     \begin{figure}[tb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/application_hierarchy}
-    \caption{Hierarchy of applications, application instances, and virtual browsers.
+    \caption[Application deployment model]{Application deployment model: Hierarchy of applications, application instances, and virtual browsers.
     Note that a single virtual browser may be broadcast to multiple clients (cobrowsing).}
     \label{fig:appidhierarchy}
     \end{figure}
@@ -141,7 +144,7 @@
 \begin{figure*}[ht]
     \centering
     \includegraphics[width=\textwidth]{../gnuplot/resource_consumption}
-    \caption{
+    \caption[Resource Consumption of worker]{
     Resource Consumption of worker node running JQueryChat Application\\
 X axis is time. Left Y axis corresponds to the red line of CPU usage.
 Right Y axis corresponds to memory statistics.\\
@@ -169,7 +172,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_method_invoke}
-    \caption{Process A invoke a method of a stub object}
+    \caption[Remote method invocation via a stub object]{Process A invoke a method of a stub object}
     \label{fig:nodermimethodinvoke}
     \end{figure}
 }
@@ -179,8 +182,17 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_callback}
-    \caption{Process B invoke a method that itself is a stub}
+    \caption[Remote callback via a stub function]{Process B invoke a callback that itself is a stub}
     \label{fig:nodermicallback}
+    \end{figure}
+}
+
+\newcommand{\nodrmiexamplefig}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figs/nodermi_example}
+    \caption{Nodermi remote method invocation example}
+    \label{fig:nodermiexample}
     \end{figure}
 }
 
@@ -197,7 +209,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_race}
-    \caption{Race in dereference remote reference}
+    \caption{Race condition when dereferencing a remote reference}
     \label{fig:nodermirace}
     \end{figure}
 }
@@ -207,7 +219,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/api_reference}
-    \caption{API objects only keep weak reference to internal objects}
+    \caption[API objects]{API objects only keep weak reference to internal objects}
     \label{fig:apireference}
     \end{figure}
 }

@@ -108,11 +108,15 @@ We do not want to write message passing code directly in our framework as it
 will damage the code readability, and it is cumbersome to design message protocol
 and write sending receiving code for every possible methods.
 
-Chapter~\ref{ch:impl} and Chapter~\ref{ch:api} will discuss the implementation detail
-of \cbtwo that deals with the first two challenges.
-In chapter~\ref{ch:rmi}, 
-we introduce a remote procedure call framework nodermi~\cite{nodermi} that we developed
-to face the third challenge.
-Although it is developed to support \cbtwo,
-nodermi is a general purpose RPC framework that could be utilized by
-any \nodejs project.
+We designed a single master multiple workers architecture that the master
+controls dispatching logic and the workers process user requests.
+To support the inter-process communication,
+we created a remote procedure call framework nodermi~\cite{nodermi} that
+encapsulates message communication as method calls.
+To support the applications to access server side resource
+and isolate applications with the framework,
+we build a set of API. % ------
+We also build benchmark tools to evaluate the performance and scalability of \cbtwo.
+\cbtwo scales linearly in our experiments. 
+It could support 2,800 concurrent users using a chat room application
+on a eight core machine with average latency less than 100ms.

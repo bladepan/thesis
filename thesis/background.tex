@@ -3,11 +3,12 @@
 
 This chapter gives background information to understand the concept of \cbtwo.
 We assume the reader has the basic knowledge of web development.
-The reader should understand the meaning of HTTP, HTML, \js and CSS.
+The reader should understand the meaning of HTTP~\cite{rfc7231}, HTML~\cite{hickson2012html}, 
+DOM~\cite{2000Document}, \js~\cite{ecmascript2011ecmascript} and CSS~\cite{css21}.
 
 \webscaleoutfig{}
 
-\section{Web Systems}
+\section{Scalable Web Server Architectures}
 \label{sec:websys}
 
 Web systems are system platforms that host web applications.
@@ -18,76 +19,141 @@ Scalability is an important issue for web systems.
 Even in the early 90s, the first web system experienced a load rose by a factor
 of 10 every year~\cite{berners1998world}.
 Even without the increasing user access,
-web applications could demand more resource as new features are added.
-The single server example we mentioned earlier would not scale well.
-Figure~\ref{fig:webscaleout} shows a diagram of scalable web systems.
-In a scalable web system, the server side is divided to layers of servers.
-The web layer consists multiple web servers to process the HTTP requests from users
-and generate HTTP response.
-The web servers would usually offload storage and computation tasks to a storage layer
-of database servers and other types of servers.
-This layered design makes web servers light weight and the whole system modular.
-The system owner could improve only the parts that become bottleneck without interfering
+web applications could demand more resource as they become more sophisticated.
+Figure~\ref{fig:webscaleout} is a diagram of scalable web systems.
+In a scalable web system, web applications are able to efficiently 
+harness resource from a cluster of servers.
+We divide the servers in such web systems into two layers.
+The web layer processes the HTTP requests from users
+and generate HTTP response which will be rendered in users' browser.
+The web layer offload storage and computation tasks to a storage layer
+consists of database servers and other types of servers.
+The benefit of layered design is manifold:
+it makes the web servers light weight so they could handle more concurrent 
+connections;
+the whole system becomes modular,
+the system owner could upgrade parts of the system without interfering
 other parts.
-Sitting in between the clients and the web layer is the load balancer.
-The load balancer distributes user's requests web servers
+Besides the web layer and the storage layer,
+the load balancer is another important part of a web system.
+The load balancer sits between the clients and the web layer,
+it  distributes user's requests web servers
 and return the response from the web servers to users.
-From the user's point of view, he only needs one identifier to
-access the web system, that is a DNS name or an IP address.
-It is the load balancer's job to hide multiple web servers from the user.
-There are many kinds of implementations for load balancer~\cite{cardellini2002state}.
-For example, we could deploy reverse proxy software (like nginx~\cite{nginx})
-and configure the system's DNS name pointing to the reverse proxy,
-then all the client's traffic will be directed to the reverse proxy
-and the reverse proxy will distribute the traffic to the web server layer.
-It is also possible that the load balancer layer is purely logical with no
-dedicated server side components:
-the system owner could register all the web servers' public IP addresses to the DNS server
+From the user's point of view, 
+he only needs one identifier to
+access the web system, that could be a DNS~\cite{rfc1034} name or an IP address.
+It is the load balancer's job to hide 
+the distributed architecture
+ from the user.
+There are many ways to implement load balancer~\cite{cardellini2002state}.
+For instance, 
+we could
+deploy reverse proxy software (like nginx~\cite{nginx})
+on a group of servers
+and configure the system's DNS name pointing to those servers,
+then all the client traffic will be directed to reverse proxy servers
+and reverse proxy will distribute the traffic to the web layer.
+It is also possible that the load balancer layer is implemented purely in logic 
+with no dedicated servers.
+One way to do it is
+ registering all the web servers' public IP addresses to the DNS server
 and rely on the DNS server return these IP addresses to clients in a round-robin
 fashion.
 From now on, we will only discuss the distribution algorithm without meddling too much
 in the implementation details of the load balancer layer.
 
+% \subsection{Application State Management}% maybe too big a title for a short review...
 
-\subsection{Load balancer}
+% We use application state to describe 
+% the data web applications need to 
+% process user requests and render user interface.
+% Based on the design of the web application,
+% the application state could comprise data fetched from some permanent
+% storage or 
+% generated during the execution of the application.
+% On the other direction,
+% the data in application state could be written back to permanent
+% storage or just be kept transiently.
+% The application state data that stored permanently could
+% endure server restart and be referenced in the future,
+% it usually contains data that is costly or impossible to 
+% recreate, like user profile, shopping transactions, etc.
+% The application state data that is transient 
+% usually represents state that is acceptable to be lost
+% during server restart or client crash.
+
+
+% To distinguish individual users, the web application assigns 
+% a unique session identifier for each user.
+% The session identifier is then attached to every HTTP requests.
+
+
+\subsection{Session State Management}
+
+We use session state to describe the application context
+web applications need to maintain for each user.
+It is generally acceptable to lose session state
+when server restarts,
+because session state could be recreated from scratch.
+Session state is partitioned on client side and server side.
+Usually the web application would assign a unique 
+session id for each user and uses
+the session id to associate the client side session state
+with server side.
+Most web frameworks provides two modes
+to manages session state~\cite{j2eedoc}~\cite{phpdoc}:
+a local mode where server side session data is stored
+in memory or in file system,
+a distributed mode where server side session data
+is stored in a centralized storage system usually a
+relational database.
+It is easy to see that the local mode has better performance
+than the distributed mode.
+
+
+\subsection{Load Balance}
 
 In this section we discuss the design choices of load balancer in a web system
 and how the implementation of load balancer impacts the application development.
 
 We use the taxonomy from the survey of Cardellini et al.~\cite{cardellini2002state}
-to categorize the load balancer as client-blind or client-aware based on if
+to categorize the load balancer into client-blind or client-aware based on if
 the load balancer uses any information from client request to perform the dispatch.
 
 A client-blind load balancer does not use information from client.
-For example, it could select a web server in a random probability or using a round robin algorithm.
-In this case, the requests from the same client could be distributed to any web server.
-The web server needs to reinitialize the client's application state for every request.
-The web server cannot naively cache the application sate in hopes of reducing the
-cost of reconstruction,
-because the user's requests might not be routed to the server again.
-Even if the user's requests hit this server in a future time,
-caching the user's application state would be a waste of space,
-because the application state might have been changed on some other server
-and the cached application state needs to be invalidated anyway.
-One solution would be move as much application state to the client side as possible,
-then the client would attach its part of application state
-with the requests to reduce the cost of constructing application sate on the server side.
-However, the server side still needs to construct part of the application state
-because it is risky to construct application state using only the data from
+For example, it could randomly select a web server from the web layer for each request,
+or use a round robin algorithm to pick web server one by one.
+In this case, the requests from the same client could be relayed to any web server.
+The developer cannot naively use a local mode session implementation
+, because as the requests from a user hit multiple servers,
+multiple copies of session state would be created on these servers,
+the discrepancy in these copies could cause application bugs not to mention
+it is a waste of space to store multiple copies.
+The application has to move session state to a centralized
+storage system and fetch the session state for every request.
+One solution would be move as much session state to the client side as possible,
+then the client would attach its part of session state
+with the requests to reduce the cost on the server side.
+However, the server side still needs to keep part of the session state
+because it is risky to store all session state on
 the client side.
 For example,
 the server might need the client's user profile to check if the client has
 the privilege to do a certain task.
 It is obvious that server should not trust the user profile passed by the client
 as a misbehaved client could forge a user profile in its requests.
+Another solution would be synchronizing local mode session data among web servers
+as implemented in Tomcat's session replication mode~\cite{tomcatcluster}. % and JBOSS
+This solution is expansive because it needs to broadcast
+changed session data to all web servers.
 
 A client-aware load balancer dispatches the request from the same
 client to the same web server.
-In this model, the web server could cache application state for each client.
+In this model, the web server could use the local mode session implementation.
 The downside is the load balancer needs to discriminate each client
 to make the correct routing decision.
 One way to do it is parsing the HTTP request header to get
-a session identifier which is identical for each client,
+the session identifier,
 then the load balancer computes a hash value of
 the session identifier and map the hash value to a web server.
 
@@ -134,17 +200,21 @@ the session identifier and map the hash value to a web server.
 Simply put, \nodejs is a standalone \js runtime that allows \js code to be
 executed without a web browser.
 It is also regarded as server side \js in contrast to typical \js code that executed in
-web browsers.
-\nodejs comes with a standard library that provides a rich set of API
+client side web browsers.
+\nodejs comes with a standard library that provides API
 such as file system access, network IO, binary data manipulation, etc.
 that makes it possible to write server side network applications using \js.
-\nodejs uses a non-blocking event driven IO model that makes it appealing to
-build high performance scalable web applications.
-\nodejs also has abundant third party packages
-and a great module management system that eases the effort to organize and reuse code.
+\nodejs is appealing for building high performance scalable web applications
+because it adopts a non-blocking event driven IO model which makes it capable 
+to handle a large number of concurrent connections.
+\nodejs is widely adopted in the web development community,
+a lot of third party packages are developed.
 Another bonus for using \nodejs is that the \cb framework code and application code
-is written in the same language, there is language crossing cost.
+are in the same language, there is language crossing cost.
+In this section we will discuss the \nodejs's non-blocking IO model and some important
+third party packages we used.
 
+\subsection{Non-blocking IO}
 
 \begin{listing}[ht,width=\columnwidth]
 \begin{minted}[
@@ -179,6 +249,39 @@ The event based non-blocking IO and simple execution semantics
 is key to the performance of \nodejs,
 the downside is that any operation that waits for IO must be implemented as a callback.
 
+\subsection{Node-http-proxy}
+
+Node-http-proxy~\cite{nodeproxy} is a \nodejs package for developing HTTP proxies.
+It provides programming interface to relay a HTTP request to another server and
+automatically copy the response from that server to the original requester.
+It also supports WebSocket~\cite{rfc6455} protocol.
+WebSocket is a TCP-based protocol which provides bidirectional full-duplex communication
+mechanism for web browsers.
+Using WebSocket, the server could send content to the client without requested
+by the client.
+Because WebSocket sends messages while keep the connection open,
+it is cost efficient comparing to using HTTP requests.
+We use WebSocket to implement DOM synchronization between client and server so
+the server could push DOM changes to clients.
+In node-http-proxy,
+the programmer needs only to provide the destination server on the hand shake
+request and all the subsequent WebSocket messages will
+be transparently proxyed to the destination server.
+
+\subsection{Jsdom}
+
+Jsdom~\cite{JSDOM} is a \nodejs package which provides a \js implementation of 
+DOM API. We use jsdom to implement server side DOM tree.
+Jsdom works like a web browser except it does not render the DOM tree:
+it reads HTML documents to build the initial DOM tree,
+it also executes \js files specified in script tags.
+It is possible to create multiple jsdom instances in a same process,
+each of these jsdom instance will have its own DOM tree and
+script execution environment,
+the scripts in each jsdom instance will have its own isolated view of global variables.
+In our model, each virtual browser has one jsdom instance and
+forwards client events to the jsdom DOM tree.
+We also patched jsdom to get notifications for DOM updates.
 
 
 \section{\cb}
@@ -198,14 +301,60 @@ in the global scope associated with the virtual browser's window object.
 Since the server environment faithfully mimics a real browser, libraries
 such as AngularJS~\cite{hevery2009angular} can be used unchanged to implement the user interface.
 Client and server communicate through a lightweight RPC protocol that is
-layered on top of a bidirectional web socket communication.
+layered on top of a bidirectional WebSocket communication.
 Stylesheets, images, etc. are provided to the client through a resource
 proxy.
 
+\subsection{Deployment Model}
+\appprojectfig{}
+As shown in Figure~\ref{fig:appproject}, 
+a \cb application project is a directory
+contains descriptor files, an entry point HTML file,
+\js files and resources files like CSS files, images, etc.
+The descriptor files specify the application's name, owner, mount point, and
+other application's configuration.
+Mount point is the URL path to the application, for example,
+if a \cb is deployed at \emph{www.example.com} and an application's mount point is
+\emph{/chat}, the user could access the application at \emph{http://www.example.com/chat}.
+The \js files include libraries like AngularJS or JQuery
+, the application code and an optional application instance(explained 
+in section~\ref{sec:appins}) definition.
+Like in regular browser, the entry point HTML should have script tags
+pointed to the \js files the developer wants to be executed in virtual browsers.
+
+The developer could put the application project in \cb's deployment 
+directory or compress and upload the project using \cb's administrator application.
+Multiple applications could be deployed at the same time.
+
+\apphierarchyfig{}
+
+As emphasized in Figure~\ref{fig:appidhierarchy},
+an application could create multiple application instances,
+each application instance could create multiple virtual browsers,
+a virtual browser could be simultaneously accessed by multiple clients.
+% For example, in our chat room example application, multiple clients
+% can join one chat room and each client get his own view of the
+% chat room.
+% In our model, the chat room concept is represented by application instance,
+% the user's view of chat rooms are represented by virtual browsers.
+% When a user request the chat room application's URL,
+% he is redirected to a page that lists all the chat rooms(in essential application instances) 
+% he joined.
+% From there, the user could manage his application instances.
+% He could create a new application instance(chat room) and share the application
+% instance's URL to let others join in.
+% When a user joined a chat room,
+% a virtual browser is created for him so he could interact with the application.
+% A virtual browser could also be accessed by multiple clients,
+% the DOM updates from the virtual browser will be broadcast to all connecting
+% clients to provide a co-browsing experience.
+
+
+
 \subsection{Application Instance}
 \label{sec:appins}
-
 \appinstancefig{}
+
 
 Application instance allows multiple virtual browsers to share data structure.
 As in Figure~\ref{fig:appinstance} shows, 
@@ -214,12 +363,12 @@ and virtual browsers inside an application instance share application instance o
 The application instance itself
 consists metadata about the application instance object
  such as ownership and access permissions.
-The application instance object is created by a factory method provided by the application developer.
-The system will create the application instance object when creating a application instance.
+The application instance object is defined
+the application instance definition file 
+in the application project(see Figure~\ref{fig:appproject}).
 When a virtual browser is created in the application instance,
 the application instance object is injected into that virtual browser
 and the application code could reference it directly.
-
 
 \chatappfig{}
 
@@ -274,11 +423,10 @@ The supported strategies include
 Except for multiInstance applications, the existence of virtual browsers is not exposed to
 end users that merely join existing application instances.
 
-\apphierarchyfig{}
 
-The hierarchy that results from applications, application instances, and virtual browsers is
-depicted in Figure~\ref{fig:appidhierarchy}.  This figure shows the general case in which an
-application might allow multiple instances, and in which each user can create multiple virtual
-browsers.
+% The hierarchy that results from applications, application instances, and virtual browsers is
+% depicted in Figure~\ref{fig:appidhierarchy}.  This figure shows the general case in which an
+% application might allow multiple instances, and in which each user can create multiple virtual
+% browsers.
 
 

@@ -127,32 +127,33 @@ Xiaozhong Pan
 
 \end{center}
 
-The need for concrete examples increases when technology becomes
-difficult to explain.  In documentation for computer systems
-especially, we see a wide audience of field experts attempting to
-comprehend documentation for computer software and hardware of which
-they should only require a cursory understanding.  Additionally, as
-the pace of the information age quickens we see document authors
-struggle for \textit{examplia-concretes} with wide applicability, and
-consistently rely on excerpts from Shakespearean literature as a
-public-domain source for their various explications.
+Designing modern web applications involves a wide spectrum of
+choices when it comes to deciding where the different tiers of
+application and framework code that constitute these distributed
+applications should be placed.  These system design choices affect 
+programmer productivity, ease of deployment, security, and performance, 
+particularly with respect to latency and scalability.
 
-We predict the twenty-first century will be no different.  Actuarial
-studies show explosion in the information industry such that four out
-of five persons will be \textit{bona fide} electronic document
-authors; many of those will have one or more college degrees.  We
-prove through computer simulation \textsc{Machinum Simitatores} that
-authors of twenty-first century literature will be affected by these
-examples and will include metaphor with Shakespearean source into
-their writing with increasing frequency.
+\cb provides a concept that enables programmer to 
+write web applications like event based desktop GUI applications
+using purely HTML, \js and CSS.
+In \cb, the application code is executed in a headless server side
+virtual browser and the client web browser acts like a dumb display
+device, 
+the client's interaction with the application is brought to the
+server side virtual browser seamlessly by the framework. 
+Using this model, the programmer is saved from the complexity of
+client server communication while being able to
+reuse existing client side web programming technology.
+The original \cb is single process single threaded,
+we extended it to support deployment on multiple processes.
+The new system is able to be deployed on a cluster of servers
+as well as a single multi-core server.
+% ------------
 
 \vfill
 
 % GRANT INFORMATION
-
-That this work received support from the Southeastern Universities
-Research Association (SURA) ``Monticello Library Project'' is purely
-coincidental.
 
 \pagebreak
 
@@ -175,9 +176,9 @@ coincidental.
 
 \input{introduction}
 \input{background}
+\input{rmi}
 \input{implementation}
 \input{api}
-\input{rmi}
 \input{evaluation}
 \input{related}
 \input{conclusion}

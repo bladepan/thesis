@@ -152,14 +152,13 @@ formats and send the binary data on long running TCP connections.
 
 
 
-\nodrmimethodinvokefig{}
-\nodrmicallbackfig{}
+\nodrmiexamplefig{}
 
-Figure~\ref{fig:nodermimethodinvoke},~\ref{fig:nodermicallback} shows a simple example
+Figure~\ref{fig:nodrmiexample} shows a simple example
 of a remote method invocation.
 In these two figures, process B has a local object \emph{objB} that has a method called \emph{method1},
 suppose process A has a stub representing \emph{objB} called \emph{stubB}.
-As shown in the code snippet on the top left of Figure~\ref{fig:nodermimethodinvoke},
+As shown in the code snippet on the top left of Figure~\ref{fig:nodrmiexample},
 process A invokes \emph{method1} with a parameter a function named \emph{callbackA}.
 First nodermi will create a method invocation message.
 The message contains information about the remote method being called:
@@ -176,7 +175,7 @@ Then process B finds \emph{objB} and \emph{method1} by the ids in the message.
 After that,
 process B invokes the \emph{method1} with \emph{stubCallbackA} as parameter.
 The \emph{method1} then invokes \emph{stubCallbackA} with \emph{result}.
-In Figure~\ref{fig:nodermicallback}, \emph{callbackA} is invoked
+Finally, \emph{callbackA} is invoked
 via a remote method call by process B,
 and the result computed in process B is printed in process A.
 In the whole process, there is no difference for the programmer that \emph{objB}
@@ -241,12 +240,12 @@ in the future.
 objects that are not referenced anymore in the program.
 However, the garbage collector is not aware a local object
 could also be referenced by another process through nodermi.
-In the example shown in Figure~\ref{fig:nodermimethodinvoke},
+In the example shown in Figure~\ref{fig:nodrmiexample},
 after \emph{method1} of \emph{stubB} is called,
 \emph{callbackA} is out of scope in process A,
 it is not referenced anymore by the user code.
 If nodermi does not hold reference to \emph{callbackA},
-it could be garbage collected before it is invoked in Figure~\ref{fig:nodermicallback}.
+it could be garbage collected before it is invoked.
 In fact, in practice callback functions like \emph{callbackA} are almost
 immediately garbage collected because it is likely that these functions
 live on the new space of a generational garbage collector heap that is frequently
