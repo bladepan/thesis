@@ -162,7 +162,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[ht]
     \centering
     \includegraphics[width=\textwidth]{../figs/nodermi}
-    \caption{Overall Design of nodermi}
+    \caption[Overall Design of nodermi]{Overall Design of nodermi}
     \label{fig:nodermi}
     \end{figure}
 }
@@ -200,7 +200,9 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_objectmap}
-    \caption{Nodermi object map and stub map}
+    \caption[Nodermi memory management]{Nodermi memory management : Nodermi holds 
+    strong references to local objects that are remotely referenced in \emph{object map},
+    holds weak references to \emph{stub}s in \emph{stub map}.}
     \label{fig:nodermiobjmap}
     \end{figure}
 }
@@ -209,8 +211,26 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_race}
-    \caption{Race condition when dereferencing a remote reference}
+    \caption[Race condition when dereferencing a remote reference]
+    {Race condition when dereferencing a remote reference, \emph{objB} is garbage collected
+    when \emph{Process A} still has a stub referencing it.}
     \label{fig:nodermirace}
+    \end{figure}
+}
+
+\newcommand{\apiclassfig}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figs/api_classes}
+    \caption[API class design]{API class design: 
+    The arrow points to the method's return value's type.
+    For instance,
+    The \emph{listApplications} returns
+    a list of \emph{APIApplication} objects.
+    ``:'' indicates an variable's class, ``currentApplication:APIApplication'' means
+     \emph{currentApplication} is a \emph{APIApplication} object.
+    }
+    \label{fig:apiclass}
     \end{figure}
 }
 
@@ -218,8 +238,8 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 \newcommand{\apireferencefig}{
     \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.8\textwidth]{../figs/api_reference}
-    \caption[API objects]{API objects only keep weak reference to internal objects}
+    \includegraphics[width=0.6\textwidth]{../figs/api_reference}
+    \caption[API object structure]{API object structure : API objects only keep weak reference to internal objects}
     \label{fig:apireference}
     \end{figure}
 }

@@ -1,56 +1,86 @@
 \chapter{Application Programming Interface}
 \label{ch:api}
 \markright{Application Programming Interface}
-Besides DOM API and built in types and methods,
-we created a set of API for the developers to access server side resource.
-We want programmers be able to manipulate server side objects like
-applications, application instances and virtual browsers.
-For example, in the administration dashboard(which is a \cb application),
-we want to list all the applications and modify applications' descriptions.
-For other applications, it is reasonable to give the programmer
-the ability to control the server side objects to accomplish
-tasks like closing a view(virtual browser) when it is no longer needed.
-We design a separate API instead of letting developers directly use the internal
-API of the framework because we want to enforce authentication check so that 
-the user could only do what he has the right to do.
-For example, we want ensure the current user could only close the virtual browser
-he owns.
+There are many use cases when the application needs
+to access framework's internal objects.
+For administrator applications, 
+it is obvious that without access to the framework's internals
+it cannot do anything useful.
+For instance, in our administration dashboard one can
+view all the installed applications and upload new applications,
+it cannot be implemented without access to the framework internals.
+For general purpose applications,
+some common tasks could only be implemented by the framework.
+For example, 
+in a chat room application,
+a user could terminate a chat room(i.e. application instance) 
+and close all its associated chat windows(i.e. virtual browser).
+
+Instead of allowing application developers directly calling internal framework API,
+we designed a separate API layer to access the framework internals.
+The rationale for this decision are as follows:
+\begin{enumerate}
+\item Security. We have a privilege system built in \cb that allows the application
+specify its owner account and user's privileges to application instances and virtual browsers.
+For example, a virtual browser could be destroyed by its owner,
+the system administrators and the application owners. 
+We want to enforce authorization check so that a user's actions 
+are limited by the privilege system.
+Using the internal API directly, the application code could easily allow
+any user to do almost anything.
+The only way to do it is providing an intermediate level 
+that checks privilege violations between the application code and the framework.
+
+\item Isolation. With direct access to internal objects, the application 
+code could manipulate them in unexpected ways thus poses great threat to 
+the integrity of the framework. Even the application is well implemented,
+the coupling between application and framework internals makes
+the changes made to the framework code could easily break the existing applications.
+\end{enumerate}
+
 
 \section{Overall Design}
-We have four classes in the API represents internal objects in the framework.
-To avoid confusion, we add API prefix to these class names.
-
+The first objective is that the API should provides
+enough features to cover all the scenarios where the application needs
+to access framework internals.
+We designed the API alongside developing several example applications
+include administrator applications and general multiple user applications.
+In our experience, the current API covers the essential features that are commonly
+needed.
+From our experience, we concluded that the API should allow developers to access
+applications, application instances and virtual browsers.
+Besides these internal objects, the API should also provide some auxiliary services
+like sending emails.
+Below are the classes we designed for the API:
 \begin{enumerate}
-\item APICloudBrowser: An entry point API object, 
-has a method to list all the applications. 
-For every virtual browser one APICloudBrowser is created and injected as
-a global variable in the browser's window.
+\item APICloudBrowser: 
+The entry point for the application.
+For every virtual browser one APICloudBrowser object is created and injected as
+a global variable in the application code name space.
 
 \item APIApplication: Represents an application in the framework.
-Contains a method to list the application's application instances.
-Has methods to manipulate the application, such as modify the application's
-description, change its owner, un-install the application, etc.
+It contains methods to manipulate the application, such as modify the application's
+description, change its owner, close the application, etc.
 
 \item APIAppInstance: Represents an application instance in the framework.
-Contains a method to list the application instance's virtual browsers.
-Has methods to manipulate the application instance.
+It has methods to manipulate the application instance.
 
 \item APIBrowser: Represents a virtual browser in the framework.
-Has methods to manipulate the virtual browser.
-\end{enumerate}
-The internal objects are always wrapped in API objects before handed
-to the application code.
-For example, when the caller invokes \emph{list applications} method
-of \emph{APICloudBrowser}, a list of \emph{APIApplication} objects 
-are returned instead of actual application objects.
-The reason we do not return the internal objects is obvious:
-First, we want to protect the internal state of the framework from 
-being tampered by application code.
-Second, 
-the application code could call methods of the internal objects directly
-thus bypass the authentication check we put in the API methods.
+It has methods to manipulate the virtual browser.
 
-API objects themselves are just proxies of the internal objects,
+\end{enumerate}
+
+\apiclassfig{}
+
+Initially, the application code could get a reference to a \emph{APICloudBrowser} object.
+As emphasized in Figure~\ref{fig:apiclass}, 
+via this object, the application code could
+could get API objects
+representing applications, application instances and virtual browsers.
+
+
+\section{Implementation}
+API objects themselves are just proxies of the internal objects they represented,
 they need to keep reference to these internal objects.
 We cannot store the internal objects as properties of the API objects,
 because there is no language support for private properties in \js,
