@@ -3,39 +3,32 @@
 \markright{nodermi}
 In the single process version of \cb, 
 everything lives in the same address space,
-features are composed by local method invocations.
+which allows application code to invoke system component's functionality.
 As \cbtwo divides \cb into multiple processes,
 some of those local method invocations need to be replaced by 
 inter-process communication,
-because 
-as the framework spreads its state 
-and responsibility to multiple process,
+because as the framework spreads its state 
+and responsibility to multiple processes,
 an operation initiated in one process
-could require cooperation from another process.
+could require access in state located in another process.
 For example, 
 in the single process version, 
 closing a virtual browser
-is implemented by invoke the close method of the virtual browser
-object since everything is in the same address space,
-now this operation needs to be implemented as inter-process
-communication if the virtual browser is on another process,
-the current process cannot make the other process close a virtual browser 
-without communication.
-We could design message protocols for methods that need
-to be replaced and replace these method invocation
- with explicit message sending.
+is implemented by invoking the close method of the virtual browser
+object.
+Now if the virtual browser is in another process
+, closing it requires that a request be sent to that process.
+We could have introduced new objects and methods to send specific messages.
 This approach is undesirable for the following reasons.
-First, there are a lot of method invocations need to be transformed.
-We need to design message format for many different types of methods and
+First, there are many of method invocations that would need to be transformed.
+In this way
+we would have to design message format for many different types of methods and
 write handler code to parse and process these messages.
-Second, we are constantly changing existing methods and add
-new methods to objects.
-We need to modifying the message communication layer 
-when we make these changes.
-Third, 
-we want to reuse the existing code as much as possible.
-Using explicit message passing would change the existing code base entirely.
-To deal with our concerns with explicit message communication,
+Second, 
+since the continuous coding, including changes to existing methods.
+We would need to modify the message communication layer continuously.
+To avoid 
+boilerplate messaging code and allow code evolve,
 we developed nodermi~\cite{nodermi}, an object-oriented
 remote procedure call(RPC) framework for \nodejs{}.
 % Nodermi hides the complexity of inter-process communication details from
@@ -45,48 +38,37 @@ Before we discuss the implementation of nodermi,
 we first introduce some terms for nodermi and 
 RPC systems in general.
 We use the term \emph{local object}
-to refer objects that are local to the process.
+to refer objects that are local to calling process.
 We use the term \emph{remote object} to represent objects that are
 living on other processes.
 We use \emph{stub} or \emph{remote reference} to refer to special objects created
-by nodermi or other RPC framework that
-represents \emph{remote object}s(you can think \emph{stub}s as proxies to remote objects).
-Each \emph{stub} represents one \emph{remote object}
-and a \emph{stub} has methods represent
-its \emph{remote object}'s methods.
-We say an object is remotely referenced if there are \emph{stub}s representing 
-it. 
+by nodermi that represents \emph{remote object}s 
+(we can think \emph{stub}s as proxies to remote objects).
+We say an object is \emph{remotely referenced} from a process
+if there are \emph{stub}s representing it.
+Each \emph{stub} represents one \emph{remote object},
+it has methods that mirror the \emph{remote object}'s methods.
+From the programmer's perspective, 
+\emph{stub}s are just like ordinary local objects.
 When calling a \emph{stub}'s method, the underlying
-RPC framework code is executed to send messages
-to its \emph{remote object}'s process
+RPC framework code sends messages to the \emph{remote object}'s process
 to invoke the corresponding method there.
-In \js{}, function is the first class citizen, it is legal
-to pass a function as a parameter or return a function as a result.
-We use the term object to refer to ordinary objects as well as
-functions unless explicitly noted.
-Similarly, since a function could exist without being part of an object,
-when we talk about method and method invocation in \js, 
-the term \emph{method} means a member function of an object
-or a standalone function.
 For a given object, the process that creates that object is referred
 as \emph{host} of that object,
-the process that holds a \emph{stub} to that object is called \emph{client},
-the \emph{host} is also called \emph{server} to that \emph{client}.
-There is no clear distinction between \emph{server} and \emph{client},
-it depends on the context of which object is under discussion.
+the process that holds a \emph{stub} representing 
+that object is called \emph{client},
+the \emph{host} is also called \emph{server} to that \emph{client} process.
+In \js{}, since functions are first class citizens, it is possible
+to pass a function as a parameter or return a function as a result.
+Nodermi treats functions and objects alike : functions could also be 
+\emph{remotely referenced}.
 
 \nodermiexamplefig{}
 
 Nodermi encapsulates inter-process communication via \emph{stub}s.
-Nodermi allows direct many-to-many inter-process communication without
-any central point and zig-zag communication.
-From the programmer's perspective, 
-\emph{stub}s are just like ordinary local objects.
-Calling methods of \emph{stub}s initiates message
-communication directly to the host processes under the hood.
 In the course of remote method invocations
 nodermi automatically 
-create \emph{stub}s for the parameter objects on the server process.
+create \emph{stub}s for the argument objects on the server process.
 In essential it preserves the single address space illusion on the
 server process as well,
 the server process could invoke methods of the parameter objects
