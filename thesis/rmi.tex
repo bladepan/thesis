@@ -63,95 +63,113 @@ to pass a function as a parameter or return a function as a result.
 Nodermi treats functions and objects alike : functions could also be 
 \emph{remotely referenced}.
 
-\nodermiexamplefig{}
-
-Nodermi encapsulates inter-process communication via \emph{stub}s.
-In the course of remote method invocations
-nodermi automatically 
-create \emph{stub}s for the argument objects on the server process.
-In essential it preserves the single address space illusion on the
-server process as well,
-the server process could invoke methods of the parameter objects
-as if they are in the same address space.
-Figure~\ref{fig:nodermiexample} shows a
-seamless execution of \emph{Process A}
-calls a remote method \emph{method1} on \emph{Process B} which
-will call \emph{callbackA} on  \emph{Process A} provided
-as a parameter in the original remote method invocation.
-A \emph{stub} pointing to \emph{callbackA} is created automatically
-on \emph{Process B}.
-It makes no difference for the code that if \emph{stubB} and \emph{callback}
-are ordinary local objects or not.
-Using nodermi, 
-the structure of our original object-oriented code base could be preserved.
-A process only need to explicitly register a few entry point objects to nodermi 
-so other processes could get initial \emph{stub}s.
-In our system, the master registers its application management object in nodermi.
-A worker would first get \emph{stub} of the master's application management object.
-Then the worker could register its application instance to master 
-via a method call on the \emph{stub}.
-On the master side, a \emph{stub} to the application instance is created and
-stored in the master's application instance table.
-The worker could also obtain \emph{stub}s to application instances on other workers by 
-calling a method on the its \emph{stub} to master's application management object.
-The worker could then directly communicate to other workers
-by calling methods on the newly created \emph{stub}s 
-even it does not have other workers' addresses in configuration.
-
 
 \section{Semantics}
 
-Unlike traditional RPC frameworks where the process halts for the
-completion of remote method execution~\cite{birrell1984implementing},
-nodermi is fully asynchronous because \nodejs
-is single threaded and event based.
-In nodermi a remote method call returns immediately
-like any other IO related asynchronous methods.
-Thus the \emph{return} value is not defined for remote method calls.
-If the method itself is already asynchronous, 
-nodermi fully preserves the semantics of the original method design,
-because the callbacks provided by the caller could
-be called on the remote side as shown in Figure~\ref{fig:nodermiexample}.
-If the method is originally synchronous,
-it needs to be modified to take an optional callback function
-if caller wants to ``wait'' for the completion of this method.
-Luckily, it is not hard to make such changes and methods involves
-IO are already asynchronous.
+\nodermiexamplefig{}
 
-For the same reason,
-changes made to the properties of a stub have no effect on the remote object.
-Vice versa, the server's update to the properties of a local object will 
-not be synchronized to its stubs either.
-In essence,
-the stub's properties are merely a snapshot of the state of 
-the remote object right before the stub is created.
-In \js{}, reading or writing properties is synchronous.
-Although we can intercept writing existing properties using
-\emph{setter} and propagate the writings to other processes,
-we still cannot preserve the semantics of the local property setting
-where the change takes effect instantly. 
-Moreover, there is no way in \js{} to intercept the operation of adding a new property or delete
-a property, 
-thus propagating addition and deletion of properties is unrealistic.
+\paragraph{Synchronous Methods}
+Unlike traditional RPC frameworks where the process blocks during the
+completion of remote method~\cite{birrell1984implementing},
+nodermi is fully asynchronous since \js{} functions may not block.
+In nodermi a remote method call returns immediately after initiating the communication
+similar to other IO related asynchronous methods.
+Thus the result of the method on server 
+is not known when the stub method returns on client.
+To get the result of a remote method,
+the remote method should be implemented asynchronously,
+that is passing result to caller via callback functions.
+If a remote method is synchronous,
+we need to change it to be asynchronous if
+we want to wait for its result on the client side.
 
-Unlike some RPC systems~\cite{birrell1993distributed} 
-where stubs only contains methods and the properties of the remote
-objects could only be accessed via stub methods,
-nodermi stubs contain full object graphs mirroring the objects they represent.
-The method only design puts great limitations on the
-application layer and it introduces more network round trips.
-Especially in \js{} applications, where 
- it is common practice to call a method with
-a container object that wraps simple value parameters and callback parameters,
-the method would read parameters from the container object and invoke callback
-extracted from the container object.
-If the stubs contain only methods, 
-we would need to define several getter methods 
-for these container objects, 
-then replace the code that reading properties of the container object
- with several asynchronous getter method calls.
-It would greatly complicate the control flow
-not to mention the performance penalty.
+
+\paragraph{Passing Arguments}
+When calling a remote method, the arguments are either
+passed by reference, by value or by implementation to
+the server process.
+
+\paragraph{Pass By Value}
+Simple objects that do not contain methods
+ are passed by value.
+In contrast to passing by reference,
+the server side creates field to field copies of them instead of creating
+stubs.
+
+\paragraph{Pass By Implementation}
+For some commonly used objects that have simple
+internal states such as Dates, Errors, Byte Buffer, etc.,
+nodermi passes them by implementation.
+It is obvious that it makes little sense to remotely
+call a method of a Date object if we could create
+a local Date object with exactly the same value.
+Nodermi implements passing by implementation by transmitting the internal
+states of these objects to the receiving process and 
+calling constructors
+of these objects in the receiving process with the internal states.
+Besides built-in types,
+nodermi also passes a customized object by implementation if
+its constructor is registered and it implements a method
+to export its internal states as constructor arguments.
+Unlike similar features
+ in other RPC frameworks~\cite{birrell1993distributed}~\cite{j2eedoc}
+ where representation of the class definition is passed,
+we assume the class definition of the object passed is presented
+in the receiving process.
+
+
+\paragraph{Pass By Reference}
+When an object is passed by reference to another process,
+nodermi creates a stub representing that object on the receiving process.
+In this way, 
+the receiving process could remotely invoke methods of that object.
+Functions are always passed by reference in nodermi.
+For example, in figure~\ref{fig:nodermiexample}, the callback function 
+\emph{callbackA} is passed by reference. Nodermi creates
+a stub \emph{stubCallbackA} representing it in \emph{Process B}.
+\emph{Process B} then invokes \emph{stubCallbackA} like a local function.
+
+\paragraph{Pass Stubs}
+A stub is passed by reference. Unlike ordinary objects,
+nodermi does not create a new stub to represent that old
+stub.
+Instead, if the stub represents an object on the receiving 
+process, nodermi will use that original object on the receiving 
+process directly.
+Otherwise, nodermi creates a new stub represents
+the remote object the old stub represents.
+In this case, method invocation on the new stub will
+initiate communication directly to the process that 
+hosts the original remote object.
+
+
+
+\paragraph{Remote Object Property}
+A stub's properties is a snapshot of the properties
+of the remote object it represents.
+Similar to passing method arguments,
+properties are passed by value, implementation or reference
+based on the their types.
+We could read or write properties of a stub directly.
+But the changes we made to a stub's property 
+will not be synchronized to the remote object the stub represents.
+Vice versa,
+changing the properties on the remote object has no effect
+on the stub either.
+It is ideal to make the stub acts like a regular reference
+to the remote object such that
+changes made on one side would be reflected on the other.
+It is not feasible to implement this semantics because
+in \js{} reading or writing object property is synchronous,
+we cannot block to wait for synchronization takes place
+ when accessing object property.
+We could have intercept assignment to existing properties using
+\emph{setter} and propagate the assignment to other processes.
+We still cannot preserve the semantics of the local property assignment
+where the property update takes effect right after the assignment statement returns. 
+Moreover, there is no way in \js{} to intercept the operation of 
+adding a new property or deleting a property.
+
 
 
 \section{Design}
@@ -160,19 +178,22 @@ not to mention the performance penalty.
 
 Figure~\ref{fig:nodermi} is a diagram of nodermi's design.
 A stub is created with every method pointing to the 
-remote method invocation code in nodermi.
-When a method of a stub is called,
-nodermi encodes the parameters and some information of this method 
-into a method invocation message.
-The transportation layer then converts the message into 
-a binary format and sends to the host of the stub's remote object.
-On the server side, the transportation layer first reads 
-the message from the network and invoke \emph{method invocation handler}.
-The handler finds the local object which the \emph{stub}
-represents,
-finds the local object's method which this invocation is about,
-decodes the message to reconstruct the parameters of this method call,
-then call the method with the decoded parameters.
+\emph{remote method invocation} module in nodermi.
+This module
+first encodes the arguments of the method call
+ and other necessary information about this method call
+as a \emph{method invocation message}.
+The transport layer then converts the message to
+a binary string and sends it
+to the server process.
+On the server side, the transport layer first reads 
+the message from the network and invokes \emph{method invocation handler}.
+The handler
+constructs arguments by decoding the \emph{method invocation message}, 
+it would create stubs to represent the original arguments in the client process
+ if necessary,
+then invokes the corresponding local method with the arguments
+it constructs earlier.
 
 
 Nodermi uses TCP sockets to implement inter-process communication,
