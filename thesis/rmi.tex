@@ -3,34 +3,31 @@
 \markright{nodermi}
 In the single process version of \cb,
 everything lives in the same address space,
-which allows application code to invoke system component's functionality.
+which allows application code to invoke system components' functionality.
 As \cbtwo divides \cb into multiple processes,
 some of those local method invocations need to be replaced by
 inter-process communication,
 because as the framework spreads its state
 and responsibility to multiple processes,
 an operation initiated in one process
-could require access in state located in another process.
+could require access to state located in another process.
 For example,
 in the single process version,
 closing a virtual browser
-is implemented by invoking the close method of the virtual browser
+is implemented by invoking the \code{close} method of the virtual browser
 object.
-Now if the virtual browser is in another process
-, closing it requires that a request be sent to that process.
-We could have introduced new objects and methods to send specific messages.
-This approach is undesirable for the following reasons.
-First, there are many of method invocations that would need to be transformed.
-In this way
-we would have to design message format for many different types of methods and
-write handler code to parse and process these messages.
-Second,
-since the continuous coding, including changes to existing methods.
-We would need to modify the message communication layer continuously.
-To avoid
-boilerplate messaging code and allow code evolve,
-we developed nodermi~\cite{nodermi}, an object-oriented
-remote procedure call(RPC) framework for \nodejs{}.
+If the virtual browser is in another process, closing it requires that a request be sent to that process.
+We could have introduced new objects and methods to send specific messages,
+but this approach is undesirable for the following reasons.
+First, there are many call sites that would need to be changed.
+Second, we would also have to design message formats for many different methods and
+write handler code to parse and process each of these messages.
+Third, since our codebase is continuously evolving, any changes to existing methods
+would require modifications to the message communication layer.
+
+To avoid having to manually create and maintain messaging code for each
+method, we developed nodermi~\cite{nodermi}, an object-oriented
+remote procedure call (RPC) framework for \nodejs{}.
 % Nodermi hides the complexity of inter-process communication details from
 % upper layer code and is adaptive to code changes.
 
@@ -38,85 +35,104 @@ Before we discuss the implementation of nodermi,
 we first introduce some terms for nodermi and
 RPC systems in general.
 We use the term \emph{local object}
-to refer objects that are local to calling process.
+to refer to objects that are local to a calling process.
 We use the term \emph{remote object} to represent objects that are
-living on other processes.
+located in processes other than the calling process.
 We use \emph{stub} or \emph{remote reference} to refer to special objects created
-by nodermi that represents \emph{remote object}s
-(we can think \emph{stub}s as proxies to remote objects).
+by nodermi that represents \emph{remote object}s in the calling process
+(we can think of \emph{stub}s as proxies to remote objects).
 We say an object is \emph{remotely referenced} from a process
 if there are \emph{stub}s representing it.
-Each \emph{stub} represents one \emph{remote object},
+Each \emph{stub} represents one \emph{remote object} and
 it has methods that mirror the \emph{remote object}'s methods.
 From the programmer's perspective,
-\emph{stub}s are just like ordinary local objects.
+\emph{stub}s appear like ordinary local objects.
 When calling a \emph{stub}'s method, the underlying
 RPC framework code sends messages to the \emph{remote object}'s process
 to invoke the corresponding method there.
 For a given object, the process that creates that object is referred
-as \emph{host} of that object,
-the process that holds a \emph{stub} representing
-that object is called \emph{client},
-the \emph{host} is also called \emph{server} to that \emph{client} process.
+to as the \emph{host} of that object. The \emph{host} process takes on the
+role of a \emph{server}, whereas the process that holds a \emph{stub} 
+to the object act as a \emph{client}.
 In \js{}, since functions are first class citizens, it is possible
-to pass a function as a parameter or return a function as a result.
-Nodermi treats functions and objects alike : functions could also be
-\emph{remotely referenced}.
-
+to pass a function as an argument or return a function as a result.
+Nodermi treats functions and objects alike so that functions can also be
+referred to remotely.
 
 \section{Semantics}
 
 \nodermiexamplefig{}
 
 \paragraph{Synchronous Methods}
-Unlike traditional RPC frameworks where the process blocks during the
-completion of remote method~\cite{birrell1984implementing},
-nodermi is fully asynchronous since \js{} functions may not block.
-In nodermi a remote method call returns immediately after initiating the communication
-similar to other IO related asynchronous methods.
-Thus the result of the method on server
-is not known when the stub method returns on client.
-To get the result of a remote method,
-the remote method should be implemented asynchronously,
-that is passing result to caller via callback functions.
-If a remote method is synchronous,
-we need to change it to be asynchronous if
-we want to wait for its result on the client side.
-
+Unlike RPC frameworks in which a calling process blocks during the
+completion of the remote method~\cite{birrell1984implementing},
+nodermi is fully asynchronous since \js{} functions must not block.
+In nodermi a remote method call returns immediately after initiating the communication,
+similar to other IO-related asynchronous methods.
+Thus the method's return value is not available when the stub method returns on the client.
+To obtain the result of a remote method invocation,
+the remote method must be implemented asynchronously,
+passing its result(s) to the caller via a callback function.
+If a caller requires the knowledge that a method has completed - with or without
+returning a result, the method must be written in an asynchronous style.
+Thus, some existing methods will need to be changed to be able to invoke them 
+remotely via nodermi.
 
 \paragraph{Passing Arguments}
-When calling a remote method, the arguments are either
-passed by reference, by value or by implementation to
-the server process.
+nodermi copies most arguments by value, including built-in primitive types
+and objects.  If an object refers to other objects, these objects are copied 
+as well, so that an object's entire transitive closure is copied.
+Since JavaScript functions contain closure, it is not possible to copy them.
+Instead, we create stubs for functions and methods before passing them
+to the remote object's method.  If a method needs to invoke 
+methods on objects passed as arguments, then such invocations
+will cause the created stubs to initiate a remote method
+call to the original object.  The client must create handlers
+to receive and process these remote method invocations.
+% would be good to refer to figure
 
-\paragraph{Pass By Value}
-Simple objects that do not contain methods
- are passed by value.
-In contrast to passing by reference,
-the server side creates field to field copies of them instead of creating
-stubs.
+For instance, in Figure ....
+and here explain example
 
-\paragraph{Pass By Implementation}
-For some commonly used objects that have simple
-internal states such as Dates, Errors, Byte Buffer, etc.,
-nodermi passes them by implementation.
+Then discuss exceptions:
+- built-in objects
+- custom objects that you know about - handled via special casing.
+- point out that transitive closure in object graph is "manageable" - not too large.
+
+
+For certain built-in types, e.g. \code{Date}, \code{Error}, \code{Buffer}, 
+we copy their contents and recreate them via their constructors.
+
+We also provide custom handling
+
 It is obvious that it makes little sense to remotely
 call a method of a Date object if we could create
 a local Date object with exactly the same value.
+
 Nodermi implements passing by implementation by transmitting the internal
 states of these objects to the receiving process and
-calling constructors
-of these objects in the receiving process with the internal states.
+calling constructors of these objects in the receiving process with the internal states.
+
 Besides built-in types,
 nodermi also passes a customized object by implementation if
 its constructor is registered and it implements a method
 to export its internal states as constructor arguments.
+
+% it's not really similar..
 Unlike similar features
  in other RPC frameworks~\cite{birrell1993distributed}~\cite{j2eedoc}
  where representation of the class definition is passed,
 we assume the class definition of the object passed is presented
 in the receiving process.
 
+This semantic is unlike Java RMI\cite{j2eedoc}, which loads
+object's methods through a separate mechanism via Class Loaders
+and in which method calls on objects passed as argument are not
+relayed to the original objects.
+
+... introduce the problem of zigzagging.
+
+... introduce the solution of passing references to remote objects instead.
 
 \paragraph{Pass By Reference}
 When an object is passed by reference to another process,
