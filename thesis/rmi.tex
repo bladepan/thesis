@@ -50,10 +50,12 @@ From the programmer's perspective,
 When calling a \emph{stub}'s method, the underlying
 RPC framework code sends messages to the \emph{remote object}'s process
 to invoke the corresponding method there.
-For a given object, the process that creates that object is referred
-to as the \emph{host} of that object. The \emph{host} process takes on the
-role of a \emph{server}, whereas the process that holds a \emph{stub} 
-to the object act as a \emph{client}.
+For a given stub,
+the object it represents is called its \emph{source object},
+the process that creates the \emph{source object}
+is referred to as the \emph{host} of the stub. 
+The \emph{host} process takes on the role of a \emph{server}, 
+whereas the process that holds a \emph{stub} to the object act as a \emph{client}.
 In \js{}, since functions are first class citizens, it is possible
 to pass a function as an argument or return a function as a result.
 Nodermi treats functions and objects alike so that functions can also be
@@ -78,8 +80,12 @@ returning a result, the method must be written in an asynchronous style.
 Thus, some existing methods will need to be changed to be able to invoke them 
 remotely via nodermi.
 
+\nodrmipassbyreffig{}
+\nodrmipassbyvalfig{}
+
+
 \paragraph{Passing Arguments}
-nodermi copies most arguments by value, including built-in primitive types
+Nodermi copies most arguments by value, including built-in primitive types
 and objects.  If an object refers to other objects, these objects are copied 
 as well, so that an object's entire transitive closure is copied.
 Since JavaScript functions contain closure, it is not possible to copy them.
@@ -89,75 +95,53 @@ methods on objects passed as arguments, then such invocations
 will cause the created stubs to initiate a remote method
 call to the original object.  The client must create handlers
 to receive and process these remote method invocations.
-% would be good to refer to figure
-
-For instance, in Figure ....
-and here explain example
-
-Then discuss exceptions:
-- built-in objects
-- custom objects that you know about - handled via special casing.
-- point out that transitive closure in object graph is "manageable" - not too large.
+For instance, in Figure~\ref{fig:nodermiexample}, 
+when \emph{Process B} calls the remote method \emph{method1}
+in \emph{Process A} with a function argument,
+a stub for the argument
+\emph{callbackA} is created in \emph{Process A} because
+it is not possible to copy function \emph{callbackA} to \emph{Process B}.
+The stub to \emph{callbackA} is passed as an argument to
+ \emph{method1}.
+Then \emph{method1} invokes the stub to \emph{callbackA} as if it is a ordinary
+ local function and the actual \emph{callbackA} is invoked in \emph{Process A}. 
 
 
 For certain built-in types, e.g. \code{Date}, \code{Error}, \code{Buffer}, 
 we copy their contents and recreate them via their constructors.
-
-We also provide custom handling
-
-It is obvious that it makes little sense to remotely
-call a method of a Date object if we could create
-a local Date object with exactly the same value.
-
-Nodermi implements passing by implementation by transmitting the internal
-states of these objects to the receiving process and
-calling constructors of these objects in the receiving process with the internal states.
-
-Besides built-in types,
-nodermi also passes a customized object by implementation if
-its constructor is registered and it implements a method
-to export its internal states as constructor arguments.
-
-% it's not really similar..
-Unlike similar features
- in other RPC frameworks~\cite{birrell1993distributed}~\cite{j2eedoc}
- where representation of the class definition is passed,
-we assume the class definition of the object passed is presented
-in the receiving process.
-
+So the a method could call methods of these objects without 
+remote method invocation.
+In this case, no stubs is created as emphasized in Figure~\ref{fig:nodermipassbyval}.
+Besides built-in types, nodermi also allows programmers to
+register customized types to be copied and recreated via constructors.
+The objects of these customized types need to implement a method to dump
+their contents as constructor arguments.
 This semantic is unlike Java RMI\cite{j2eedoc}, which loads
-object's methods through a separate mechanism via Class Loaders
-and in which method calls on objects passed as argument are not
-relayed to the original objects.
+object's methods through a separate mechanism via Class Loaders,
+we assume constructors of these objects are registered in
+both sender process and receiver process.
 
-... introduce the problem of zigzagging.
-
-... introduce the solution of passing references to remote objects instead.
-
-\paragraph{Pass By Reference}
-When an object is passed by reference to another process,
-nodermi creates a stub representing that object on the receiving process.
-In this way,
-the receiving process could remotely invoke methods of that object.
-Functions are always passed by reference in nodermi.
-For example, in figure~\ref{fig:nodermiexample}, the callback function
-\emph{callbackA} is passed by reference. Nodermi creates
-a stub \emph{stubCallbackA} representing it in \emph{Process B}.
-\emph{Process B} then invokes \emph{stubCallbackA} like a local function.
-
-\paragraph{Pass Stubs}
-A stub is passed by reference. Unlike ordinary objects,
-nodermi does not create a new stub to represent that old
-stub.
-Instead, if the stub represents an object on the receiving
-process, nodermi will use that original object on the receiving
-process directly.
-Otherwise, nodermi creates a new stub represents
-the remote object the old stub represents.
-In this case, method invocation on the new stub will
-initiate communication directly to the process that
-hosts the original remote object.
-
+Nodermi allows programmers pass stubs as arguments.
+If we treat a stub like other normal objects and create a remote reference 
+ for the stub when it is passed to a remote method. 
+Then when calling a method of the newly created remote reference,
+a remote method invocation will be initiated to call the corresponding method
+of the stub, which will in turn initiate another remote method invocation
+to call the object the stub represents.
+The chain of remote method invocation initiated by a method call could
+be arbitrary long.
+To avoid this problem, when we pass a stub to a remote method call,
+we create a new remote reference referencing 
+ the stub's \emph{source object} instead of referencing the stub itself
+ (See Figure~\ref{fig:nodermipassbyref}).
+Then calling method on the new remote reference will initiate 
+communication directly to the stub's host process.
+An exception is that when the stub's host process is the server
+process of the original remote method that we are passing arguments to,
+it would be unnecessary to create a remote reference 
+in the server process to reference one of its local object,
+we use the stub's source object directly instead of 
+creating a new remote reference.
 
 
 \paragraph{Remote Object Property}

@@ -207,6 +207,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \end{figure}
 }
 
+%deprecated
 \newcommand{\nodrmiracefig}{
     \begin{figure}[ht]
     \centering
@@ -215,6 +216,37 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     {Race condition when dereferencing a remote reference, \emph{objB} is garbage collected
     when \emph{Process A} still has a stub referencing it.}
     \label{fig:nodermirace}
+    \end{figure}
+}
+
+
+\newcommand{\nodrmipassbyreffig}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[\textwidth]{../figs/nodermi_passbyreference}
+    \caption[Nodermi passes arguments by reference]
+    {Nodermi passes argument by reference: When passing an argument to a remote
+    method call, a remote reference is created for the argument in the server
+    process of the remote method. The exception is that 
+    when the argument is a stub, nodermi creates
+    remote reference for the argument's source object or directly locate
+    the source object.}
+    \label{fig:nodermipassbyref}
+    \end{figure}
+}
+
+\newcommand{\nodrmipassbyvalfig}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[\textwidth]{../figs/nodermi_passbyvalue}
+    \caption[Nodermi passes arguments by value]
+    {Nodermi passes argument by value: When passing an argument to a remote
+    method call and the argument is a simple object with no methods
+    , a new copy of the argument is created in the server
+    process of the remote method. When the argument is of certain built-in types,
+    a new copy is created via constructors, so the new copy has all the methods
+    of the original arguments.}
+    \label{fig:nodermipassbyval}
     \end{figure}
 }
 
