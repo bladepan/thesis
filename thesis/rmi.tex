@@ -170,7 +170,7 @@ where the property update takes effect right after the assignment statement retu
 Moreover, there is no way in \js{} to intercept the operation of
 adding a new property or deleting a property.
 
-
+% TODO comparison...
 
 \section{Design}
 
@@ -205,21 +205,6 @@ The object id is a unique id nodermi assigns for each object that
 is remotely referenced.
 
 
-\paragraph{Bootstrap}
-It is clear that nodermi automatically creates stubs during
-passing arguments in remote method invocation without programmers
-explicitly calling framework API.
-However, the first \emph{stub} cannot be obtained
-via remote method invocation.
-To bootstrap the RPC communication,
-nodermi provides \code{registerObj} method
-to register a local object with a name
-and \code{retrieveObj} method to 
-directly create a stub representing
-a remote object that has been registered via
-\code{registerObj}.
-
-
 Let's explain the message flow with the example
 in Figure~\ref{fig:nodermiexample}.
 As shown in the code snippet on the top left of the figure,
@@ -239,17 +224,39 @@ process B invokes \emph{method1} with \emph{stubCallbackA} as argument.
 Then the \emph{method1} then invokes \emph{stubCallbackA} with \emph{result}
 which in turn initiate a remote method invocation to call \emph{callbackA} in process A.
 
-% Notice that the variable \emph{result} is not necessary B's local object,
-% it could be a stub reference to an object
 
-\section{Message Encoding}
+\paragraph{Bootstrap}
+It is clear that nodermi automatically creates stubs during
+passing arguments in remote method invocation without programmers
+explicitly calling framework API.
+However, the first \emph{stub} cannot be obtained
+via remote method invocation.
+To bootstrap the RPC communication,
+nodermi provides \code{registerObj} method
+to register a local object with a name
+and \code{retrieveObj} method to 
+directly create a stub representing
+a remote object that has been registered via
+\code{registerObj}.
+
+\paragraph{Message Encoding}
+When passing an object from a process to another,
+nodermi adopts several policies to minimize the size of messages:
+Nodermi assumes properties whose names starts with ``_'' are private properties
+and skip them during encoding;
+Nodermi skips certain types of objects e.g. Sockets because
+it makes no sense for these objects to be read remotely;
+Nodermi also provides mechanism for programmers to specify which
+properties could be ignored during encoding;
+Finally, nodermi use Protobuf~\cite{protobuf} a very compact binary format 
+to serialize its messages.
 
 
 \section{Distributed Garbage Collection}
 \js{} relies on garbage collection to reclaim memory taken by
-objects that are not referenced anymore in the program.
+objects that are not referenced in the program.
 However, the garbage collector is not aware a local object
-could also be referenced by another process through nodermi.
+could be referenced by another process through nodermi.
 In the example shown in Figure~\ref{fig:nodermiexample},
 after \emph{method1} of \emph{stubB} is called,
 \emph{callbackA} is out of scope in process A,
