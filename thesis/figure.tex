@@ -167,8 +167,8 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \end{figure}
 }
 
-
-\newcommand{\nodrmimethodinvokefig}{
+% deprecated
+\newcommand{\nodermimethodinvokefig}{
     \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_method_invoke}
@@ -177,8 +177,8 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \end{figure}
 }
 
-
-\newcommand{\nodrmicallbackfig}{
+% deprecated
+\newcommand{\nodermicallbackfig}{
     \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_callback}
@@ -188,7 +188,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 }
 
 \newcommand{\nodermiexamplefig}{
-    \begin{figure}[ht]
+    \begin{figure}[tb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_example}
     \caption{Nodermi remote method invocation example}
@@ -196,8 +196,8 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \end{figure}
 }
 
-\newcommand{\nodrmiobjmapfig}{
-    \begin{figure}[ht]
+\newcommand{\nodermiobjmapfig}{
+    \begin{figure}[tb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_objectmap}
     \caption[Nodermi memory management]{Nodermi memory management : Nodermi holds 
@@ -208,7 +208,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 }
 
 %deprecated
-\newcommand{\nodrmiracefig}{
+\newcommand{\nodermiracefig}{
     \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_race}
@@ -220,10 +220,10 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 }
 
 
-\newcommand{\nodrmipassbyreffig}{
-    \begin{figure}[ht]
+\newcommand{\nodermipassbyreffig}{
+    \begin{figure}[tb]
     \centering
-    \includegraphics[\textwidth]{../figs/nodermi_passbyreference}
+    \includegraphics[width=\textwidth]{../figs/nodermi_passbyreference}
     \caption[Nodermi passes arguments by reference]
     {Nodermi passes argument by reference: When passing an argument to a remote
     method call, a remote reference is created for the argument in the server
@@ -236,9 +236,9 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 }
 
 \newcommand{\nodrmipassbyvalfig}{
-    \begin{figure}[ht]
+    \begin{figure}[tb]
     \centering
-    \includegraphics[\textwidth]{../figs/nodermi_passbyvalue}
+    \includegraphics[width=\textwidth]{../figs/nodermi_passbyvalue}
     \caption[Nodermi passes arguments by value]
     {Nodermi passes argument by value: When passing an argument to a remote
     method call and the argument is a simple object with no methods

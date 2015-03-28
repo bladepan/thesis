@@ -62,6 +62,7 @@ Nodermi treats functions and objects alike so that functions can also be
 referred to remotely.
 
 \section{Semantics}
+\label{sec:semantics}
 
 \nodermiexamplefig{}
 
@@ -80,7 +81,9 @@ returning a result, the method must be written in an asynchronous style.
 Thus, some existing methods will need to be changed to be able to invoke them 
 remotely via nodermi.
 
-\nodrmipassbyreffig{}
+\nodermipassbyreffig{}
+
+
 \nodrmipassbyvalfig{}
 
 
@@ -144,25 +147,22 @@ we use the stub's source object directly instead of
 creating a new remote reference.
 
 
-\paragraph{Remote Object Property}
+\paragraph{Stub Property}
 A stub's properties is a snapshot of the properties
-of the remote object it represents.
-Similar to passing method arguments,
-properties are passed by value, implementation or reference
-based on the their types.
+of its source object.
 We could read or write properties of a stub directly.
 But the changes we made to a stub's property
-will not be synchronized to the remote object the stub represents.
+will not be synchronized to its source object.
 Vice versa,
-changing the properties on the remote object has no effect
+changing the properties on the source object has no effect
 on the stub either.
 It is ideal to make the stub acts like a regular reference
-to the remote object such that
+to its source object such that
 changes made on one side would be reflected on the other.
 It is not feasible to implement this semantics because
-in \js{} reading or writing object property is synchronous,
-we cannot block to wait for synchronization takes place
- when accessing object property.
+in \js{} reading or assigning a object property is synchronous,
+we cannot block to wait for synchronization takes effect
+ during these operations.
 We could have intercept assignment to existing properties using
 \emph{setter} and propagate the assignment to other processes.
 We still cannot preserve the semantics of the local property assignment
@@ -176,37 +176,34 @@ adding a new property or deleting a property.
 
 \nodermifig{}
 
-Figure~\ref{fig:nodermi} is a diagram of nodermi's design.
-A stub is created with every method pointing to the
+As shown in Figure~\ref{fig:nodermi},
+calling a stub method results in calling
 \emph{remote method invocation} module in nodermi.
 This module
 first encodes the arguments of the method call
- and other necessary information about this method call
+ and other necessary information
 as a \emph{method invocation message}.
 The transport layer then converts the message to
 a binary string and sends it
-to the server process.
-On the server side, the transport layer first reads
+to the server process of the remote method.
+On the server side, the transport layer reads
 the message from the network and invokes \emph{method invocation handler}.
-The handler
-constructs arguments by decoding the \emph{method invocation message},
-it would create stubs to represent the original arguments in the client process
- if necessary,
-then invokes the corresponding local method with the arguments
+The handler reads the description of the arguments 
+ by decoding the \emph{method invocation message}.
+Then it recreates the arguments according to 
+the semantics of argument passing (see section~\ref{sec:semantics}).
+Finally, the handler invokes the corresponding local method with the arguments
 it constructs earlier.
 
-Nodermi uses TCP sockets to implement inter-process communication,
-a process needs to allocate a TCP port and specify a host name
-to receive incoming nodermi messages.
-Since the host name and port for nodermi is unique for every process,
-nodermi uses them as the process's identifier.
-When a object is passed by reference to another process,
-a unique object id is assigned to that object,
-the stub created in the receiving process
-will contain the object id and the sending process's identifier.
-So when we call a stub's method,
-nodermi could find the right process and object using
-the information stored in the stub.
+To locate the host process and source object of a stub,
+nodermi stores the host process's identifier and the source object's object id
+inside the stub so these information could be retrieved later by 
+the \emph{remote method invocation} module.
+The process identifier is a host and port pair that each process
+allocates for nodermi to listen incoming TCP message.
+The object id is a unique id nodermi assigns for each object that
+is remotely referenced.
+
 
 \paragraph{Bootstrap}
 It is clear that nodermi automatically creates stubs during
@@ -214,13 +211,13 @@ passing arguments in remote method invocation without programmers
 explicitly calling framework API.
 However, the first \emph{stub} cannot be obtained
 via remote method invocation.
-Nodermi provides \emph{retrieveObj} API to get
-a stub directly.
-The programmer needs to provide a remote process's identifier
-and an object name for this API.
-The remote process will locate an object that has been registered
-using the exact object name via \emph{registerObj} API,
-and pass that object to the requesting process by reference.
+To bootstrap the RPC communication,
+nodermi provides \code{registerObj} method
+to register a local object with a name
+and \code{retrieveObj} method to 
+directly create a stub representing
+a remote object that has been registered via
+\code{registerObj}.
 
 
 Let's explain the message flow with the example
@@ -228,26 +225,24 @@ in Figure~\ref{fig:nodermiexample}.
 As shown in the code snippet on the top left of the figure,
 process A invokes \emph{method1} with a function argument \emph{callbackA}.
 First nodermi creates a \emph{method invocation message}
-contains information about the remote method being called:
-the object ids of \emph{method1} and \emph{objB}.
-The message also contains information about the arguments:
+contains the object id of \emph{objB} and the method being called.
+The message also contains a description of the arguments:
 the object id of \emph{callbackA} and
 the type of \emph{callbackA}.
 After process B receives the message,
-it reconstructs the arguments for the method call,
-that is creating a stub for \emph{callbackA}.
+it reconstructs the arguments for the method call:
+creating stub \emph{stubCallbackA} for \emph{callbackA} since it is a function.
 The stub \emph{stubCallbackA} is a function and
 it stores \emph{callbackA}'s id and Process A's process identifier.
-Then process B finds \emph{objB} and \emph{method1} using the
-object ids in the message.
-After that,
-process B invokes the \emph{method1} with \emph{stubCallbackA} as argument.
-The \emph{method1} then invokes \emph{stubCallbackA} with \emph{result}.
-Finally, \emph{callbackA} in process A
-is invoked via a remote method call from process B.
+After process B finds \emph{objB} via object id,
+process B invokes \emph{method1} with \emph{stubCallbackA} as argument.
+Then the \emph{method1} then invokes \emph{stubCallbackA} with \emph{result}
+which in turn initiate a remote method invocation to call \emph{callbackA} in process A.
+
 % Notice that the variable \emph{result} is not necessary B's local object,
 % it could be a stub reference to an object
 
+\section{Message Encoding}
 
 
 \section{Distributed Garbage Collection}
@@ -312,7 +307,7 @@ At this point, if it is not referenced locally it could
 be safely garbage collected.
 
 
-\nodrmiobjmapfig{}
+\nodermiobjmapfig{}
 
 Figure~\ref{fig:nodermiobjmap} shows the structure of
 the object map and the stub map
