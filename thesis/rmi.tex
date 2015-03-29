@@ -170,8 +170,18 @@ where the property update takes effect right after the assignment statement retu
 Moreover, there is no way in \js{} to intercept the operation of
 adding a new property or deleting a property.
 
-% TODO -------
-
+We could have only allow methods to access properties of a remote object
+to provide a consistent semantics.
+However we would need to implement asynchronous methods to read properties
+for many objects
+and change reading property to asynchronous method calls in many
+call sites.
+This would greatly change the structure of existing code
+and introduce performance penalties of extra round trips.
+If the programmer do want a consistent semantics,
+he could implement methods to read write properties himself.
+For most cases in our system, reading a snapshot of remote object properties
+does not affect the correctness of the program.
 
 
 \section{Design}
