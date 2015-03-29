@@ -159,7 +159,7 @@ on the stub either.
 It is ideal to make the stub acts like a regular reference
 to its source object such that
 changes made on one side would be reflected on the other.
-It is not feasible to implement this semantics because
+However, it is not feasible to implement this semantics because
 in \js{} reading or assigning a object property is synchronous,
 we cannot block to wait for synchronization takes effect
  during these operations.
@@ -170,7 +170,9 @@ where the property update takes effect right after the assignment statement retu
 Moreover, there is no way in \js{} to intercept the operation of
 adding a new property or deleting a property.
 
-% TODO comparison...
+% TODO -------
+
+
 
 \section{Design}
 
@@ -242,7 +244,7 @@ a remote object that has been registered via
 \paragraph{Message Encoding}
 When passing an object from a process to another,
 nodermi adopts several policies to minimize the size of messages:
-Nodermi assumes properties whose names starts with ``_'' are private properties
+Nodermi assumes properties whose names starts with ``\_'' are private properties
 and skip them during encoding;
 Nodermi skips certain types of objects e.g. Sockets because
 it makes no sense for these objects to be read remotely;
@@ -258,25 +260,27 @@ objects that are not referenced in the program.
 However, the garbage collector is not aware a local object
 could be referenced by another process through nodermi.
 In the example shown in Figure~\ref{fig:nodermiexample},
-after \emph{method1} of \emph{stubB} is called,
-\emph{callbackA} is out of scope in process A,
-it is not referenced anymore by the user code.
-If nodermi does not hold reference to \emph{callbackA},
-it could be garbage collected before it is invoked.
-In fact, in practice callback functions like \emph{callbackA} are almost
+after \code{method1} of \code{stubB} is called,
+\code{callbackA} is out of scope in process A,
+it is not referenced anymore by the user's code.
+If nodermi does not hold reference to \code{callbackA},
+it could be garbage collected before it is invoked later
+by \emph{process B}.
+In fact, in practice callback functions like \code{callbackA} are almost
 immediately garbage collected because it is likely that these functions
 live on the new space of a generational garbage collector heap that is frequently
 garbage collected.
 However, if we naively keep reference to objects like
  \emph{callbackA} in nodermi,
-our application is surely prone to memory leak
+our system is surely prone to memory leak
 as objects that are once remotely referenced
 will never be garbage collected even after the local and remote processes
 no longer use them.
-Setting a timeout to automatically clean references of
-these objects from nodermi is not going to work either,
-since there is no guarantee that when the client is going to use a
-particular object.
+Setting timeouts for the references of these objects
+and cleaning them automatically 
+is not going to work either,
+since there is no guarantee that when the remote processes are
+ going to use a particular object.
 For example,
 when a process registers a listener function to a remote event publisher,
 the listener could be remotely triggered at anytime in the future.
@@ -290,7 +294,7 @@ We will discuss the difference between our work and ~\cite{birrell1993distribute
 in section~\ref{sec:relatedrpc}.
 
 The high level design of our distributed garbage collecting
-algorithm works as follows.
+algorithm is as follows.
 For each process, nodermi has an object map containing the objects
 that are still remotely referenced.
 The object map prevents garbage collector from prematurely garbage collecting
@@ -301,7 +305,7 @@ On the other hand, nodermi holds weak references(implemented using node-weak~\ci
 to \emph{stub}s.
 Garbage collector could collect objects that are only
 referenced by weak references.
-When a stub is not used, it would be garbage collected,
+So when a stub is not used, it would be garbage collected,
 then a callback function which is registered when creating
 the stub's weak reference is fired to
 send the stub's host process a \emph{dereference message}.
@@ -330,34 +334,33 @@ On the receiving side, the session id is written to
 the \emph{stub}s created in this transmission.
 When a \emph{stub} is garbage collected,
 the \emph{dereference message} will contain
-the remote object's id and the session id stored
-in the stub.
+the remote object's id and the stub's session id.
 
 
-So far, we only considered the scenario of a process sending its local
-objects to another process.
-It is also possible that a process could send a \emph{stub} to another process.
-If the \emph{stub}'s host is the receiver, then there is no problem because no remote
-reference is created.
-If the \emph{stub}'s host is not the receiver(it could not be the sender either),
-then a record needs to be added to the host's object map to indicate
-a new remote reference.
-In this situation,
-the sender process first sends a \emph{reference message} to
-ask the host
-to generate a new session id
+When a process passes a \emph{stub} to another process
+and the \emph{stub} is not from the receiving process,
+then a new remote reference is created to the stub's source object.
+In this case, 
+we need to add a record to the stub's host's object map to represent
+this new remote reference.
+To implement this,
+before passing the \emph{stub}
+the sender first first sends a \emph{reference message} to
+ask the stub's host to generate a new session id
 and put that session id into the host's object map.
 After that,
-the sender will send the \emph{stub} and the new session id
+the sender passes the \emph{stub} along with the new session id
 to the receiver.
-By the time the receiver gets the message from the sender
-and
-creates a new \emph{stub} to the original object,
-the host already has the record of this new remote reference.
+The receiver then creates a new \emph{stub} 
+representing the original object and the new \emph{stub}
+contains the new session id.
 
-A process could terminate without explicitly releasing its remote references
-by sending dereference messages.
-This could create false remote references on other processes.
+A process could terminate without 
+sending dereference messages to release its remote references.
+This leaves records of defunct remote references
+in other processes' object maps,
+thus creating potential memory leak by holding up
+objects that are no longer remotely referenced.
 To remove these false remote references,
 nodermi cleans a remote process's records in the object map if
 it detects that remote process is terminated.
@@ -367,8 +370,8 @@ When the table entry for a process is not updated for more than 60 seconds, node
 will send a ping message to that process.
 If the ping message is unanswered, all records of that process will be removed
 from the object map.
-This feature ensures that a terminated process will not cause memory leak on
-other processes.
+Thus, a terminated process will be detected and all its remote references 
+will be removed from the system.
 
 
 
