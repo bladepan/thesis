@@ -3,57 +3,165 @@
 
 \section{Remote Procedure Call(RPC) Frameworks}
 \label{sec:relatedrpc}
-Some remote procedure call frameworks deals similar problems as nodermi,
-such as object oriented remote method calls,
+Some remote procedure call frameworks share similar features and challenges 
+with nodermi, such as object oriented remote method calls,
 distributed garbage collection, etc.
 
 Dnode~\cite{dnode} is a RPC framework for \nodejs{}. 
-Like nodermi, it is object oriented and it allows remote objects to be 
-returned in a function or be passed as function parameters.
-However, it does not distinguish remote stubs from local objects 
-when marshaling them into messages.
-As a consequence, a remote stub could point to a remote stub on another process,
-a remote method call can cause a long chain of request round trips.
-Even when a process is passing a remote stub is referencing a local object in the client,
-the client will also create a stub point to the stub that is pointing to its local object.
-Because of it does not deal with the problem brought by copying remote reference,
-the garbage collection scheme is straightforward in dnode.
+Like nodermi, the remote methods are asynchronous, the remote references are created
+automatically as a result of remote method calls, etc.
+However, it does not distinguish stubs from local objects 
+when passing them as arguments of remote methods.
+As a consequence, a stub could represent another stub,
+a remote method call can cause a long chain of inter-process communications as
+we discussed in section~\ref{sec:semantics}.
+Even when the stub's host is the receiver process,
+the receiver will still create a remote reference
+representing the stub that is representing a receiver's local object.
+Because dnode does not deal with 
+the problem brought by passing remote reference,
+its garbage collection scheme is straightforward.
 Dnode keeps reference to the object in a reference map when the object
- is serialized as a message,
-on the client side,
+ is passed to a receiver process,
+on the receiver side,
 whenever a remote reference is garbage collected, 
-a \emph{cull} message(similar to our dereference message) 
-is sent to inform the host to remove the object from 
-the reference map.
-There is a reference map for every client so the \emph{cull} messages from
-different clients do not conflict with each other.
+a \code{cull} message (similar to dereference message in nodermi) 
+is sent to inform the host of the remote reference
+ to remove the original object from its reference map.
+
  
-Pyro~\cite{pyro} is a object oriented RPC framework for python programming language.
-Because python supports interception of creating, deleting and changing object properties,
-and because python is not a ``non-blocking'' language like \js{},
-pyro is able to support property manipulation on remote stubs in the exact same semantics as manipulating 
-properties of local objects.
-The downside of pyro is that every object needs to be registered in pyro manually
-if you want it to be passed to another process as remote reference.
+Pyro~\cite{pyro} is an object oriented RPC framework for python programming language.
+Unlike nodermi and dnode,
+Pyro synchronizes the modifications of remote references' properties to their source 
+objects and vice versa.
+This makes remote references act more like regular references thus
+provides a better semantics.
+There are two major drawbacks in pyro :
+An object needs to be registered manually
+before it could be passed to another process as a remote reference,
+this could be tricky as remote method calls appear like regular method calls for 
+programmers.
 If a object is not registered,
-pyro will serialize it as a \emph{dict} structure, i.e., a hash map equivalent data structure in python.
-Also, there is no garbage collection mechanism in pyro, 
-objects are kept in server by pyro even no client or other server component is referencing them.
+it is passed as a \emph{dict} structure, i.e., 
+a hash map equivalent data structure in python,
+thus loses all of its methods.
+Another shortcoming for pyro is the lack of garbage collection mechanism, 
+objects that passed to remote methods are kept forever.
 
-Druby(drb)~\cite{druby} is a object oriented RPC framework that is built in ruby's standard library.
-Druby has two modes of transmitting a object to client : by value and by reference.
-If a object is transferred by value, the client will create a copy of that object and method
-invocation on that object will only take place on the client.
-The by reference mode creates a remote stub on the client side, and the stub will proxy 
-method calls to the server.
-Like pyro, it is the programmer's responsibility to explicitly define if a object could be
-remotely referenced.
-It also requires user to explicitly hold reference to remote objects to prevent them from being 
-prematurely garbage collected. 
 
-Network objects~\cite{birrell1993distributed} is a distribute programming paradigm
+Druby(drb)~\cite{druby} is a object oriented RPC framework in ruby's standard library.
+Like pyro, it is the programmer's responsibility to explicitly tell the
+framework to pass an object as a remote reference.
+It also requires user to explicitly hold reference 
+to objects that are remotely referenced 
+to prevent them from being prematurely garbage collected.
+While in nodermi, the framework automatically creates remote references and takes care of
+distributed garbage collection.
+
+% TODO ---------
+Network objects~\cite{birrell1993distributed}
+is a distribute programming paradigm
 that provides RPC in a object oriented style.
-The major difference between network objects and nodermi is that 
-a client cannot directly read or write a remote object's properties,
-and a client only keeps one stub per remote object.
-As we explained in %FIXME
+Java RMI~\cite{j2eedoc}
+is a object oriented RPC frameworks for Java programming language.
+These two both build on languages unlike the frameworks we introduced
+before.
+When passing objects to remote processes,
+the objects are either passed by value such that 
+ the receiver process creates copies of them
+ with exact the same internal states and methods,
+or are remotely referenced via stubs.
+Unlike nodermi,
+the stubs in these systems do not have properties,
+so the properties of a remote object could
+only be accessed via remote method calls.
+
+% They all have sophisticated distributed garbage collected
+% mechanisms and they create remote references automatically.
+
+These frameworks except dnode are based on ``synchronous'' languages.
+They all block for the remote site completion when invoking remote
+method calls.
+
+
+
+
+\section{Server-centric Web Frameworks}
+
+ZK~\cite{ChenCheng:book2007},
+which we use as part of our motivation in Section~\ref{sec:background}
+is a Java-based server-centric web framework that is in wide use.
+ZK applications are constructed using components, which are represented
+using the ZK User Interface Markup Language (ZUML).  ZUML components
+are translated into HTML and CSS when a page is rendered.
+A client-side library handles synchronization between the client's 
+view of and interaction with components and their server-side 
+representation.  Our extensive experience deploying applications
+with ZK~\cite{Tilevich:aop2008,EdwardsBack:csc2011} inspired the 
+work on \cb.  As discussed, ZK does not maintain a representation
+of the server document across page reloads, which means that
+all presentation state must be tied to session or persistent state.
+To scale ZK to multiple processes or servers, this session state must
+be replicated.
+
+Unlike \projectname{}, ZK aims to support layout attributes, but
+we have found that the complexity of its client engine leads to 
+numerous layout and compatibility bugs developers must work around,
+particularly when the server-side document and the client-side
+document are not identical.  By contrast, \cb uses identical, HTML-based
+documents on the client and the server.
+
+ItsNat~\cite{JoseMariaArranzSantamariaItsNat} is a Java-based AJAX
+component framework similar to ZK, although it uses HTML instead of
+ZUML to express server documents, along with the Java W3C implementation.  
+Unlike \projectname, it also does not maintain the server document 
+state across visits, and cannot make use of existing JavaScript libraries.
+
+The Google Web Toolkit~\cite{GWT} allows the implementation of
+AJAX applications in Java that are compiled to JavaScript (or other
+targets).  Like \projectname, it provides an environment similar to 
+that provided by desktop libraries, but focuses on the client-side only; 
+communication with the server is outside its scope.
+
+% Fiz~\cite{OusterhoutFiz2009} is a server centric component based web framework
+
+% http://itsnat.sourceforge.net/index.php?_page=overview
+
+% http://books.zkoss.org/wiki/ZK_Developer%27s_Reference/Clustering
+% http://www.javaworld.com/article/2075019/jndi/j2ee-clustering--part-1.html
+
+% TODO zkoss
+
+% http://books.zkoss.org/wiki/Small_Talks/2007/April/How_to_Run_ZK_on_Apache_%2B_Tomcat_clustering,_Part_I
+% session replication "replication costly while cluster nodes more then three (it's about math, think about fully connected graph K3~K4"
+% TODO every node pick an arbitrary node to replicate is also an option, wonder why they do not use this option
+
+\section{Other Systems}
+
+A closely related project that pursues similar goals in simplifying the development
+of rich web applications is Meteor~\cite{meteor}, a full stack platform for building 
+web and mobile applications.  Meteor provides mechanisms that tie a client's presentation
+state directly to model state that is kept in a server-side database, which in turn is 
+partially replicated on the client.  As such, user input can be handled, optimistically, before 
+the server roundtrip has completed. If an update is rejected by the server, the optimistic 
+application is undone. Like with client-centric frameworks, no presentation state is kept on
+the server. Asynchronous updates to model data is pushed to clients.
+
+Meteor will have lower server-side cost, and thus higher scalability, than \cb, as well
+as the ability to reduce user-perceived latency because of its optimistic processing.
+However, we believe that this comes at a high price of complexity and increased risk.
+For instance, programmers must be extremely careful to not leak sensitive data to the 
+client, and they may easily expose (unintentionally) sensitive business logic to the client.  
+Meteor also does not focus on the problem of simplifying the retention of presentation
+state across visits, either making that state ephemeral, or requiring the programmer
+use session state or store all necessary model variables in the database.
+
+
+Lastly, our system shares ideas with traditional thin-client and remote display 
+systems, going back to ``dumb terminals'' based on the X Window 
+System~\cite{ScheiflerGettys:acmtg1986}.  We note that VMWare's Horizon product provides
+a way to see the user interface of actual virtual machines via a browser, with its
+BLAST protocol.  Compared to these systems, \cb{} is 
+unique in that it uses a markup document and differential update to it to 
+describe the structure and evolution of the user interface that is rendered 
+to the user.  
