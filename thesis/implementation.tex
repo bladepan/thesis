@@ -1,189 +1,153 @@
-\chapter{Implementation}
-\label{ch:impl}
+\chapter{Implementation} 
+\label{ch:impl} 
 \markright{Implementation}
 
 \newarchitectureoverview{}
 
-Figure~\ref{fig:cb2arch} shows the design of \cbtwo, which consists of a single
-master process, multiple reverse proxies, and multiple worker processes.
-All processes communicate via standard TCP/IP sockets, 
-so they can be located on a shared multiprocessor machine or in a cluster.
-The workers host application instances and virtual browsers.
-The master is responsible for the request dispatch logic which
-decides how to distribute the client load to workers.
-The actual dispatching is implemented by the reverse proxies,
-they forward users' requests to workers and copy workers' response
-back to users.
-Multiple reverse proxy processes are bound to the socket that accepts client requests, allowing
-the OS to distribute pending client connections in a round-robin fashion.
-For \cb, virtual browsers occupy most of the system resource in terms of CPU and
-memory. In the new design, we spread the virtual browsers to multiple workers, 
-thus improves the system's scalability.
-% The master process is a single point of failure,
-% but it is light weight and does less computation,
+Figure~\ref{fig:cb2arch} shows the design of \cbtwo, which consists of a
+single master process, multiple reverse proxies, and multiple worker
+processes. All processes communicate via standard TCP/IP sockets, so they can
+be located on a shared multiprocessor machine or in a cluster. The workers
+host application instances and virtual browsers. The master is responsible for
+the request dispatch logic which decides how to distribute the client load to
+workers. The actual dispatching is implemented by the reverse proxies, they
+forward users' requests to workers and copy workers' response back to users.
+Multiple reverse proxy processes are bound to the socket that accepts client
+requests, allowing the OS to distribute pending client connections in a round-
+robin fashion. The reverse proxy can relay both HTTP requests/responses as
+well as the bidirectional WebSocket protocol after the connection has been
+upgraded.  Once established, the majority of traffic will be WebSocket
+messages for which there is relatively little per-message overhead.  We
+implemented the proxy using the \nodejs{} module note-http-
+proxy~\cite{nodeproxy}. For \cb, virtual browsers occupy most of the system
+resource in terms of CPU and memory. In the new design, we spread the virtual
+browsers to multiple workers, thus improves the system's scalability.
+
+% The master process is a single point of failure, 
+% but it is light weight and does less computation, 
 % so it is less likely to fail in practice.
 
 % discuss the user request, message flow
 
-\section{Client Bootstrap}
-A user could use any form of the below URL types to access an application in \cb{} (assume
-the system's domain name \emph{example.com}).
+\section{Request Dispatch} 
+\label{sec:bootstrap} 
 
-\begin{enumerate}
+A user could use any type of URL listed below to access an application in
+\cb{}.
 
-\item \label{itm:appurl} http://example.com/[app] : Application URL.
-`[app]' represents an application's mount point. 
-For example, a chat application's mount point is \emph{chat},
-then its Application URL is http://example.com/chat.
+\begin{description}
 
-
-\item \label{itm:appinsurl} http://example.com/[app]/a/[appInstanceId] : \appins{} URL.
-`[appInstanceId]' represents an \appins{}'s id. 
-For example,
-an \appins{}'s id is \emph{appins1} and its application is the chat application mentioned 
-above, then its \appins{} URL is
- http://example.com/chat/a/appins1.
+\item[Application URL] \label{itm:appurl} \hfill \\
+Format: \url{http://example.com/[app]}, \code{[app]} represents an application's mount
+point.   For example, if an application's mount point is \emph{chat},  then
+its Application URL is \url{http://example.com/chat}.
 
 
-\item \label{itm:vburl} http://example.com/[app]/a/[appInstanceId]/b/[browserId] : Browser URL.
-`[browserId]' represents a virtual browser's id. 
-For example, 
-a virtual browser's id is \emph{browser1} and its \appins{} is the
-application instance \emph{appins1}, then the virtual browser's Browser URL is
- http://example.com/chat/a/appins1/b/browser1.
-
-\end{enumerate}
-
-When the user uses a Browser URL, the system could directly find
-a virtual browser to serve the user's requests.
-But the user could use the other two forms of URLs for various reasons:
-When the user accesses the application for the first time,
-using the Application URL is the only option;
-The user does not want to bookmark his virtual browsers' URLs and
-use the Application URL directly;
-The user wants to join someone else's shared \appins{},
-in this case, he is given an \appins{} URL.
-When the user uses an Application URL or an \appins{} URL,
-the system will eventually redirect him to a Browser URL.
-% When the user sends requests using an Application URL or
-% an \appins{} URL,
-% the system would allocates a virtual browser 
-% or find an existing virtual browser for the user and
-% sends a redirect to the user with the virtual browser's URL.
-
-When the client sends the initial HTTP request to the system,
-a reverse proxy process will accept this HTTP request and
-ask the master where to dispatch this request.
-The master use its request dispatch logic (discussed in
-Section~\ref{sec:reqdis}) to find a worker process to handle
-this request.
-The reverse proxy then forwards the request to the worker process.
-If the request URL is not a Browser URL,
-the worker process would allocate a new virtual browser
-or find an existing virtual browser in
-the system and sends back
-a redirect response with the virtual browser's Browser URL.
-Upon receiving the redirect response,
-the user will send another HTTP request with the Browser URL.
-
-When the worker process receives a request with a Browser URL,
-it responds a HTML document that contains information
-to bootstrap the client engine.
-The client engine will create a WebSocket connection
-to synchronize DOM nodes.
-First, the client engine sends a handshake request
-which embeds the current \appins id in the URL,
-the master could find the corresponding worker
-by a simple lookup in a in-memory \appins id to worker table.
-After handshake, 
-the WebSocket connection is established,
-the connection goes through 
-the reverse proxy that handles the handshake request
-and the reverse proxy will copy subsequent messages
-back and forth directly from the user to the worker.
-
-If there is any exception happens in bootstrap,
-for example, the user is sending a Browser URL with no corresponding
-virtual browser in the system,
-the system will reject the request with an error message.
+\item[\appins{} URL] \label{itm:appinsurl} \hfill \\
+Format: \url{http://example.com/[app]/a/[appInstanceId]}, \code{[appInstanceId]} represents an
+\appins{}'s id.  For example, if an \appins{}'s id is \emph{appins1} and its
+application's mount point is \emph{chat}, then its \appins{} URL
+is  \url{http://example.com/chat/a/appins1}.
 
 
-\section{Master} 
+\item[Browser URL] \label{itm:vburl} \hfill \\
+Format: \url{http://example.com/[app]/a/[appInstanceId]/b/[browserId]}, 
+\code{[browserId]} represents a virtual browser's id. 
+For example, if a virtual browser's id is \emph{browser1} and its \appins{} is the
+application instance \emph{appins1} in the previous example, 
+then the virtual browser's Browser URL is
+\url{http://example.com/chat/a/appins1/b/browser1}.
+
+\end{description}
+
+When the user requests a Browser URL, the system could directly locate a virtual
+browser to serve the user's requests. When the user uses an Application URL or
+an \appins{} URL, the system will locate an existing virtual browser or create a
+new virtual browser, and then send a redirect response back to user with the
+virtual browser's Browser URL.
+
+% When the user sends requests using an Application URL or an \appins{} URL, the
+% system would allocates a virtual browser  or find an existing virtual browser
+% for the user and sends a redirect to the user with the virtual browser's URL.
+
+To preserve the semantics of  \appins (see section~\ref{sec:appins}), each
+\appins and its virtual browsers need to be allocated in the same worker process
+as emphasized in Figure~\ref{fig:appidhierarchy}. The master keeps a lookup
+table of \appins id to worker process mappings. When the URL contains \appins
+id,  the master could directly find a worker
+
+When the client sends the initial HTTP request to the system, a reverse proxy
+process will accept this HTTP request and ask the master where to dispatch this
+request. If \appins id is in the request URL, the master would find a worker via
+a in-memory \appins id to worker table. Otherwise, the master would find a
+worker using load balance algorithm detailed in Section~\ref{sec:lb}. The
+reverse proxy then forwards the request to the worker process. If the request
+URL is not a Browser URL, the worker process would allocate a new virtual
+browser or find an existing virtual browser in the system and sends back a
+redirect response with the virtual browser's Browser URL. Upon receiving the
+redirect response, the user will send another HTTP request with the Browser URL.
+
+When the worker process receives a request with a Browser URL, it responds a
+HTML document that contains information to bootstrap the client engine. The
+client engine will create a WebSocket connection to synchronize DOM nodes.
+First, the client engine sends a handshake request which embeds the current
+\appins id in the URL, the master could find the corresponding worker by a
+simple lookup in a in-memory \appins id to worker table. After handshake,  the
+WebSocket connection is established, the connection goes through  the reverse
+proxy that handles the handshake request and the reverse proxy will copy
+subsequent messages back and forth directly from the user to the worker.
+
+If any exception happens in bootstrap, for example, the user sends a Browser URL
+with no corresponding virtual browser in the system, the system will reject the
+request with an error message.
 
 
-\subsection{Request Dispatch}
-\label{sec:reqdis}
-To preserve the semantics of 
-Application Instance(see section~\ref{sec:appins}),
-each application instance and its virtual browsers need to be allocated in
-the same worker process as emphasized in Figure~\ref{fig:appidhierarchy},
-so the requests associated with the same application instance needs
-to be dispatched to the worker that has that application instance.
-We implemented the request dispatch algorithm 
-to dispatch the requests in application instance level.
-The master process maintains a 
-table of which worker is responsible for which application instance.
-Multiple reverse proxy processes are bound to the socket that accepts client requests, allowing
-the OS to distribute pending client connections in a round-robin fashion.  
-When a proxy process accepts a client, it parses the incoming HTTP request 
-to extract the application instance id, which is part of the request URL.  
-If the application instance id is already in the master's table, the request is directly
-relayed to the corresponding worker.  
-Otherwise, the master finds a worker using a load balancing algorithm(described in Section~\ref{sec:lb})
-, the worker will then either create a new application instance 
-or redirect the request to an existing application instance
-or reject the request based on application specific settings.  
-The reverse proxy can 
-relay both HTTP requests/responses as well as the bidirectional web socket protocol after the
-connection has been upgraded.  Once established, the majority of traffic will be web socket
-messages for which there is relatively little per-message overhead.  We implemented the proxy 
-using the \nodejs{} module note-http-proxy~\cite{nodeproxy}.
+\section{Master}
+
+% For example, the worker could parse the request to extract a user id and find
+% the user's existing virtual browser in the system,  then sends back a redirect
+% response with the  virtual browser's URL.
 
 
-\subsection{Load Balancing}
-\label{sec:lb}
-When a new application instance is going to be created,
-the master will apply a load balancing algorithm to decide which worker to place this instance.  
-We support two load balancing strategies: first, the master can assign application instances
-to workers in a simple round-robin fashion.  
-However, since application instances may vary
-widely in terms of the actual cost they impose on a worker, we also implemented a load-based
-scheme in which workers periodically report a measure of current load to the master.
-The master will select the worker with the lowest load when placing a new application instance.
-We have found the amount of heap memory that is currently in use a good measure of a worker's 
-momentary load.
-
-In the load-based mode, it is impossible for the master to get
-the load of the worker in real time.
-So it is possible that a burst of application instances
-are assigned to the same worker that has the lowest load at that moment.
-This could cause extremely uneven load distribution.
-To mitigate this issue, the master adds an empirical value to the cached
-load value of a worker after it assigns a new application instance to it.
-This empirical value reflects our estimation about an application instance's 
-effect on a worker.
-Even under bursts of new requests, 
-the load distribution between the workers would not vary greatly.
 
 
-\section{Worker}
+\subsection{Load Balancing} 
+\label{sec:lb} 
+When a new application instance is
+going to be created, the master will apply a load balancing algorithm to decide
+which worker to place this instance.   We support two load balancing strategies:
+first, the master can assign application instances to workers in a simple round-
+robin fashion.   However, since application instances may vary widely in terms
+of the actual cost they impose on a worker, we also implemented a load-based
+scheme in which workers periodically report a measure of current load to the
+master. The master will select the worker with the lowest load when placing a
+new application instance. We have found the amount of heap memory that is
+currently in use a good measure of a worker's  momentary load.
 
-Worker processes is responsible for serving the client requests.
-When a worker receives a request,
-it first extracts application instance id from the request.
-If the request has an application instance id
-and it matches a local application instance,
-then the application instance is fetched to serve the request.
-If the application instance id doesn't match any local application instance,
-it would responds a internal error message to the user.
-If there is no application instance id 
-in the request,
-then the worker would handle the request based on application instantiation strategy
-mentioned in section~\ref{sec:appinstantiation}.
-In this situation,
-the worker would either, ask master for existing application instances and
-redirect the request to existing instances,
-or create an new application instance for this request.
+In the load-based mode, it is impossible for the master to get the load of the
+worker in real time. So it is possible that a burst of application instances are
+assigned to the same worker that has the lowest load at that moment. This could
+cause extremely uneven load distribution. To mitigate this issue, the master
+adds an empirical value to the cached load value of a worker after it assigns a
+new application instance to it. This empirical value reflects our estimation
+about an application instance's  effect on a worker. Even under bursts of new
+requests,  the load distribution between the workers would not vary greatly.
+
+
+\section{Worker} 
+\label{sec:worker}
+
+Worker processes is responsible for serving the client requests. When a worker
+receives a request, it first extracts application instance id from the request.
+If the request has an application instance id and it matches a local application
+instance, then the application instance is fetched to serve the request. If the
+application instance id doesn't match any local application instance, it would
+responds a internal error message to the user. If there is no application
+instance id  in the request, then the worker would handle the request based on
+application instantiation strategy mentioned in
+section~\ref{sec:appinstantiation}. In this situation, the worker would either,
+ask master for existing application instances and redirect the request to
+existing instances, or create an new application instance for this request.
 
 
 

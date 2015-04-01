@@ -25,7 +25,7 @@ Dnode keeps reference to the object in a reference map when the object
  is passed to a receiver process,
 on the receiver side,
 whenever a remote reference is garbage collected, 
-a \code{cull} message (similar to dereference message in nodermi) 
+a \code{cull} message (similar to release message in nodermi) 
 is sent to inform the host of the remote reference
  to remove the original object from its reference map.
 

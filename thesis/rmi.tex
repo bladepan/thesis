@@ -35,7 +35,7 @@ Before we discuss the implementation of nodermi,
 we first introduce some terms for nodermi and
 RPC systems in general.
 We use the term \emph{local object}
-to refer to objects that are local to a calling process.
+to refer to objects that are allocated by the calling process.
 We use the term \emph{remote object} to represent objects that are
 located in processes other than the calling process.
 We use \emph{stub} or \emph{remote reference} to refer to special objects created
@@ -53,13 +53,15 @@ to invoke the corresponding method there.
 For a given stub,
 the object it represents is called its \emph{source object},
 the process that creates the \emph{source object}
-is referred to as the \emph{host} of the stub. 
-The \emph{host} process takes on the role of a \emph{server}, 
+is referred to as the \emph{host} of the stub.
+The \emph{host} process takes on the role of a \emph{server},
 whereas the process that holds a \emph{stub} to the object act as a \emph{client}.
 In \js{}, since functions are first class citizens, it is possible
 to pass a function as an argument or return a function as a result.
 Nodermi treats functions and objects alike so that functions can also be
 referred to remotely.
+
+% -------- TODO mention the example
 
 \section{Semantics}
 \label{sec:semantics}
@@ -78,7 +80,7 @@ the remote method must be implemented asynchronously,
 passing its result(s) to the caller via a callback function.
 If a caller requires the knowledge that a method has completed - with or without
 returning a result, the method must be written in an asynchronous style.
-Thus, some existing methods will need to be changed to be able to invoke them 
+Thus, some existing methods will need to be changed to be able to invoke them
 remotely via nodermi.
 
 \nodermipassbyreffig{}
@@ -89,17 +91,17 @@ remotely via nodermi.
 
 \paragraph{Passing Arguments}
 Nodermi copies most arguments by value, including built-in primitive types
-and objects.  If an object refers to other objects, these objects are copied 
+and objects.  If an object refers to other objects, these objects are copied
 as well, so that an object's entire transitive closure is copied.
-Since JavaScript functions contain bindings to variables that are part of 
+Since JavaScript functions contain bindings to variables that are part of
 their closure, it is not possible to copy them.
 Instead, we create stubs for functions and methods before passing them
-to the remote object's method.  If a method needs to invoke 
+to the remote object's method.  If a method needs to invoke
 methods on objects passed as arguments, then such invocations
 will cause the created stubs to initiate a remote method
 call to the original object.  The client must create handlers
 to receive and process these remote method invocations.
-For instance, in Figure~\ref{fig:nodermiexample}, 
+For instance, in Figure~\ref{fig:nodermiexample},
 when \emph{Process B} calls the remote method \emph{method1}
 in \emph{Process A} with a function argument,
 a stub for the argument
@@ -108,10 +110,11 @@ it is not possible to copy function \emph{callbackA} to \emph{Process B}.
 The stub to \emph{callbackA} is passed as an argument to
  \emph{method1}.
 Then \emph{method1} invokes the stub to \emph{callbackA} as if it were an ordinary
- local function and the actual \emph{callbackA} is invoked in \emph{Process A}. 
+ local function and the actual \emph{callbackA} is invoked in \emph{Process A}.
 
+% -------- TODO check the example above
 
-For certain built-in types, e.g. \code{Date}, \code{Error}, \code{Buffer}, 
+For certain built-in types, e.g. \code{Date}, \code{Error}, \code{Buffer},
 we copy their contents and recreate them via their constructors.
 Thus, method invocations on those objects are local, not remote.
 In this case, no stubs are created as emphasized in Figure~\ref{fig:nodermipassbyval}.
@@ -119,26 +122,26 @@ Besides built-in types, nodermi also allows programmers to
 register customized types to be copied and recreated via constructors.
 The objects of these customized types need to implement a method to output
 their contents such that their constructor can recreate them.
-Unlike Java RMI\cite{j2eedoc}'s remote class loading mechanism, we do 
-not support a way for the sender of such objects to provide the receiver 
+Unlike Java RMI\cite{j2eedoc}'s remote class loading mechanism, we do
+not support a way for the sender of such objects to provide the receiver
 with code for its methods.  Rather, we use the receiver's versions of
 those classes.
 
-Nodermi allows programmers to pass reference to remote objects, 
+Nodermi allows programmers to pass reference to remote objects,
 represented by stubs, transparently as arguments to any method.
-If we treated such stubs representing remote references like other 
+If we treated such stubs representing remote references like other
 objects, we would create a remote stub referring to the passed stub.
 If the called method invokes a method on this stub,
-the corresponding remote method call would in turn initiate another 
+the corresponding remote method call would in turn initiate another
 remote method invocation to call the object the original stub represents.
 Since the remote object may in turn pass the received stub to other
 methods, the resulting chain of remote method invocations could
 be arbitrary long.
 To avoid this ``zig-zag'' problem, when we pass a stub to a remote method call,
-we create a new remote reference referencing 
+we create a new remote reference referencing
  the stub's \emph{source object} instead of referencing the stub itself
  (See Figure~\ref{fig:nodermipassbyref}).
-Calling methods on this newly created stub will initiate 
+Calling methods on this newly created stub will initiate
 communication directly with the remote object's host process.
 If the remote object resides in the same process as the
 receiver object, we pass a direct reference to the object
@@ -147,15 +150,15 @@ instead.
 \paragraph{Stub Generation.}
 A stub's properties are a snapshot of the properties
 of its source object at the time the stub is created.
-Any subsequent changes to the stub's properties will not 
+Any subsequent changes to the stub's properties will not
 be synchronized with its source object.
-Vice versa, any changes to the properties on the source object 
+Vice versa, any changes to the properties on the source object
 have no effect on the stub either.
 
 A stronger consistency  model would propagate changes from
 the stubs to the original objects and vice versa, as in DRuby\cite{druby}.
 However, it is not feasible to implement this semantics because
-in \js{} reading or assigning a object property is a synchronous 
+in \js{} reading or assigning a object property is a synchronous
 operation, thus we cannot engage in any communication to achieve
 such synchronization.
 
@@ -166,7 +169,7 @@ for each read property of each object, requiring changes to many
 callsites.
 This would severely change the structure of existing code
 and introduce performance penalties from extra round trips.
-For most use cases in our system, providing a snapshot of a 
+For most use cases in our system, providing a snapshot of a
 remote object does not affect the correctness of the program.
 
 
@@ -183,19 +186,19 @@ The transport layer then converts the message to
 a binary string and sends it
 to the server process hosting the remote object.
 On the server side, the transport layer reads
-the message from the network and invokes a generic 
+the message from the network and invokes a generic
 \emph{method invocation handler}.
-The handler reads the description of the arguments 
+The handler reads the description of the arguments
 by decoding the \emph{method invocation message}.
-Then it recreates the arguments according to 
+Then it recreates the arguments according to
 the semantics of argument passing (see Section~\ref{sec:semantics}).
 The handler uses the object's id to lookup the corresponding local object.
-Finally, the handler invokes the corresponding local method 
+Finally, the handler invokes the corresponding local method
 with the arguments it constructed earlier.
 
 To locate the host process and source object of a stub,
 nodermi stores the host process's identifier and the source object's object id
-inside the stub so this information can be retrieved later by 
+inside the stub so this information can be retrieved later by
 the \emph{remote method invocation} module.
 The process identifier is a hostname/port pair that each process
 allocates for nodermi to listen for incoming TCP messages.
@@ -218,7 +221,7 @@ it stores \emph{callbackA}'s id and Process A's process identifier.
 After process B finds \emph{objB} via its object id,
 process B invokes \emph{method1} with \emph{stubCallbackA} as argument.
 \emph{method1} then invokes \emph{stubCallbackA} with \emph{result},
-which in turn initiates a remote method invocation 
+which in turn initiates a remote method invocation
 to call \emph{callbackA} in process A.
 
 
@@ -226,20 +229,20 @@ to call \emph{callbackA} in process A.
 nodermi automatically creates stubs while passing arguments during remote method invocations
 on existing stubs, without requiring explicit calls to the framework API.
 To bootstrap the RPC communication and obtain an initial stub,
-nodermi provides a \code{registerObj} method to register a local object 
-under a name and a \code{retrieveObj} method to look up a remote object that 
+nodermi provides a \code{registerObj} method to register a local object
+under a name and a \code{retrieveObj} method to look up a remote object that
 has been registered via \code{registerObj} and create a stub for it.
 
 \paragraph{Object Encoding}
 When passing an object from one process to another,
 nodermi adopts several policies to control the encoding.
-Nodermi assumes properties whose names starts with ``\_'' are 
+Nodermi assumes properties whose names starts with ``\_'' are
 private properties and skips them during encoding;
 Nodermi skips properties that refer to certain types of objects, e.g. Sockets,
 which refer to native OS objects, which cannot be sent.
 Nodermi also provides a mechanism for programmers to specify which
 additional properties should be ignored during encoding.
-Finally, nodermi uses Protobuf~\cite{protobuf}, a very compact 
+Finally, nodermi uses Protobuf~\cite{protobuf}, a very compact
 binary format, to serialize its messages.
 
 
@@ -253,14 +256,14 @@ before \code{method1} of \code{stubB} is called,
 the caller creates a stub for \code{callbackA} to be able
 to dispatch invocations of this callback.
 This stub registers the callback, using its id, in the
-method invocation handler's object map. 
+method invocation handler's object map.
 
 If nodermi naively kept references to objects such as
 \emph{callbackA} indefinitely, it would incur memory leaks as all
 objects that are even once referenced remotely will never be garbage
 collected even after the local and remote processes no longer use them.
 
-Setting timeouts for the references of these objects and cleaning 
+Setting timeouts for the references of these objects and cleaning
 them automatically is not going to work either,
 since there is no guarantee as to when a remote processes will
 no longer attempt to use a particular object.
@@ -268,7 +271,7 @@ For example, when a process registers a listener function to a remote event publ
 the listener could be remotely triggered at anytime in the future.
 
 Instead, we implemented a distributed garbage collection mechanism
-that ensure that the entry to callbackA is deleted when the 
+that ensure that the entry to callbackA is deleted when the
 garbage collector is certain that it may no longer be invoked.
 Our mechanism is similar to the sequence reference counting algorithm
 designed by Birrell et al.~\cite{birrell1993distributed}.
@@ -289,28 +292,28 @@ these objects.
 This map is also necessary for looking up local objects
 when handling \emph{method invocation} messages.
 
-Entries in the object map are removed when a nodermi process learns that there 
+Entries in the object map are removed when a nodermi process learns that there
 are no more remote stub referencing the object.   In turn, a nodermi
 process must inform the hosts of the objects for it has created stubs
 when those stubs become unreachable and subject to garbage collection.
 
 Since \js does not provide finalizers, we use weak
-references (implemented using node-weak~\cite{nodeweak}).  
+references (implemented using node-weak~\cite{nodeweak}).
 Creation of a weak reference to a stub allows us to obtain notification
 via a callback when the garbage collector has freed the object.  Weak
-references, unlike regular references do not prevent the garbage collector 
+references, unlike regular references do not prevent the garbage collector
 from doing so.
 
-Thus, when a stub is no longer referenced by application code, it will 
+Thus, when a stub is no longer referenced by application code, it will
 be garbage collected and the corresponding weak reference's callback
 will execute.  In this callback, nodermi
 sends the object's host process a \emph{release message}.
 
-Upon receiving a release message, nodermi knows that a remote 
+Upon receiving a release message, nodermi knows that a remote
 reference to a local object no longer exists and will remove the
 corresponding reference from its object map.
 An object is garbage collected if the last entry to it from the
-object map is removed and there are no other local references to the 
+object map is removed and there are no other local references to the
 object.
 
 %
@@ -355,8 +358,8 @@ Nodermi keeps a table with the last response time of each remote process,
 which is updated every time it receives a message from a
 remote process.  When the table entry for a process is not updated for
 more than 60 seconds, nodermi will send a ping message to that process.
-If the ping message is not answered within some timeout, all records of that 
-process will be removed from the object map.  Thus, a terminated process 
+If the ping message is not answered within some timeout, all records of that
+process will be removed from the object map.  Thus, a terminated process
 will be detected and all its remote references will be removed from the system.
 
 TBA: discuss cycles.
