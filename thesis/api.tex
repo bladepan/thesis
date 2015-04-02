@@ -3,100 +3,100 @@
 \markright{Application Programming Interface}
 There are many use cases when the application needs
 to access framework's internal objects.
-For administrator applications, 
+For administrator applications,
 it is obvious that without access to the framework's internals
 it cannot do anything useful.
 For instance, in our administration dashboard one can
-view all the installed applications and upload new applications,
-it cannot be implemented without access to the framework internals.
+view all the installed applications and upload new applications.
 For general purpose applications,
 some common tasks could only be implemented by the framework.
-For example, 
+For example,
 in a chat room application,
-a user could terminate a chat room(i.e. application instance) 
+a user might want to terminate a chat room(i.e. application instance)
 and close all its associated chat windows(i.e. virtual browser).
 
-Instead of allowing application developers directly calling internal framework API,
-we designed a separate API layer to access the framework internals.
-The rationale for this decision are as follows:
-\begin{enumerate}
-\item Security. We have a privilege system built in \cb that allows the application
-specify its owner account and user's privileges to application instances and virtual browsers.
-For example, a virtual browser could be destroyed by its owner,
-the system administrators and the application owners. 
-We want to enforce authorization check so that a user's actions 
-are limited by the privilege system.
-Using the internal API directly, the application code could easily allow
-any user to do almost anything.
-The only way to do it is providing an intermediate level 
-that checks privilege violations between the application code and the framework.
+We designed an API layer such that the applications can only call
+the framework methods via the API.
+We do not allow the applications call framework code directly for the
+following reasons:
 
-\item Isolation. With direct access to internal objects, the application 
-code could manipulate them in unexpected ways thus poses great threat to 
-the integrity of the framework. Even the application is well implemented,
-the coupling between application and framework internals makes
-the changes made to the framework code could easily break the existing applications.
-\end{enumerate}
+\begin{description}
+
+\item[Security] \cb has a privilege system (discussed in
+Section~\ref{sec:worker})  that manages the permissions of users. For example,
+only the system administrator is allowed to shutdown all the  applications. We
+want to enforce permission check so that users' actions  are limited by the
+privilege system. Using the internal API directly, the application code could
+easily allow any user to do almost anything. The only way to do it is
+providing an intermediate level  that checks privilege violations between the
+application code and the framework.
+
+\item[Isolation] With direct access to internal objects, the application  code
+could manipulate them in unexpected ways thus poses great threat to  the
+integrity of the framework. Even the application is well implemented, the
+coupling between application and framework internals makes the changes made to
+the framework code could easily break the existing applications.
+
+\end{description}
 
 
 \section{Overall Design}
-The first objective is that the API should provides
-enough features to cover all the scenarios where the application needs
-to access framework internals.
+
+The first objective is that the API should provides enough features to cover
+all the scenarios where the applications need to access framework internals.
 We designed the API alongside developing several example applications
-include administrator applications and general multiple user applications.
-In our experience, the current API covers the essential features that are commonly
-needed.
-From our experience, we concluded that the API should allow developers to access
-applications, application instances and virtual browsers.
-Besides these internal objects, the API should also provide some auxiliary services
-like sending emails.
-Below are the classes we designed for the API:
-\begin{enumerate}
-\item APICloudBrowser: 
+including some administrator applications and some general multiple user
+applications. In our experience, the current API covers the essential features
+that are commonly needed. We concluded that the API should allow developers to
+access applications, application instances and virtual browsers in the whole
+system. Besides these internal objects, the API should also provide some
+auxiliary services like sending emails. Below are the key classes we designed
+for the API:
+
+\begin{description}
+\item[APICloudBrowser]
 The entry point for the application.
 For every virtual browser one APICloudBrowser object is created and injected as
 a global variable in the application code name space.
 
-\item APIApplication: Represents an application in the framework.
+\item[APIApplication] Represents an application in the framework.
 It contains methods to manipulate the application, such as modify the application's
 description, change its owner, close the application, etc.
 
-\item APIAppInstance: Represents an application instance in the framework.
+\item[APIAppInstance] Represents an application instance in the framework.
 It has methods to manipulate the application instance.
 
-\item APIBrowser: Represents a virtual browser in the framework.
+\item[APIBrowser] Represents a virtual browser in the framework.
 It has methods to manipulate the virtual browser.
 
-\end{enumerate}
+\end{description}
 
 \apiclassfig{}
 
-Initially, the application code could get a reference to a \emph{APICloudBrowser} object.
-As emphasized in Figure~\ref{fig:apiclass}, 
-via this object, the application code could
-could get API objects
-representing applications, application instances and virtual browsers.
+Initially, the application code could get a reference to a
+\emph{APICloudBrowser} object. As emphasized in Figure~\ref{fig:apiclass}, via
+this object, the application code could get API objects representing
+applications, application instances and virtual browsers.
 
 
 \section{Implementation}
-API objects themselves are just proxies of the internal objects they represented,
-they need to keep reference to these internal objects.
-We cannot store the internal objects as properties of the API objects,
-because there is no language support for private properties in \js,
-the application code could get reference to internal objects
-via reading properties.
-Using hidden non-enumerable property is not safe because the application
-code could guess the property name.
+
+API objects themselves are just proxies of the internal objects they
+represented so they need to keep reference to these internal objects. If we
+referenced the internal objects as properties of the API objects, the
+application code could get reference to internal objects via reading
+properties  since there is no language support for private properties in \js.
+Using hidden non-enumerable property is not safe either because the
+application code could guess the property name.
+
 We use closure visibility to implement a equivalence of private property as
-shown in Listing~\ref{code:apiconstructor}.
-We store internal objects as local variables in the API objects' constructors
-and define API methods inside the constructors.
-Then in the API methods we could reference internal objects directly 
-because the API methods
-and the variables reference to the internal objects are in the same closure.
-The application code cannot get the references to internal objects because
-they cannot be read as properties or be revealed by reflection.
+shown in Listing~\ref{code:apiconstructor}. We store internal objects as local
+variables in the API objects' constructors and define API methods inside the
+constructors. Then in the API methods we could reference internal objects
+directly because the API methods and the variables referencing to the internal
+objects are in the same closure. The application code cannot get the
+references to internal objects because they cannot be read as properties or be
+revealed by reflection.
 
 
 \begin{listing}[ht,width=\columnwidth]
@@ -125,18 +125,24 @@ function APICloudBrowser(virtualBrowser){
 
 
 As the application code could hold reference to internal objects indirectly
-through API,
-it is possible that a virtual browser hogs large amount of memory
-because it keeps alive internal objects that are no longer needed in
-the framework.
-To avoid this issue, the API objects only keep weak references to the
-internal objects(See Figure~\ref{fig:apireference}).
-We use a \nodejs{} package node-weak~\cite{nodeweak} to implement weak reference.
-Unlike ordinary references, the objects referenced only by weak references are
-free to be garbage collected.
-Using this method, 
-the internal objects could be garbage collected if they are no longer needed in
-the framework.
+through API, it is possible that a virtual browser hogs large amount of memory
+by keeping alive the internal objects that are no longer needed elsewhere in
+the system.  For example, if a page lists all the virtual browsers in the
+system, then it holds references to these virtual browsers indirectly. Then
+the closed virtual browsers could not be reclaimed if such references exist.
+To avoid this issue, the API objects only keep weak references to the internal
+objects(See Figure~\ref{fig:apireference}). We use a \nodejs{} package node-
+weak~\cite{nodeweak} to implement weak reference. Unlike ordinary references,
+the objects referenced only by weak references are free to be garbage
+collected. Using this method, the internal objects could be garbage collected
+if they are no longer needed in the framework.
 
 
 \apireferencefig{}
+
+The framework could also obtain references to the application object. 
+The API provides methods for the application to register event listeners to
+internal objects.
+For example,
+the application could register a event listener so that when an virtual browser
+% TODO -------
