@@ -18,11 +18,14 @@ robin fashion. The reverse proxy can relay both HTTP requests/responses as
 well as the bidirectional WebSocket protocol after the connection has been
 upgraded.  Once established, the majority of traffic will be WebSocket
 messages for which there is relatively little per-message overhead.  We
-implemented the proxy using the \nodejs{} module note-http-
+implemented the proxy using the \nodejs{} module node-http-
 proxy~\cite{nodeproxy}. For \cb, virtual browsers occupy most of the system
 resource. In the new design, we spread the virtual
 browsers to multiple worker processes, thus improves the system's scalability.
 The master process is light weight so it is tolerable to make it single process.
+
+% ---- make it clear that after dispatch, the messages websocket
+% ---- 'virtual browsers occupy most of the system...' move it earlier
 
 % The master process is a single point of failure,
 % but it is light weight and does less computation,
@@ -32,6 +35,7 @@ The master process is light weight so it is tolerable to make it single process.
 
 \section{Request Dispatch}
 \label{sec:reqdis}
+% ---- motivation, use cases here
 
 A user could use any type of URL listed below to access an application in
 \cb{}.
@@ -60,10 +64,10 @@ instance \emph{appins1} in the previous example, then the virtual browser's
 Browser URL is \url{http://example.com/chat/a/appins1/b/browser1}.
 
 \end{description}
-% scenario of these URLs
+% -----scenario of these URLs, when low load, the reverse proxy could be embedded
 
 The application URLs are entry points to applications. When the user requests
-for an application URL, the application will allocate a new virtual browser or
+ an application URL, the application will allocate a new virtual browser or
 find an existing virtual browser for that user, and sends back the user a
 redirect with the Browser URL of that virtual browser. The \appins URLs are
 used to connect to virtual browsers in specified \appins{}s. For example, in a
@@ -89,16 +93,17 @@ as emphasized in Figure~\ref{fig:appidhierarchy}. The master keeps a lookup
 table of \appins id to worker process mappings.  When the request URL contains
 an \appins id,  the master could find the corresponding worker right away.
 
-When the client sends the initial HTTP request to the system, a reverse proxy
-process will accept this HTTP request and ask the master where to dispatch
-this request. If \appins id is in the request URL, the master would find a
-worker via the lookup table. Otherwise, the master would find a worker using
-load balance algorithm detailed in Section~\ref{sec:lb}. The reverse proxy
-then forwards the request to the worker process. If the request URL is not a
-Browser URL, the worker process would allocate a new virtual browser or find
-an existing virtual browser in the system and sends back a redirect response
-with the virtual browser's Browser URL. Upon receiving the redirect response,
-the user will send another HTTP request with the Browser URL.
+When the client sends a HTTP request to the system, a reverse proxy process
+will accept this HTTP request and ask the master where to dispatch this
+request. If \appins id is in the request URL, the master would find a worker
+via the lookup table. Otherwise, the master would find a worker using load
+balance algorithm detailed in Section~\ref{sec:lb}. The reverse proxy then
+forwards the request to the worker process. If the request URL does not
+contain virtual browser id, the worker process would allocate a new virtual
+browser or find an existing virtual browser in the system and sends back a
+redirect response with the virtual browser's Browser URL. Upon receiving the
+redirect response, the user will send another HTTP request with the Browser
+URL.
 
 When a worker process receives a Browser URL request, it will locate the
 corresponding virtual browser and responds a HTML document that contains
@@ -124,9 +129,9 @@ Since the URLs for these resources contains the current \appins id and virtual
 browser id, these request could be dispatched to the right worker and  served
 without redirect.
 
-\section{Master}
 
-\subsection{Startup}
+\section{Master Implementation}
+
 When the master process starts up, it initiates the following modules:
 
 \begin{description}
@@ -149,19 +154,21 @@ processes of the master and handles queries from them.
 
 After initiation, the master exposes \emph{Application Manager} and
 \emph{Worker Manager} to the workers via nodermi's \code{registerObj}  method
-(discussed in Chapter~\ref{ch:rmi}). The workers would register themselves
+(discussed in Chapter~\ref{ch:rmi}). The workers register themselves
 using \emph{Worker Manager}'s methods and register \appins{}s using
 \emph{Application Manager}'s methods.
 
+% ----------- we use nodermi here.....how? describe how nodermi simplify, stubs...
 
 % \subsection{Application Management}
 
-\subsection{Load Balancing}
+\section{Load Balancing}
 \label{sec:lb}
 
-For the HTTP requests whose URLs do not contain \appins ids (usually
-Application URLs), the master could not find workers for them via its lookup
-table,  we call these requests \emph{unbound request}s. When creating a new
+% ------- explain when lb decision is been made, don't introduce new term
+
+If a HTTP request does not contain an \appins id,
+  we call the request \emph{unassigned request}s. When creating a new
 \appins or  dispatching an \emph{unbound request}, the master use the load
 balancing algorithm  to decide which worker will create the new \appins or
 handle the request. We support two load balancing strategies: first, the
@@ -174,8 +181,9 @@ lowest load when placing a new \appins or an \emph{unbound request}.  We have
 found the amount of heap memory that is currently in use a good measure of a
 worker's  momentary load.
 
-In the load-based mode, it is impossible for the master to get the load of the
-worker in real time. This could lead to problematic load distribution. For
+In the load-based mode, the master's knowledge 
+. 
+This could lead to problematic load distribution. For
 example,  when the system is creating a burst of \appins{}s, they could all be
 assigned to the same worker that has the lowest load at that moment.  This
 could cause extremely uneven load distribution. To mitigate this issue, the
@@ -185,8 +193,10 @@ estimation about the load increase caused by a new \appins or an \emph{unbound
 request}. In this way, even under bursts of new requests,  the load
 distribution between the workers would not vary greatly.
 
+% ------ don't say cached ... master made a projection.. projected load increase
+% rational ... explain when it works, scenario
 
-\section{Worker}
+\section{Worker Implementation}
 \label{sec:worker}
 
 When a worker process starts up, it first reads a configuration file that
@@ -196,9 +206,11 @@ its own nodermi instance. After initializing, the worker process obtains
 remote references to the master's \emph{Application Manager} and \emph{Worker
 Manager} via nodermi, then it register itself to the master and fetch all the
 applications' metadata by invoking methods of these remote references. If the
-master is not running, the worker will keep on retry until the remote
+master is not running, the worker will keep on retrying until the remote
 references are obtained.
 
+% ------ mapping bid to browser is in worker, make it clear, use html5 history
+% to change url in location bar 
 
 When a worker receives a HTTP request, it parses the request to extract
 \appins id, virtual browser id and user information. If the request does not
@@ -220,7 +232,9 @@ from file system or from Internet, and send back the content. For WebSocket
 handshake requests, the worker would send back a handshake response message
 and add the connection to the virtual browser.
 
-If the application has enabled privilege checking in the configuration, the
+% ------ describe authorization in background....
+
+If the application requires authorization in the configuration, the
 worker would also check if the user has the permission to access the \appins
 or virtual browser specified in the request. The framework has a default
 permission policy that is useful for most cases. For example, by default the

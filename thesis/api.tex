@@ -1,6 +1,11 @@
 \chapter{Application Programming Interface}
 \label{ch:api}
 \markright{Application Programming Interface}
+
+% ------ made a section of impl... : secure access to system object
+% ------ namespace based, carefully control objects app can access
+% ------ the access is made by place the object into the global name
+
 There are many use cases when the application needs
 to access framework's internal objects.
 For administrator applications,
@@ -36,7 +41,7 @@ could manipulate them in unexpected ways thus poses great threat to  the
 integrity of the framework. Even the application is well implemented, the
 coupling between application and framework internals makes the changes made to
 the framework code could easily break the existing applications.
-
+% ------- prevent memory hog....
 \end{description}
 
 
@@ -144,5 +149,6 @@ The framework could also obtain references to the application object.
 The API provides methods for the application to register event listeners to
 internal objects.
 For example,
-the application could register a event listener so that when an virtual browser
-% TODO -------
+the application could register a event listener to notify the current user
+when an virtual browser is shared to him.
+
