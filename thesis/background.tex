@@ -306,25 +306,26 @@ Stylesheets, images, etc. are provided to the client through a resource
 proxy.
 
 \subsection{Deployment Model}
-\appprojectfig{}
-As shown in Figure~\ref{fig:appproject}, 
-a \cb application project is a directory
+\label{sec:deploymodel}
+\appbundlefig{}
+As shown in Figure~\ref{fig:appbundle}, 
+a \cb application bundle is a directory
 contains descriptor files, an entry point HTML file,
 \js files and resources files like CSS files, images, etc.
 The descriptor files specify the application's name, owner, mount point, and
 other application's configuration.
 Mount point is the URL path to the application, for example,
-if a \cb is deployed at \emph{example.com} and an application's mount point is
-\emph{/chat}, the user could access the application at \emph{http://example.com/chat}.
+if a \cb is deployed at \url{example.com} and an application's mount point is
+\emph{chat}, the user could access the application at \url{http://example.com/chat}.
 The \js files include libraries like AngularJS or JQuery
 , the application code and an optional application instance(explained 
-in section~\ref{sec:appins}) definition.
+in Section~\ref{sec:appins}) definition.
 Like in regular browser, the entry point HTML should have script tags
-pointed to the \js files the developer wants to be executed in virtual browsers.
+specifying the \js files the developer wants to be executed in virtual browsers.
 
-The developer could put the application project in \cb's deployment 
-directory or compress and upload the project using \cb's administrator application.
-Multiple applications could be deployed at the same time.
+The developer could put the application bundle in \cb's application 
+directory or upload the bundle using \cb's administrator application.
+Multiple applications could be deployed simultaneously.
 
 \apphierarchyfig{}
 
@@ -365,7 +366,7 @@ consists metadata about the application instance object
  such as ownership and access permissions.
 The application instance object is defined
 the application instance definition file 
-in the application project(see Figure~\ref{fig:appproject}).
+in the application bundle (see Figure~\ref{fig:appbundle}).
 When a virtual browser is created in the application instance,
 the application instance object is injected into that virtual browser
 and the application code could reference it directly.

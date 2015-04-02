@@ -1,5 +1,5 @@
-\chapter{Implementation} 
-\label{ch:impl} 
+\chapter{Implementation}
+\label{ch:impl}
 \markright{Implementation}
 
 \newarchitectureoverview{}
@@ -20,17 +20,18 @@ upgraded.  Once established, the majority of traffic will be WebSocket
 messages for which there is relatively little per-message overhead.  We
 implemented the proxy using the \nodejs{} module note-http-
 proxy~\cite{nodeproxy}. For \cb, virtual browsers occupy most of the system
-resource in terms of CPU and memory. In the new design, we spread the virtual
-browsers to multiple workers, thus improves the system's scalability.
+resource. In the new design, we spread the virtual
+browsers to multiple worker processes, thus improves the system's scalability.
+The master process is light weight so it is tolerable to make it single process.
 
-% The master process is a single point of failure, 
-% but it is light weight and does less computation, 
+% The master process is a single point of failure,
+% but it is light weight and does less computation,
 % so it is less likely to fail in practice.
 
 % discuss the user request, message flow
 
-\section{Request Dispatch} 
-\label{sec:bootstrap} 
+\section{Request Dispatch}
+\label{sec:reqdis}
 
 A user could use any type of URL listed below to access an application in
 \cb{}.
@@ -38,116 +39,192 @@ A user could use any type of URL listed below to access an application in
 \begin{description}
 
 \item[Application URL] \label{itm:appurl} \hfill \\
-Format: \url{http://example.com/[app]}, \code{[app]} represents an application's mount
-point.   For example, if an application's mount point is \emph{chat},  then
-its Application URL is \url{http://example.com/chat}.
+Format: \url{http://example.com/[app]}, \code{[app]} represents an
+application's mount point.   For example, if an application's mount point is
+\emph{chat},  then its Application URL is \url{http://example.com/chat}.
 
 
 \item[\appins{} URL] \label{itm:appinsurl} \hfill \\
-Format: \url{http://example.com/[app]/a/[appInstanceId]}, \code{[appInstanceId]} represents an
-\appins{}'s id.  For example, if an \appins{}'s id is \emph{appins1} and its
-application's mount point is \emph{chat}, then its \appins{} URL
-is  \url{http://example.com/chat/a/appins1}.
+Format: \url{http://example.com/[app]/a/[appInstanceId]},
+\code{[appInstanceId]} represents an \appins{}'s id.  For example, if an
+\appins{}'s id is \emph{appins1} and its application's mount point is
+\emph{chat}, then its \appins{} URL is
+\url{http://example.com/chat/a/appins1}.
 
 
 \item[Browser URL] \label{itm:vburl} \hfill \\
-Format: \url{http://example.com/[app]/a/[appInstanceId]/b/[browserId]}, 
-\code{[browserId]} represents a virtual browser's id. 
-For example, if a virtual browser's id is \emph{browser1} and its \appins{} is the
-application instance \emph{appins1} in the previous example, 
-then the virtual browser's Browser URL is
-\url{http://example.com/chat/a/appins1/b/browser1}.
+Format: \url{http://example.com/[app]/a/[appInstanceId]/b/[browserId]},
+\code{[browserId]} represents a virtual browser's id. For example, if a
+virtual browser's id is \emph{browser1} and its \appins{} is the application
+instance \emph{appins1} in the previous example, then the virtual browser's
+Browser URL is \url{http://example.com/chat/a/appins1/b/browser1}.
 
 \end{description}
+% scenario of these URLs
 
-When the user requests a Browser URL, the system could directly locate a virtual
-browser to serve the user's requests. When the user uses an Application URL or
-an \appins{} URL, the system will locate an existing virtual browser or create a
-new virtual browser, and then send a redirect response back to user with the
-virtual browser's Browser URL.
+The application URLs are entry points to applications. When the user requests
+for an application URL, the application will allocate a new virtual browser or
+find an existing virtual browser for that user, and sends back the user a
+redirect with the Browser URL of that virtual browser. The \appins URLs are
+used to connect to virtual browsers in specified \appins{}s. For example, in a
+chat room application that models a chat rooms as an \appins{} and a user's
+chat window in a particular chat room  as a virtual browser, user A could
+invite user B to join a chat room by share the chat room's \appins URL, when
+the user B requests for the \appins URL for the first time, a new virtual
+browser will be allocated in the \appins for user B, then the system will send
+a redirect to user B with the virtual browser's Browser URL. User B's
+subsequent requests to the \appins URL would be directed to the Browser URL of
+the virtual browser created earlier. The Browser URLs are used to connect to
+specified virtual browsers.
+
 
 % When the user sends requests using an Application URL or an \appins{} URL, the
 % system would allocates a virtual browser  or find an existing virtual browser
 % for the user and sends a redirect to the user with the virtual browser's URL.
 
-To preserve the semantics of  \appins (see section~\ref{sec:appins}), each
-\appins and its virtual browsers need to be allocated in the same worker process
+To preserve the semantics of \appins (discussed in Section~\ref{sec:appins})
+that virtual browsers in an \appins could directly share data structure, each
+\appins and its virtual browsers must be allocated in the same worker process
 as emphasized in Figure~\ref{fig:appidhierarchy}. The master keeps a lookup
-table of \appins id to worker process mappings. When the URL contains \appins
-id,  the master could directly find a worker
+table of \appins id to worker process mappings.  When the request URL contains
+an \appins id,  the master could find the corresponding worker right away.
 
 When the client sends the initial HTTP request to the system, a reverse proxy
-process will accept this HTTP request and ask the master where to dispatch this
-request. If \appins id is in the request URL, the master would find a worker via
-a in-memory \appins id to worker table. Otherwise, the master would find a
-worker using load balance algorithm detailed in Section~\ref{sec:lb}. The
-reverse proxy then forwards the request to the worker process. If the request
-URL is not a Browser URL, the worker process would allocate a new virtual
-browser or find an existing virtual browser in the system and sends back a
-redirect response with the virtual browser's Browser URL. Upon receiving the
-redirect response, the user will send another HTTP request with the Browser URL.
+process will accept this HTTP request and ask the master where to dispatch
+this request. If \appins id is in the request URL, the master would find a
+worker via the lookup table. Otherwise, the master would find a worker using
+load balance algorithm detailed in Section~\ref{sec:lb}. The reverse proxy
+then forwards the request to the worker process. If the request URL is not a
+Browser URL, the worker process would allocate a new virtual browser or find
+an existing virtual browser in the system and sends back a redirect response
+with the virtual browser's Browser URL. Upon receiving the redirect response,
+the user will send another HTTP request with the Browser URL.
 
-When the worker process receives a request with a Browser URL, it responds a
-HTML document that contains information to bootstrap the client engine. The
-client engine will create a WebSocket connection to synchronize DOM nodes.
-First, the client engine sends a handshake request which embeds the current
-\appins id in the URL, the master could find the corresponding worker by a
-simple lookup in a in-memory \appins id to worker table. After handshake,  the
-WebSocket connection is established, the connection goes through  the reverse
-proxy that handles the handshake request and the reverse proxy will copy
-subsequent messages back and forth directly from the user to the worker.
+When a worker process receives a Browser URL request, it will locate the
+corresponding virtual browser and responds a HTML document that contains
+information to bootstrap the client engine. The client engine will create a
+WebSocket connection to synchronize DOM nodes. First, the client engine sends
+a WebSocket handshake request which is a HTTP request to initiate the
+WebSocket connection, the \appins id is embedded in the handshake request URL.
+Like we discussed, a reverse proxy will receive this request and forward it to
+the worker. After the worker send back the handshake response, the connection
+between the worker and the reverse proxy, and the connection between the
+reverse proxy and the user remains open. Subsequent WebSocket messages will go
+through these two opened connections to forward user events and synchronize
+DOM states for the specific virtual browser. The reverse proxy will just copy
+the WebSocket messages back and forth without parsing them.
 
-If any exception happens in bootstrap, for example, the user sends a Browser URL
-with no corresponding virtual browser in the system, the system will reject the
+If any exception happens, for example, the user sends a Browser URL with no
+corresponding virtual browser in the system, the system will reject the
 request with an error message.
 
+After client engine establishes WebSocket connections, the client could send
+additional HTTP requests to fetch resources such as stylesheets, images, etc.
+Since the URLs for these resources contains the current \appins id and virtual
+browser id, these request could be dispatched to the right worker and  served
+without redirect.
 
 \section{Master}
 
-% For example, the worker could parse the request to extract a user id and find
-% the user's existing virtual browser in the system,  then sends back a redirect
-% response with the  virtual browser's URL.
+\subsection{Startup}
+When the master process starts up, it initiates the following modules:
+
+\begin{description}
+\item[Application Manager] \hfill \\
+Application Manager is responsible to maintain the state of applications. It
+reads the application bundles (discussed in Section~\ref{sec:deploymodel}) and
+initiate data structures to represent applications.
+
+\item[Worker Manager] \hfill \\
+Worker manager is responsible for the request dispatch logic.
+It maintains a table of worker processes and
+the lookup table of \appins id to worker.
+
+\item[Reverse Proxy Manager] \hfill \\
+Reverse proxy manager starts multiple reverse proxy processes as child
+processes of the master and handles queries from them.
+% the queries are sent from pipe, called ipc channel in node.js
+% https://github.com/joyent/node/blob/master/lib/child_process.js
+\end{description}
+
+After initiation, the master exposes \emph{Application Manager} and
+\emph{Worker Manager} to the workers via nodermi's \code{registerObj}  method
+(discussed in Chapter~\ref{ch:rmi}). The workers would register themselves
+using \emph{Worker Manager}'s methods and register \appins{}s using
+\emph{Application Manager}'s methods.
 
 
+% \subsection{Application Management}
 
+\subsection{Load Balancing}
+\label{sec:lb}
 
-\subsection{Load Balancing} 
-\label{sec:lb} 
-When a new application instance is
-going to be created, the master will apply a load balancing algorithm to decide
-which worker to place this instance.   We support two load balancing strategies:
-first, the master can assign application instances to workers in a simple round-
-robin fashion.   However, since application instances may vary widely in terms
-of the actual cost they impose on a worker, we also implemented a load-based
-scheme in which workers periodically report a measure of current load to the
-master. The master will select the worker with the lowest load when placing a
-new application instance. We have found the amount of heap memory that is
-currently in use a good measure of a worker's  momentary load.
+For the HTTP requests whose URLs do not contain \appins ids (usually
+Application URLs), the master could not find workers for them via its lookup
+table,  we call these requests \emph{unbound request}s. When creating a new
+\appins or  dispatching an \emph{unbound request}, the master use the load
+balancing algorithm  to decide which worker will create the new \appins or
+handle the request. We support two load balancing strategies: first, the
+master can assign \appins{}s and \emph{unbound request}s to workers in a
+simple round- robin fashion. However, since application instances may vary
+widely in terms of the actual cost they impose on a worker, we also
+implemented a load-based scheme in which workers periodically report a measure
+of current load to the master. The master will select the worker with the
+lowest load when placing a new \appins or an \emph{unbound request}.  We have
+found the amount of heap memory that is currently in use a good measure of a
+worker's  momentary load.
 
 In the load-based mode, it is impossible for the master to get the load of the
-worker in real time. So it is possible that a burst of application instances are
-assigned to the same worker that has the lowest load at that moment. This could
-cause extremely uneven load distribution. To mitigate this issue, the master
-adds an empirical value to the cached load value of a worker after it assigns a
-new application instance to it. This empirical value reflects our estimation
-about an application instance's  effect on a worker. Even under bursts of new
-requests,  the load distribution between the workers would not vary greatly.
+worker in real time. This could lead to problematic load distribution. For
+example,  when the system is creating a burst of \appins{}s, they could all be
+assigned to the same worker that has the lowest load at that moment.  This
+could cause extremely uneven load distribution. To mitigate this issue, the
+master adds an empirical value to the cached load value of a worker after it
+is selected by the load balancing algorithm. This empirical value is our
+estimation about the load increase caused by a new \appins or an \emph{unbound
+request}. In this way, even under bursts of new requests,  the load
+distribution between the workers would not vary greatly.
 
 
-\section{Worker} 
+\section{Worker}
 \label{sec:worker}
 
-Worker processes is responsible for serving the client requests. When a worker
-receives a request, it first extracts application instance id from the request.
-If the request has an application instance id and it matches a local application
-instance, then the application instance is fetched to serve the request. If the
-application instance id doesn't match any local application instance, it would
-responds a internal error message to the user. If there is no application
-instance id  in the request, then the worker would handle the request based on
-application instantiation strategy mentioned in
-section~\ref{sec:appinstantiation}. In this situation, the worker would either,
-ask master for existing application instances and redirect the request to
-existing instances, or create an new application instance for this request.
+When a worker process starts up, it first reads a configuration file that
+specifies the port it is going to listen for HTTP requests,  the hostname/port
+pair of the master process's nodermi instance   and the hostname/port pair for
+its own nodermi instance. After initializing, the worker process obtains
+remote references to the master's \emph{Application Manager} and \emph{Worker
+Manager} via nodermi, then it register itself to the master and fetch all the
+applications' metadata by invoking methods of these remote references. If the
+master is not running, the worker will keep on retry until the remote
+references are obtained.
 
 
+When a worker receives a HTTP request, it parses the request to extract
+\appins id, virtual browser id and user information. If the request does not
+have an \appins id, the worker would find an existing virtual browser in the
+system or tell the master to create a new one  based on the application
+instantiation strategy discussed in Section~\ref{sec:appinstantiation}. After
+that, the worker sends back a redirect response with the virtual browser's
+\emph{Browser URL}. If the request has an \appins id, the worker first check
+if the id matches any local \appins and rejects the request if the check
+fails. If the request does not have a virtual browser id, the worker either
+picks an existing virtual browser in the \appins  or create a new one based on
+the application instantiation strategy, then the worker sends back a redirect
+response with  the virtual browser's \emph{Browser URL}. If the request has a
+virtual browser id and it matches a virtual browser in the \appins, the worker
+processes the request based on the type of the request: For \emph{Browser URL}
+requests, the worker sends back the initial  HTML document; For resource
+requests, the virtual browser will read the corresponding local resource files
+from file system or from Internet, and send back the content. For WebSocket
+handshake requests, the worker would send back a handshake response message
+and add the connection to the virtual browser.
 
+If the application has enabled privilege checking in the configuration, the
+worker would also check if the user has the permission to access the \appins
+or virtual browser specified in the request. The framework has a default
+permission policy that is useful for most cases. For example, by default the
+user could only access the virtual browsers he creates. We also provide a
+default web interface for users to manage the permissions of their \appins{}s
+and virtual browsers. The programmer could also explicitly manage user
+permissions in application code.
