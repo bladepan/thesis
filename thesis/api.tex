@@ -1,6 +1,5 @@
-\chapter{Application Programming Interface}
-\label{ch:api}
-\markright{Application Programming Interface}
+\section{Application Programming Interface}
+\label{sec:api}
 
 % ------ made a section of impl... : secure access to system object
 % ------ namespace based, carefully control objects app can access
@@ -45,7 +44,7 @@ the framework code could easily break the existing applications.
 \end{description}
 
 
-\section{Overall Design}
+\subsection{Overall Design}
 
 The first objective is that the API should provides enough features to cover
 all the scenarios where the applications need to access framework internals.
@@ -84,7 +83,7 @@ this object, the application code could get API objects representing
 applications, application instances and virtual browsers.
 
 
-\section{Implementation}
+\subsection{Implementation}
 
 API objects themselves are just proxies of the internal objects they
 represented so they need to keep reference to these internal objects. If we
