@@ -4,28 +4,25 @@
 
 \newarchitectureoverview{}
 
-Figure~\ref{fig:cb2arch} shows the design of \cbtwo, which consists of a
+Since virtual browsers occupy most of the system resource, the new
+distributed design spread the virtual browsers to multiple processes
+to improve the system's scalability.
+As shown in Figure~\ref{fig:cb2arch}, \cbtwo consists of a
 single master process, multiple reverse proxies, and multiple worker
 processes. All processes communicate via standard TCP/IP sockets, so they can
 be located on a shared multiprocessor machine or in a cluster. The workers
 host application instances and virtual browsers. The master is responsible for
 the request dispatch logic which decides how to distribute the client load to
 workers. The actual dispatching is implemented by the reverse proxies, they
-forward users' requests to workers and copy workers' response back to users.
-Multiple reverse proxy processes are bound to the socket that accepts client
+forward users' requests to workers and copy workers' responses back to users.
+The reverse proxy processes are bound to the socket that accepts client
 requests, allowing the OS to distribute pending client connections in a round-
 robin fashion. The reverse proxy can relay both HTTP requests/responses as
 well as the bidirectional WebSocket protocol after the connection has been
 upgraded.  Once established, the majority of traffic will be WebSocket
 messages for which there is relatively little per-message overhead.  We
-implemented the proxy using the \nodejs{} module node-http-
-proxy~\cite{nodeproxy}. For \cb, virtual browsers occupy most of the system
-resource. In the new design, we spread the virtual
-browsers to multiple worker processes, thus improves the system's scalability.
-The master process is light weight so it is tolerable to make it single process.
+implemented the proxy using the \nodejs{} module node-http-proxy~\cite{nodeproxy}.
 
-% ---- make it clear that after dispatch, the messages websocket
-% ---- 'virtual browsers occupy most of the system...' move it earlier
 
 % The master process is a single point of failure,
 % but it is light weight and does less computation,
@@ -36,9 +33,8 @@ The master process is light weight so it is tolerable to make it single process.
 \section{Request Dispatch}
 \label{sec:reqdis}
 % ---- motivation, use cases here
-
-A user could use any type of URL listed below to access an application in
-\cb{}.
+% ---- make it clear that after dispatch, the messages websocket
+A user can access a \cb{} application using an URL of the following types:
 
 \begin{description}
 
@@ -66,7 +62,33 @@ Browser URL is \url{http://example.com/chat/a/appins1/b/browser1}.
 \end{description}
 % -----scenario of these URLs, when low load, the reverse proxy could be embedded
 
-The application URLs are entry points to applications. When the user requests
+% The \emph{Application URL} is similar to the home page URL in a traditional web application.
+In a traditional web application, the user can use the home page URL to get a 
+entry point view and navigate to the pages he want to visit without
+storing URLs of individual pages.
+The benefit for the user is that he only needs to remember one URL and that URL
+is shorter than page URLs.
+A \cb application's \emph{Application URL} serves a similar purpose,
+ the user uses it as an entry point.
+The \emph{\appins URL}s are used for sharing \appins{}s.
+The \emph{Browser URL}s are used to connect to specific virtual browsers.
+The user can bookmark \emph{\appins URL}s and \emph{Browser URL}s for future
+visits.
+
+For a \emph{singleAppInstance} application (application instantiation
+strategies  are discussed in Section~\ref{sec:appinstantiation}), the system
+creates only one virtual browser for all users. When the user requests the
+\emph{Application URL}, the system redirects the user with the only virtual
+browser's \emph{Browser URL}. The user could bookmark the \emph{Browser URL}
+and visit the application with that URL without redirect. The \emph{\appins
+URL} is not exposed to the user in a \emph{singleAppInstance} application
+because there is no use case of sharing \appins. If the user requests with the
+only virtual browser's \emph{\appins URL}, the system will send back a
+redirect response with the \emph{Browser URL}.
+
+
+
+When the user requests
  an application URL, the application will allocate a new virtual browser or
 find an existing virtual browser for that user, and sends back the user a
 redirect with the Browser URL of that virtual browser. The \appins URLs are
@@ -82,9 +104,6 @@ the virtual browser created earlier. The Browser URLs are used to connect to
 specified virtual browsers.
 
 
-% When the user sends requests using an Application URL or an \appins{} URL, the
-% system would allocates a virtual browser  or find an existing virtual browser
-% for the user and sends a redirect to the user with the virtual browser's URL.
 
 To preserve the semantics of \appins (discussed in Section~\ref{sec:appins})
 that virtual browsers in an \appins could directly share data structure, each
@@ -129,6 +148,64 @@ Since the URLs for these resources contains the current \appins id and virtual
 browser id, these request could be dispatched to the right worker and  served
 without redirect.
 
+In this design, the reverse proxies ask the master for the dispatch decision
+for every HTTP request.  Since the majority of the system's network traffic
+are WebSocket messages and they do not need to invoke dispatch logic,  this
+overhead of inter-process communication between the master and the reverse
+proxies   only affects a small portion of the network traffic. We also provide
+an option to embed a reverse proxy instance inside the master process. The
+embedded reverse proxy  communicates with the master via method calls thus no
+inter-process overhead is introduced.
+
+\section{Load Balancing}
+\label{sec:lb}
+
+% ------- explain when lb decision is been made, don't introduce new term
+When the master receives a HTTP request that does not have an \appins id,
+the master does not know if the request would result in creating a new \appins
+or be handled by an existing \appins,
+it needs to find a worker process to handle it using application specific
+logic.
+When a new \appins{} is going to be created,
+the system needs to select a worker process to place it.
+In these two cases, load balancing algorithm is invoked to make the load
+of the system more evenly distributed among workers.
+For other cases, there is no need to call the load balancing algorithm
+because the load is already fixed.
+For instance,
+if a request contains \appins id, the master dispatches the request to
+the worker that hosts the \appins via its lookup table and
+the master cannot dispatch the request elsewhere.
+If the system needs to create a new virtual browser,
+it could only be created in the same worker process as its \appins{}.
+
+
+
+We support two load balancing strategies: first, the master can assign the
+load to workers in a simple round-robin fashion. However, since \appins{}s may
+vary widely in terms of the actual cost they impose on a worker and \appins{}s
+can be terminated,  the round-robin assignment only works well for simple use
+cases like benchmarking. We also implemented a load-based scheme in which
+workers periodically report a measure of current load to the master. The
+master will select the worker with the lowest load when placing new load.  We
+have found the amount of heap memory that is currently in use a good measure
+of a worker's  momentary load.
+
+In the load-based mode,  the worker's load could change during the interval
+between the worker's updates, and the master's knowledge is not updated. This
+could lead to problematic load distribution. For example,  when the system is
+creating a burst of \appins{}s, they could all be assigned to the same worker
+that has the lowest load at that moment.  This could cause extremely uneven
+load distribution. To mitigate this issue,  after the load balancing algorithm
+selects a worker, the algorithm makes a projection of the worker's load. Based
+on our evaluation, a virtual browser in a non-trivial application takes about
+6M.  We increase a worker's load by 10M for every new \appins assignment
+assuming each \appins will have 1 or 2  virtual browsers. Although this
+estimate is not accurate, the worker's load will be fixed upon receiving next
+load update. In this way, even under bursts of new requests,  the load
+distribution between the workers would not vary greatly.
+
+
 
 \section{Master Implementation}
 
@@ -141,9 +218,8 @@ reads the application bundles (discussed in Section~\ref{sec:deploymodel}) and
 initiate data structures to represent applications.
 
 \item[Worker Manager] \hfill \\
-Worker manager is responsible for the request dispatch logic.
-It maintains a table of worker processes and
-the lookup table of \appins id to worker.
+Worker manager is responsible for the request dispatch 
+and the load balance algorithm (detailed in Section~\ref{sec:lb}).
 
 \item[Reverse Proxy Manager] \hfill \\
 Reverse proxy manager starts multiple reverse proxy processes as child
@@ -154,47 +230,28 @@ processes of the master and handles queries from them.
 
 After initiation, the master exposes \emph{Application Manager} and
 \emph{Worker Manager} to the workers via nodermi's \code{registerObj}  method
-(discussed in Chapter~\ref{ch:rmi}). The workers register themselves
-using \emph{Worker Manager}'s methods and register \appins{}s using
-\emph{Application Manager}'s methods.
+(discussed in Chapter~\ref{ch:rmi}).  
 
-% ----------- we use nodermi here.....how? describe how nodermi simplify, stubs...
+The \emph{Application Manager} has
+methods to list all applications, to create a new application, to  remove an
+application, etc. Each application object has methods to maintain the internal
+state of the application, such as change the application's authentication
+policy, register a new \appins, remove an \appins, etc. The worker invoke
+these methods remotely to obtain metadata of all applications, register an
+\appins, etc. The worker also register its own \emph{Application Manager}  and
+application objects to the master's \emph{Application Manager}  via remote
+method invocation. The master \emph{Application Manager}  uses stubs to these
+worker objects to push changes to the  workers. For instance, the master uses
+stubs to the worker's \emph{Application Manager} to push new application to
+that worker and remove an application from that worker.
 
-% \subsection{Application Management}
+The \emph{Worker Manager} contains methods for worker to register its HTTP
+hostname/port and report its load. It also maintains a table of \appins{} id
+to worker HTTP hostname/port. This table is updated every time a \appins{}
+is registered or removed from the \emph{Application Manager}. 
 
-\section{Load Balancing}
-\label{sec:lb}
 
-% ------- explain when lb decision is been made, don't introduce new term
 
-If a HTTP request does not contain an \appins id,
-  we call the request \emph{unassigned request}s. When creating a new
-\appins or  dispatching an \emph{unbound request}, the master use the load
-balancing algorithm  to decide which worker will create the new \appins or
-handle the request. We support two load balancing strategies: first, the
-master can assign \appins{}s and \emph{unbound request}s to workers in a
-simple round- robin fashion. However, since application instances may vary
-widely in terms of the actual cost they impose on a worker, we also
-implemented a load-based scheme in which workers periodically report a measure
-of current load to the master. The master will select the worker with the
-lowest load when placing a new \appins or an \emph{unbound request}.  We have
-found the amount of heap memory that is currently in use a good measure of a
-worker's  momentary load.
-
-In the load-based mode, the master's knowledge 
-. 
-This could lead to problematic load distribution. For
-example,  when the system is creating a burst of \appins{}s, they could all be
-assigned to the same worker that has the lowest load at that moment.  This
-could cause extremely uneven load distribution. To mitigate this issue, the
-master adds an empirical value to the cached load value of a worker after it
-is selected by the load balancing algorithm. This empirical value is our
-estimation about the load increase caused by a new \appins or an \emph{unbound
-request}. In this way, even under bursts of new requests,  the load
-distribution between the workers would not vary greatly.
-
-% ------ don't say cached ... master made a projection.. projected load increase
-% rational ... explain when it works, scenario
 
 \section{Worker Implementation}
 \label{sec:worker}
@@ -204,14 +261,15 @@ specifies the port it is going to listen for HTTP requests,  the hostname/port
 pair of the master process's nodermi instance   and the hostname/port pair for
 its own nodermi instance. After initializing, the worker process obtains
 remote references to the master's \emph{Application Manager} and \emph{Worker
-Manager} via nodermi, then it register itself to the master and fetch all the
-applications' metadata by invoking methods of these remote references. If the
-master is not running, the worker will keep on retrying until the remote
-references are obtained.
+Manager} via nodermi, then  it fetches all the applications' metadata and
+registers itself to the master by invoking methods of these remote references.
+If the master is not running, the worker will keep on retrying until the
+remote references are obtained.
 
 % ------ mapping bid to browser is in worker, make it clear, use html5 history
 % to change url in location bar 
-
+The worker process maintains the mappings of \appins{} id to its local
+\appins{}s and browser id to its local virtual browsers.
 When a worker receives a HTTP request, it parses the request to extract
 \appins id, virtual browser id and user information. If the request does not
 have an \appins id, the worker would find an existing virtual browser in the

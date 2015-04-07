@@ -401,26 +401,29 @@ A descriptor in the application's manifest describes
 their application's instantiation strategy.
 The supported strategies include
 
-\begin{enumerate}
-\item \emph{singleAppInstance}. The application supports only one instance and single virtual browser.
+\begin{description}
+
+\item[singleAppInstance] The application supports only one instance and single virtual browser.
     All connected clients will share a single server-side document in this singleton - this can be
     used for applications that display data, such as a weather application. These applications will not
     typically react to user input and users do not need to be authenticated.
 
-\item \emph{singleUserInstance}.  This application requires authentication to establish a
+\item[singleUserInstance]  This application requires authentication to establish a
     user identity, which we provide through a local database as well as through external OpenID
     authentication.   In this mode, users may not create more than one virtual browser per
     application instance.  When a user accesses the application instance's URL, they will either
     be forwarded to their virtual browser or a virtual browser will be instantiated for them.
 
-\item \emph{multiInstance}.
+\item[multiInstance]
     Allows users to have multiple, separate virtual browsers connected to an application
     instance. For instance, a user may have to be in two separate chatrooms offered by one chat site.
     In those cases, the user has the largest flexibility, but will need to manage whether
     to join an existing virtual browser or create a new one when they visit the application instance
     - similar to the choice a user may have when deciding whether to navigate to a new site in
     an existing browser tab or open a new one.
-\end{enumerate}
+
+\end{description}
+
 Except for multiInstance applications, the existence of virtual browsers is not exposed to
 end users that merely join existing application instances.
 

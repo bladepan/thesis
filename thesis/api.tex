@@ -1,28 +1,21 @@
-\section{Application Programming Interface}
+\section{Secure Access to Framework Object}
 \label{sec:api}
 
-% ------ made a section of impl... : secure access to system object
 % ------ namespace based, carefully control objects app can access
 % ------ the access is made by place the object into the global name
 
-There are many use cases when the application needs
-to access framework's internal objects.
-For administrator applications,
-it is obvious that without access to the framework's internals
-it cannot do anything useful.
-For instance, in our administration dashboard one can
-view all the installed applications and upload new applications.
-For general purpose applications,
-some common tasks could only be implemented by the framework.
-For example,
-in a chat room application,
-a user might want to terminate a chat room(i.e. application instance)
-and close all its associated chat windows(i.e. virtual browser).
+There are many use cases when an application needs to access framework's
+internal objects. For administrator applications that monitor and manage the
+system, nearly every feature requires access to the framework's internals. For
+instance, in our administration dashboard one can view all the installed
+applications and upload new applications. For general purpose applications,
+some common tasks could only be implemented by the framework. For example, in
+a chat room application, a user can terminate a chat room (i.e. application
+instance) and close all its associated chat windows (i.e. virtual browser).
 
-We designed an API layer such that the applications can only call
-the framework methods via the API.
-We do not allow the applications call framework code directly for the
-following reasons:
+We designed an API layer such that the applications can only call the
+framework methods via the API. We do not allow the applications call framework
+code directly for the following reasons:
 
 \begin{description}
 
@@ -39,8 +32,13 @@ application code and the framework.
 could manipulate them in unexpected ways thus poses great threat to  the
 integrity of the framework. Even the application is well implemented, the
 coupling between application and framework internals makes the changes made to
-the framework code could easily break the existing applications.
-% ------- prevent memory hog....
+the framework code could easily break the existing applications. Also with
+direct access to framework objects, the application could prevent framework
+objects from properly released. On the other direction, via method calls, the
+framework could also hold references to the application objects, thus prevent
+the application objects allocated inside a virtual browser from being
+reclaimed after the virtual browser's destruction. 
+
 \end{description}
 
 
@@ -144,10 +142,15 @@ if they are no longer needed in the framework.
 
 \apireferencefig{}
 
-The framework could also obtain references to the application object. 
-The API provides methods for the application to register event listeners to
-internal objects.
-For example,
-the application could register a event listener to notify the current user
-when an virtual browser is shared to him.
+
+The framework can also obtain references to the application object.  The API
+provides methods for the application to register event listeners to internal
+objects. For example, the application could register a event listener to
+notify the current user when someone shares an virtual browser to him. To
+prevent the framework referencing objects from a destructed virtual browser,
+Because the application code could only interact with the framework via API
+layer, the API layer is fully aware of such references. We store such
+references inside the API objects and clean these references in the virtual
+browser's \code{close} method.
+
 
