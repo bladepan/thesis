@@ -58,25 +58,21 @@ More side benefits include: a lighter weight client engine that can load faster,
 a resulting application that is potentially more secure since no direct access to
 application data needs to be exposed, the ability to co-browse by broadcasting
 the virtual browser state to multiple clients.
-
-The original implementation of \cb{} is single threaded and
-only supports deployment on one process.
-It could not scale horizontally by adding more processors or more machines
-to increase the system's capacity.
-To enable \cb{} to host large scale web applications,
-we designed and implemented \cbtwo which could distribute and manage
-virtual browsers on CPU cores of a multiprocessor machine or on a cluster of machines.
-We have implemented a number of sample and benchmark
-applications and profiled them to better understand the intrinsic and extrinsic
-limitations of this design.
-
-% benchmark results
-
+% may be later?
+% We have implemented a number of sample and benchmark
+% applications and profiled them to better understand the intrinsic and extrinsic
+% limitations of this design.
 
 \section{Core Contributions}
 
-We have implemented \cbtwo that distributes and manages virtual browsers
-to multiple processes.
+Prior to this work, the implementation of \cb{} was single threaded and
+supported deployment on only one process.
+It could not scale horizontally by adding more processors or more machines
+to increase the system's capacity.
+To enable \cb{} to host large scale web applications,
+we designed and implemented \cbtwo which can distribute virtual browsers 
+across the CPU cores of a multiprocessor machine or across a cluster of machines.
+
 We managed to make this upgrade transparent for application developers.
 Most of the existing applications could automatically scale to 
 multiple processors without modifying the code.
@@ -120,3 +116,6 @@ We also build benchmark tools to evaluate the performance and scalability of \cb
 \cbtwo scales linearly in our experiments. 
 It could support 2,800 concurrent users using a chat room application
 on a eight core machine with average latency less than 100ms.
+
+% benchmark results (?)
+
