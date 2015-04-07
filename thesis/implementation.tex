@@ -86,23 +86,6 @@ redirect response with the \emph{Browser URL}.
 
 
 
-When the user requests
- an application URL, the application will allocate a new virtual browser or
-find an existing virtual browser for that user, and sends back the user a
-redirect with the Browser URL of that virtual browser. The \appins URLs are
-used to connect to virtual browsers in specified \appins{}s. For example, in a
-chat room application that models a chat rooms as an \appins{} and a user's
-chat window in a particular chat room  as a virtual browser, user A could
-invite user B to join a chat room by share the chat room's \appins URL, when
-the user B requests for the \appins URL for the first time, a new virtual
-browser will be allocated in the \appins for user B, then the system will send
-a redirect to user B with the virtual browser's Browser URL. User B's
-subsequent requests to the \appins URL would be directed to the Browser URL of
-the virtual browser created earlier. The Browser URLs are used to connect to
-specified virtual browsers.
-
-
-
 To preserve the semantics of \appins (discussed in Section~\ref{sec:appins})
 that virtual browsers in an \appins could directly share data structure, each
 \appins and its virtual browsers must be allocated in the same worker process
