@@ -1,9 +1,10 @@
 \chapter{Background}
 \markright{Background}
 
-This chapter gives background information to understand the concept of \cbtwo.
-We assume the reader has the basic knowledge of web development.
-The reader should understand the meaning of HTTP~\cite{rfc7231}, HTML~\cite{hickson2012html}, 
+This chapter provides background information to understand the concepts underlying the
+design of \cbtwo.
+We assume the reader has basic knowledge of web-related protocols and languages,
+including HTTP~\cite{rfc7231}, HTML~\cite{hickson2012html}, 
 DOM~\cite{2000Document}, \js~\cite{ecmascript2011ecmascript} and CSS~\cite{css21}.
 
 \webscaleoutfig{}
@@ -11,48 +12,48 @@ DOM~\cite{2000Document}, \js~\cite{ecmascript2011ecmascript} and CSS~\cite{css21
 \section{Scalable Web Server Architectures}
 \label{sec:websys}
 
-Web systems are system platforms that host web applications.
-For example, a web system could be a machine running a web
-server software serving static contents.
+Web servers provide the infrastructure on which web applications 
+are hosted.
+Scalability is an important issue for web servers as the number of users
+visiting a site can grow significantly~\cite{berners1998world}.
+Even without the increase in users,
+web applications demand more resources as they become more sophisticated.
 
-Scalability is an important issue for web systems.
-Even in the early 90s, the first web system experienced a load rose by a factor
-of 10 every year~\cite{berners1998world}.
-Even without the increasing user access,
-web applications could demand more resource as they become more sophisticated.
-Figure~\ref{fig:webscaleout} is a diagram of scalable web systems.
-In a scalable web system, web applications are able to efficiently 
-harness resource from a cluster of servers.
+Figure~\ref{fig:webscaleout} is a diagram of a typical scalable web server architecture,
+which is able to harness resources from a cluster of servers.
 We divide the servers in such web systems into two layers.
-The web layer processes the HTTP requests from users
-and generate HTTP response which will be rendered in users' browser.
-The web layer offload storage and computation tasks to a storage layer
-consists of database servers and other types of servers.
-The benefit of layered design is manifold:
-it makes the web servers light weight so they could handle more concurrent 
+The web layer processes HTTP requests from users
+and generates HTTP responses which will be rendered in the user's browser.
+The web layer offloads storage and computational tasks to a storage layer
+that consists of database servers or other types of storage servers.
+The benefit of such layered design is twofold:
+it makes the web servers lightweight so they are able to handle more concurrent 
 connections;
 the whole system becomes modular,
-the system owner could upgrade parts of the system without interfering
-other parts.
-Besides the web layer and the storage layer,
-the load balancer is another important part of a web system.
-The load balancer sits between the clients and the web layer,
-it  distributes user's requests web servers
-and return the response from the web servers to users.
-From the user's point of view, 
-he only needs one identifier to
-access the web system, that could be a DNS~\cite{rfc1034} name or an IP address.
-It is the load balancer's job to hide 
-the distributed architecture
- from the user.
-There are many ways to implement load balancer~\cite{cardellini2002state}.
-For instance, 
-we could
-deploy reverse proxy software (like nginx~\cite{nginx})
-on a group of servers
-and configure the system's DNS name pointing to those servers,
+so that the system operator can upgrade parts of the system without interfering
+with other parts.
+
+To balance requests evenly across the web servers, a load balancer
+component sits between the clients and the web layer,
+which dispatches user requests to web servers
+and returns the responses from the web servers to users.
+The use of a load balancer allows users to access the web server
+using a single URL because it hides the distributed architecture from the user.
+There are many ways to implement load balancing~\cite{cardellini2002state}.
+%
+%
+%  REVISE FROM HERE
+%
+%
+What is a reverse proxy in this context?
+%
+Briefly describe idea of DNS-based round-robin load balancing first.
+% 
+For instance, we could deploy reverse proxy software (such as nginx~\cite{nginx})
+on a group of servers and configure the system's DNS name pointing to those servers,
 then all the client traffic will be directed to reverse proxy servers
 and reverse proxy will distribute the traffic to the web layer.
+%
 It is also possible that the load balancer layer is implemented purely in logic 
 with no dedicated servers.
 One way to do it is
@@ -61,6 +62,9 @@ and rely on the DNS server return these IP addresses to clients in a round-robin
 fashion.
 From now on, we will only discuss the distribution algorithm without meddling too much
 in the implementation details of the load balancer layer.
+%
+%  REVISE TO HERE
+%
 
 % \subsection{Application State Management}% maybe too big a title for a short review...
 
@@ -90,14 +94,25 @@ in the implementation details of the load balancer layer.
 
 \subsection{Session State Management}
 
+---
+Session state - way for server to remember information across HTTP requests.
+(Implemented via cryptographic cookie client presents at each visit).
+Backed by server storage, application can store arbitrary information 
+in there.)
+
+
+Then discuss ways in which it's managed and how this affects scalability/load balancing.
+
+---
+
 We use session state to describe the application context
 web applications need to maintain for each user.
 It is generally acceptable to lose session state
 when server restarts,
 because session state could be recreated from scratch.
-Session state is partitioned on client side and server side.
-Usually the web application would assign a unique 
-session id for each user and uses
+Session state is partitioned on client side and server side. (?)
+Web applications assign a unique 
+session id for each user and use
 the session id to associate the client side session state
 with server side.
 Most web frameworks provides two modes
@@ -107,30 +122,36 @@ in memory or in file system,
 a distributed mode where server side session data
 is stored in a centralized storage system usually a
 relational database.
-It is easy to see that the local mode has better performance
-than the distributed mode.
 
+(don't conflate being accessible from anywhere with choice of centralized vs. distributed storage)
 
-\subsection{Load Balance}
+If session state is stored locally, it can be accessed faster,
+but it is not accessible from other web server instances.
 
-In this section we discuss the design choices of load balancer in a web system
-and how the implementation of load balancer impacts the application development.
+\subsection{Load Balancing}
+
+In this section we discuss the design choices regarding load balancing
+and how its implementation impacts application development.
 
 We use the taxonomy from the survey of Cardellini et al.~\cite{cardellini2002state}
 to categorize the load balancer into client-blind or client-aware based on if
-the load balancer uses any information from client request to perform the dispatch.
+the load balancer uses any information from the client request to perform the dispatch.
 
-A client-blind load balancer does not use information from client.
+A client-blind load balancer does not use information from client when deciding
+how to dispatch a request.
 For example, it could randomly select a web server from the web layer for each request,
-or use a round robin algorithm to pick web server one by one.
-In this case, the requests from the same client could be relayed to any web server.
-The developer cannot naively use a local mode session implementation
-, because as the requests from a user hit multiple servers,
-multiple copies of session state would be created on these servers,
-the discrepancy in these copies could cause application bugs not to mention
-it is a waste of space to store multiple copies.
+or use a round robin algorithm.
+In this case, multiple requests from one client could be relayed to different web servers.
+In this design, session state cannot be stored locally; rather it must be accessible 
+from any server handling the client's request.
+
 The application has to move session state to a centralized
-storage system and fetch the session state for every request.
+storage system and fetch the session state for every request. (\emph{not true}).
+
+(Following paragraph leads off on a tangent - potential and limitations of
+storing session state on the client, which is an alternative regardless of
+load balancing approach used.)
+
 One solution would be move as much session state to the client side as possible,
 then the client would attach its part of session state
 with the requests to reduce the cost on the server side.
@@ -142,20 +163,32 @@ the server might need the client's user profile to check if the client has
 the privilege to do a certain task.
 It is obvious that server should not trust the user profile passed by the client
 as a misbehaved client could forge a user profile in its requests.
+%
+% I would just discuss a few options for sharing and synchronizing access to
+% session state in a cluster: central database, redis, memcached, Tomcat session replication, etc.
+%
 Another solution would be synchronizing local mode session data among web servers
 as implemented in Tomcat's session replication mode~\cite{tomcatcluster}. % and JBOSS
-This solution is expansive because it needs to broadcast
+This solution is expensive because it needs to broadcast
 changed session data to all web servers.
 
-A client-aware load balancer dispatches the request from the same
+% ------------------------------------------------------------
+
+A client-aware load balancer dispatches every request from a given
 client to the same web server.
-In this model, the web server could use the local mode session implementation.
-The downside is the load balancer needs to discriminate each client
-to make the correct routing decision.
-One way to do it is parsing the HTTP request header to get
-the session identifier,
-then the load balancer computes a hash value of
-the session identifier and map the hash value to a web server.
+In this model, the web server can use the local mode session implementation,
+which is faster.
+The downside is the load balancer needs to identify each client's assigned
+server to make the correct routing decision.
+For instance, the load balancer could examine the
+HTTP request header to extract the session identifier
+and assign web servers based on a hash of this identifier.
+
+
+Complete the point/comparison: client-awareness may lead to unbalanced loads.
+
+What about long-lived connections? COMET, Long-polling, websockets?
+How are those load-balanced?
 
 % Another aspect that needs to be consider to design a scalable web system
 % is the servers' load.
