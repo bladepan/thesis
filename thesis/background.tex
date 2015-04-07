@@ -386,6 +386,29 @@ is that AngularJS's dirty-checking mechanism will reflect updates to the shared 
 in each virtual browsers' document automatically, thus ensuring that new message are broadcast
 to each.
 
+\subsection{Authentication}
+
+When an application is enabled with authentication, the system will redirect
+the user's request to a login page if it detects the user has not logged in
+that application. The login page itself is implemented by creating a virtual
+browser in the system login application. The login page provides two
+authentication options: a local authentication option where the user's
+credentials are stored in MongoDB; an OAuth~\cite{hardt2012oauth} option which
+authenticate user via Google's openID. The user could submit his email address
+and password directly in the login page  for local authentication option. Then
+the system will find the matching record in the account table.   For the OAuth
+option, the user clicks a \emph{Login with Google Account} link  to land on a
+Goolge account authorization page. After the user authorizes \cb{} to access
+his Goolge account information, Goolge will request \cb{}'s authentication
+callback URL and \cb{} will get the user's email address.
+
+After the user logs in using either mode, the system adds an entry of the
+user's email address and the application's mount point in the user's session
+(stored in MongoDB as well). That entry indicates the user has logged in the
+application. Then the login page virtual browser is closed and the user is
+redirected to  the URL he originally requested. The subsequent requests from
+the user will pass the authentication check until the session expires or the
+user logs out the application.
 
 
 \subsection{Application Instantiation Strategy}
