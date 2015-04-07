@@ -62,18 +62,15 @@ Browser URL is \url{http://example.com/chat/a/appins1/b/browser1}.
 \end{description}
 % -----scenario of these URLs, when low load, the reverse proxy could be embedded
 
-% The \emph{Application URL} is similar to the home page URL in a traditional web application.
-In a traditional web application, the user can use the home page URL to get a 
-entry point view and navigate to the pages he want to visit without
-storing URLs of individual pages.
-The benefit for the user is that he only needs to remember one URL and that URL
-is shorter than page URLs.
-A \cb application's \emph{Application URL} serves a similar purpose,
- the user uses it as an entry point.
-The \emph{\appins URL}s are used for sharing \appins{}s.
-The \emph{Browser URL}s are used to connect to specific virtual browsers.
-The user can bookmark \emph{\appins URL}s and \emph{Browser URL}s for future
-visits.
+For a \emph{multiInstance} application, the \emph{Application URL} takes the
+user to a landing page listing all his \appins{}s and virtual browsers
+including those are shared with other users. The user can share his \appins{}s
+to someone else on that page and the system will send the \emph{\appins{}
+URL}s to that user. When a user requests \emph{\appins{} URL} that he has
+rights to access, the system will either create a new virtual browser for him
+or redirect him to his existing virtual browser in the \appins{}. The
+\emph{Browser URL} is used to connect to a specific virtual browser. The user
+can bookmark \emph{\appins{} URL}s and \emph{Browser URL}s for future visits.
 
 For a \emph{singleAppInstance} application (application instantiation
 strategies  are discussed in Section~\ref{sec:appinstantiation}), the system
@@ -81,7 +78,7 @@ creates only one virtual browser for all users. When the user requests the
 \emph{Application URL}, the system redirects the user with the only virtual
 browser's \emph{Browser URL}. The user could bookmark the \emph{Browser URL}
 and visit the application with that URL without redirect. The \emph{\appins
-URL} is not exposed to the user in a \emph{singleAppInstance} application
+URL} is not exposed to the users in a \emph{singleAppInstance} application
 because there is no use case of sharing \appins. If the user requests with the
 only virtual browser's \emph{\appins URL}, the system will send back a
 redirect response with the \emph{Browser URL}.
