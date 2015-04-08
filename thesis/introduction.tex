@@ -58,64 +58,44 @@ More side benefits include: a lighter weight client engine that can load faster,
 a resulting application that is potentially more secure since no direct access to
 application data needs to be exposed, the ability to co-browse by broadcasting
 the virtual browser state to multiple clients.
-% may be later?
-% We have implemented a number of sample and benchmark
-% applications and profiled them to better understand the intrinsic and extrinsic
-% limitations of this design.
+
 
 \section{Core Contributions}
 
 Prior to this work, the implementation of \cb{} was single threaded and
-supported deployment on only one process.
-It could not scale horizontally by adding more processors or more machines
-to increase the system's capacity.
-To enable \cb{} to host large scale web applications,
-we designed and implemented \cbtwo which can distribute virtual browsers 
-across the CPU cores of a multiprocessor machine or across a cluster of machines.
+supported deployment on only one process. It could not scale horizontally by
+adding more processors or more machines to increase the system's capacity. To
+enable \cb{} to host large scale web applications, we designed and implemented
+\cbtwo which can distribute virtual browsers  across the CPU cores of a
+multiprocessor machine or across a cluster of machines.
 
-We managed to make this upgrade transparent for application developers.
-Most of the existing applications could automatically scale to 
-multiple processors without modifying the code.
-We need to modify other applications because we updated part of
-the \cb{} API that these applications depend on,
-not because these applications need to be aware that they might run on
-multiple processes.
-\cb{} applications are still developed in a way that as if they are run in
-a web browser that users could remotely connect to.
+We designed a single master multiple workers architecture:
+the master is responsible for the application management and load balancing,
+the workers host virtual browsers and serve user requests.
+To facilitate the inter-process
+communication among the processes in our system, We developed a remote procedure call
+framework nodermi~\cite{nodermi} that encapsulates message communication as
+method calls.
+Nodermi transparently creates stubs that represents objects in other processes
+and allows a process invoke methods of other processes' objects by calling
+methods on the stubs.
+We also enhanced the application programming interface to fully
+isolate the application code and the system objects.
 
-There are several challenges to achieve this transparent upgrade.
-First, \cb{} is stateful in nature, 
-the application state and UI representation resides in virtual browsers,
-so the users' requests have to be directed to the corresponding virtual browser
-to make things work.
-It is trivial if all virtual browsers are in the same process.
-In a multiple process design,
-the framework to make sure the users' requests go to the process that holds the
-corresponding virtual browser.
-Second, we need to make useful features like application instance and
-deployment configuration work in the new multi-process design.
-For instance, application instance is a feature that allows multiple virtual browsers
-to share objects, we need to make sure the virtual browsers of the same application 
-instance are on the same process.
-Third, as we break the functionalities to multiple processes,
-some intra-process method calls need to be transformed to inter-process message
-communication.
-We do not want to write message passing code directly in our framework as it
-will damage the code readability, and it is cumbersome to design message protocol
-and write sending receiving code for every possible methods.
+The underlying architecture change is transparent for applications. The new
+implementation fully preserves the semantics of the old programming models
+while provide higher scalability. The applications do not need to be aware of
+the distributed architecture.  Most of the existing applications can
+automatically scale to  multiple processors without modification. The rest of
+the applications are modified   because we made changes to some API methods'
+signatures.
 
-We designed a single master multiple workers architecture that the master
-controls dispatching logic and the workers process user requests.
-To support the inter-process communication,
-we created a remote procedure call framework nodermi~\cite{nodermi} that
-encapsulates message communication as method calls.
-To support the applications to access server side resource
-and isolate applications with the framework,
-we build a set of API. % ------
-We also build benchmark tools to evaluate the performance and scalability of \cbtwo.
-\cbtwo scales linearly in our experiments. 
-It could support 2,800 concurrent users using a chat room application
-on a eight core machine with average latency less than 100ms.
+We have implemented a number of sample applications and profiled them to
+better understand the intrinsic and extrinsic limitations of this design.  We
+also built a benchmark tool that simulates multiple users interacting with the
+applications and used it to  to evaluate the performance and scalability of
+\cbtwo. In our experiments,  \cbtwo scales linearly, it supports 2,800
+concurrent users using a chat room application on a eight core machine with
+average latency under 100ms.
 
-% benchmark results (?)
 
