@@ -69,33 +69,32 @@ enable \cb{} to host large scale web applications, we designed and implemented
 \cbtwo which can distribute virtual browsers  across the CPU cores of a
 multiprocessor machine or across a cluster of machines.
 
-We designed a single master multiple workers architecture:
-the master is responsible for the application management and load balancing,
+We designed a single-master, multiple-workers architecture:
+the master is responsible for application management and load balancing,
 the workers host virtual browsers and serve user requests.
 To facilitate the inter-process
-communication among the processes in our system, We developed a remote procedure call
+communication among the processes in our system, we developed a remote procedure call
 framework nodermi~\cite{nodermi} that encapsulates message communication as
 method calls.
-Nodermi transparently creates stubs that represents objects in other processes
-and allows a process invoke methods of other processes' objects by calling
+Nodermi transparently creates stubs that represent objects in other processes
+and allows a process to invoke methods of other processes' objects by calling
 methods on the stubs.
-We also enhanced the application programming interface to fully
-isolate the application code and the system objects.
+We also developed an application programming interface that fully
+isolates application code from each other and from underlying systems code.
 
-The underlying architecture change is transparent for applications. The new
-implementation fully preserves the semantics of the old programming models
-while provide higher scalability. The applications do not need to be aware of
-the distributed architecture.  Most of the existing applications can
-automatically scale to  multiple processors without modification. The rest of
-the applications are modified   because we made changes to some API methods'
+The underlying architecture change is transparent to applications. The new
+implementation fully preserves the semantics of the existing programming model
+while provide higher scalability. \cb{} applications do not need to be aware of
+the distributed architecture on which they run.  Most of the existing applications 
+can automatically scale to multiple processors without modification. Some
+applications needed to be modified because of necessary changes to API methods'
 signatures.
 
 We have implemented a number of sample applications and profiled them to
 better understand the intrinsic and extrinsic limitations of this design.  We
 also built a benchmark tool that simulates multiple users interacting with the
-applications and used it to  to evaluate the performance and scalability of
+applications and used it to evaluate the performance and scalability of
 \cbtwo. In our experiments,  \cbtwo scales linearly, it supports 2,800
 concurrent users using a chat room application on a eight core machine with
 average latency under 100ms.
-
 

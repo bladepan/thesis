@@ -19,19 +19,19 @@ scalable architectures for web applications.
 Web servers provide the infrastructure on which web applications 
 are hosted.
 Scalability is an important issue for web servers as the number of users
-visiting a site can grow significantly~\cite{berners1998world}.
-Even without the increase in users,
-web applications demand more resources as they become more sophisticated.
+visiting a site can grow significantly even during short time spans~\cite{berners1998world}.
+Even without an increase in users,
+web applications may demand more resources as they become more sophisticated.
 
-Figure~\ref{fig:webscaleout} is a diagram of a typical scalable web server
+Figure~\ref{fig:webscaleout} shows a diagram of a typical scalable web server
 architecture, which is able to harness resources from a cluster of servers. We
-divide the servers in such web systems into two layers. The web layer
+divide the servers in such a system into two layers. The web layer
 processes HTTP requests from users and generates HTTP responses which will be
 rendered in the user's browser. The web layer offloads storage and
 computational tasks to a storage layer that consists of database servers or
 other types of storage servers. The benefit of such layered design is twofold:
 it makes the web servers lightweight so they are able to handle more
-concurrent  connections; the whole system becomes modular, so that the system
+concurrent connections; the whole system becomes modular, so that the system
 operator can upgrade parts of the system without interfering with other parts.
 
 To balance requests evenly across the web servers, a load balancer component
@@ -39,32 +39,25 @@ sits between the clients and the web layer, which dispatches user requests to
 web servers and returns the responses from the web servers to users. The use
 of a load balancer allows users to access the web server using a single URL
 because it hides the distributed architecture from the user. There are many
-ways to implement load balancing~\cite{cardellini2002state}. We can use round-
-robin DNS~\cite{} to distribute the load to multiple addresses. First, we need
-to register a list of IP addresses to the DNS server. The DNS server orders
-the registered addresses in round-robin fashion
- and return the ordered
-addresses for every DNS query from the user.  The user will use the first
-address in the returned list to issue requests. Considering the effect of DNS
-caching, some users will send requests to the first address in the registered
-list, some users will send requests to the second address in the list, and so
-forth. We can expose  all web servers directly to the clients  by registering
-all web servers' public IP addresses using round-robin DNS. In this way,
-clients directly issue requests to the web servers. However, this solution is
-not flexible about adding or removing web servers. To overcome limitations of
-DNS based load balancing, people often add a layer of reverse proxies \footnote{A
-reverse proxy (such as nginx~\cite{nginx})  forwards user requests to one or
-multiple web servers and copies responses from the web servers back to the
-users} between the clients and the web servers. We can register the IP
-addresses of the reverse proxies to the DNS server. The user requests are
-first distributed among the reverse proxies, then  the reverse proxies
-distribute user requests across web servers.
+ways to implement load balancing~\cite{cardellini2002state}. For example, one can 
+use round-robin DNS~\cite{} to distribute the load to a set of servers using 
+distinct IP addresses.  The DNS server will rotate the list of addresses
+returned, causing clients to connect to different machines.
+%
+DNS-based load balancing has a number of drawbacks:  
+first, it is difficult to add or remove web servers since clients will
+cache DNS information.  Second, it requires that all servers have public 
+IP addresses so that they are directly reachable by clients.  
 
-From now on, we will only discuss the distribution algorithm without meddling too much
-in the implementation details of the load balancer layer.
-%
-%  REVISE TO HERE
-%
+To overcome the limitations of DNS-based load balancing, system architects often 
+add a layer of reverse proxies between the clients and the web servers. 
+Reverse proxies (such as nginx~\cite{nginx})  forward user requests to one or
+multiple web servers and copy responses from the web servers back to the users.
+
+It is possible to have multiple reverse proxies and use DNS-based load
+balancing among them.  User requests are
+first distributed among the reverse proxies, then  the reverse proxies
+distribute user requests across a larger number of web servers.
 
 % \subsection{Application State Management}% maybe too big a title for a short review...
 
@@ -94,45 +87,41 @@ in the implementation details of the load balancer layer.
 
 \subsection{Session State Management}
 
-The web applications use session state to remember user-related information across HTTP requests
-so they can provide user specific service using stateless HTTP protocol.
-The session state is store on the server side indexed by session ids.
-The web applications assign a unique session id for each user and 
+Web applications use session state to remember client-specific information across HTTP requests
+so they can provide stateful services on top of the stateless HTTP protocol.
+Web applications typically assign a unique session id for each user and 
 use this session id to retrieve the user's session state for each request.
-For the first request, the sever automatically creates a session state for the user.
-The applications could store various information in a user's session state
-such as user profile, a shopping cart, etc.
+For the first request, the server automatically creates a new session for the user.
+Applications store various bits of information in a user's session state,
+such as authentication information, user profile, shopping carts, etc.
 
-Most web frameworks provides two modes to manages session
-state~\cite{j2eedoc}~\cite{phpdoc}: a local mode where server side session
-data is stored in memory or in file system, a distributed mode where server
-side session data is stored in a storage system usually a relational database.
+Most web frameworks provide two modes to manage session
+state~\cite{phpdoc,j2eedoc}: a local mode where session state
+is stored in memory or in the file system and a distributed mode where
+session state is stored in a storage system, often a relational database.
 
 If session state is stored locally, it can be accessed faster, but it is not
 accessible from other web server instances.  To overcome this limitation, some
 web servers like Tomcat support a session replication
 mode~\cite{tomcatcluster} that  synchronizes locally stored session state
-across the whole cluster of web servers . Since a web server needs to
-broadcast session state changes to all other web servers,  this mode is
-expensive when there are many web servers.
+across a cluster of web servers.  Since a web server needs to
+broadcast any changes to session state to all other web servers, this mode 
+is expensive when there are many web servers.
 
-Large scale web applications usually adopt distributed mode session.
-Besides traditional rational database,
+Large scale web applications usually adopt distributed session state management.
+Besides traditional relational databases,
 the backend session storage could be implemented by high performance key value
-store such as redis or distributed data stores such as memcached, Cassandra, etc.
-
+stores such as Redis~\cite{} or distributed data stores such as memcached~\cite{}, or Cassandra~\cite{}.
 
 \subsection{Load Balancing}
 
-In this section we discuss the design choices regarding load balancing and how
-its implementation impacts application development.
+The design choices regarding load balancing and their implementation can 
+affect application development.  We use the taxonomy from the survey of Cardellini et
+al.~\cite{cardellini2002state} to categorize load balancing approaches into client-
+blind or client-aware, based on whether the load balancer uses information from
+the client's request to perform the dispatch.
 
-We use the taxonomy from the survey of Cardellini et
-al.~\cite{cardellini2002state} to categorize the load balancer into client-
-blind or client-aware based on if the load balancer uses any information from
-the client request to perform the dispatch.
-
-A client-blind load balancer does not use information from client when
+A client-blind load balancer does not use information from the client when
 deciding how to dispatch a request. For example, it could randomly select a
 web server from the web layer for each request, or use a round robin
 algorithm. In this case, multiple requests from one client could be relayed to
@@ -142,32 +131,31 @@ For every request, the web server needs to fetch the session state from
 session storage and pushes the changes back to session storage if session
 state is modified.
 
-
 A client-aware load balancer dispatches every request from a given client to
-the same web server. In this model, the web server can use the local mode
-session implementation, which is faster. The web server can also use the
-distributed mode to store session data so that the session data could endure
-web server restart. Since a given client's requests are dispatched to the same
-server, the web server can cache session data to get a better performance.  In
-this way,   The web server retrieves session state once for every user and
-only communicate with the storage system when session data changes. The
-downside for the client-aware load balancer  is that the load balancer needs
+the same web server. In this model, the web server can use a local mode
+session state implementation, which is faster, but client-aware load balancers
+can also benefit distributed session state implementations.
+Since a given client's requests are dispatched to the same
+server, the web server can cache session data to get better performance.  
+In this way, a web server retrieves session state once for every user and
+communicates with the storage system only when session data changes. The
+downside of the client-aware load balancing approach is that the load balancer needs
 to identify each client's assigned server to make the correct routing
-decision. For instance, the load balancer needs to examine the HTTP request
+decision. To that end, the load balancer needs to examine the HTTP request
 header to extract the session identifier and assign web servers based on a
 hash of this identifier.
 
-Because different request can impose different load on a web server, the
-simple implementations mentioned above can cause uneven load distribution
+Because different requests can impose different load on a web server, purely random 
+or round-robin based approaches can cause uneven load distribution
 among web servers. Especially for modern web applications with long
 connections, the time a connection keeps open can vary from milliseconds to
-hours. A naive load balancer can keep distributing requests to an already busy
-server when there are servers idle in the cluster. The load balancer can also
-be server-aware such that  it  takes servers' load information into
+hours. A naive load balancer could keep distributing requests to an already busy
+server even when there are less loaded servers in the cluster. The load balancer 
+can also be server-aware such that  it  takes servers' load information into
 consideration when making dispatching decisions. Because client-aware load
 balancing has the restriction of keeping requests from a given user to the
-same server, server-aware client-aware load balancing is more complex than
-server-aware client-blindness load balancing.
+same server, server- and client-aware load balancing is more complex than
+server-aware and client-blind load balancing.
  
 % Another aspect that needs to be consider to design a scalable web system
 % is the servers' load.
@@ -207,24 +195,24 @@ server-aware client-blindness load balancing.
 
 \section{\nodejs}
 
-\cb is written in \nodejs. \nodejs~\cite{tilkov2010node} is a standalone \js
+\cb is built on top of the \nodejs framework. \nodejs~\cite{tilkov2010node} is a standalone \js
 runtime built on Google Chrome's V8~\cite{v8} \js engine that allows \js code
 to be executed without a web browser.  \nodejs comes with a standard library
 that provides API for file system access, network IO, binary data
-manipulation, etc. It enables developers write server side network
-applications using \js.  \nodejs is appealing for building high performance
-scalable web applications because it adopts a non-blocking event driven IO
-model which is capable  to handle a large number of concurrent connections
+manipulation, etc. It enables developers to write server-side network
+applications in \js.  \nodejs is appealing for building high performance
+scalable web applications because it adopts a non-blocking event-driven I/O
+model which is capable of handling a large number of concurrent connections
 using a single thread.
 
 \nodejs has a thriving community with a variety of third party packages.
-We have relied on a lot of packages in \cb to implement complex tasks like
-server side DOM or provide small useful functions like formating a date object.
+We have relied on multiple packages in \cb to implement complex tasks like
+server side DOM manipulation as well as for many utility or formatting functions. 
+Another reason we chose \nodejs is that we can write the \cb infrastructure 
+in the same language as its applications, avoiding costs associated with
+crossing languages.
 
-Another reason we chose \nodejs is that we can write  \cb and the applications
-using the same language, there is no language crossing cost.
-
-In this section we will discuss the \nodejs's non-blocking IO model and some
+In this section we discuss \nodejs's non-blocking I/O model and some
 important third party packages we used.
 
  % it is not parallel with the next section
@@ -248,18 +236,49 @@ console.log("Reading file");
 \label{code:nodefile}
 \end{listing}
 
-Listing~\ref{code:nodefile} shows the non-block IO concept in \nodejs. Because
-the IO API such as \code{readFile} does not block, line 6 will be executed
-before line 3. To wait for the IO operation completes, the developer needs to
-register a callback function in the IO method  to be fired asynchronously. In
-this example, the callback function is placed on the event loop after the
+Listing~\ref{code:nodefile} shows an example of the non-blocking IO concept in \nodejs. 
+Because the I/O API such as \code{readFile} does not block, 
+the developer needs to pass a callback function to the \code{readFile} method  
+that is invoked asynchronously when the I/O operation has completed.
+
+\emph{notes:}
+introduce concept of single-threaded execution and event loop first.
+from single-threaded execution it follows that event handlers may not block
+(otherwise, entire process would be idle/blocked on individual operations).
+So - requirement to not block makes code more complex/harder to reason about,
+but also have advantages when compared to the alternative of using multiple
+threads, namely, less need for synchronization and potential for race condition. ---
+
+In this example, the callback function is placed on the event loop after the
 file's content is read, then the runtime will dequeue this callback sometime
-in the future and execute it. Unlike languages that support multiple threads
+in the future and execute it. 
+
+Unlike languages that support multiple threads
 where code can be executed concurrently, \js runtime has only one execution
 thread and it does not block. In this way,   thus the programmers do not need
-to use mutual exclusion mechanisms like Locks. The drawbacks of this model is
+to use mutual exclusion mechanisms like Locks. 
+
+The drawbacks of this model is
 that the programmers need to manually maintain the application context in the
-callbacks  and  it is hard to reasoning the execution order of the code.
+callbacks  and  it is hard to reason about the execution order of the code.
+For instance, in Figure~\ref{above}, line 6 could be executed before line 3. 
+
+%
+this can lead to subtle mistakes.... for intsance, consider a program
+that will need to access multiple files.
+Consider figure....
+
+(figure just shows bug)
+
+....
+
+to correct this, the programmer will have to ...
+
+....
+
+(show bug fix)
+
+
 Listing~\ref{code:nodefile2} shows the necessity for programmers maintain the
 application context in callback. Without keeping the current \code{fileName}
 in closure using \code{createReadFileCallback}, line 18 will always print the
@@ -305,30 +324,45 @@ for (var i = 0; i < files.length; i++) {
 \label{code:nodefile2}
 \end{listing}
 
+Expand your point - what do developer of complex applications do?
 
+Tame.js?
+
+Async.js?  
+
+other parallel frameworks?
 
 \subsection{Important \nodejs Packages}
 
 \subsubsection{Node-http-proxy}
 
 Node-http-proxy~\cite{nodeproxy} is a \nodejs package for developing HTTP proxies.
-It provides programming interface to relay a HTTP request to another server and
+It provides a programming interface to relay HTTP requests to another server and
 automatically copy the response from that server to the original requester.
-It also supports WebSocket~\cite{rfc6455} protocol.
-WebSocket is a TCP-based protocol which provides bidirectional full-duplex communication
-mechanism for web browsers.
-Using WebSocket, the server could send content to the client without requested
-by the client.
-Because WebSocket sends messages while keep the connection open,
-it is cost efficient comparing to using HTTP requests.
-We use WebSocket to implement DOM synchronization between client and server so
-the server could push DOM changes to clients.
-In node-http-proxy,
+It also supports the WebSocket~\cite{rfc6455} protocol.
+WebSocket is a TCP-based protocol which provides a bidirectional, full-duplex 
+communication mechanism between web browsers and servers.
+Using WebSockets, servers can send information to clients without requiring
+a previous request by the client, unlike in traditional HTTP.
+It also avoids the overhead of repeatedly establishing connections.
+
+We use WebSockets to implement DOM synchronization between client and server so
+the server can send DOM changes to clients.  In node-http-proxy,
 the programmer needs only to provide the destination server on the hand shake
 request and all the subsequent WebSocket messages will
-be transparently proxyed to the destination server.
+be transparently proxied to the destination server.
 
-\subsubsection{Jsdom}
+
+Missing: motivation for using http-node-proxy instead of nginx as originally
+planned?  Scalability? Easy of use?
+
+Most of this section so far is really about what websockets are and our motivation
+for using them? (Which should be discussed somewhere) 
+Not about node-http-proxy.  Make separate section?  Different title?
+
+\subsubsection{JSDom}
+
+\emph{reads a little bit out of place... not sure we want this here separate...}
 
 Jsdom~\cite{JSDOM} is a \nodejs package which provides a \js implementation of 
 DOM API. We use jsdom to implement server side DOM tree.
@@ -349,7 +383,7 @@ We also patched jsdom to get notifications for DOM updates.
 \architectureoverview{}
 
 In this section we sketch the implementation of
-the original single process version \cb{}~\cite{mcdaniel2012cloudbrowser}.
+the original, single-process version \cb{}~\cite{mcdaniel2012cloudbrowser}.
 Figure \ref{fig:cb1arch} shows the relationship
 between the client engine running in the user's browser and the virtual browser
 running server side.  When the user visits the application, the client engine
@@ -370,29 +404,39 @@ proxy.
 \appbundlefig{}
 As shown in Figure~\ref{fig:appbundle}, 
 a \cb application bundle is a directory
-contains descriptor files, an entry point HTML file,
-\js files and resources files like CSS files, images, etc.
+containing descriptor files, an entry point HTML file,
+\js files and resource files such as CSS files, images, etc.
 The descriptor files specify the application's name, owner, mount point, and
-other application's configuration.
-Mount point is the URL path to the application, for example,
+other application configuration information.
+The mount point is the URL path to the application, for example,
 if a \cb is deployed at \url{example.com} and an application's mount point is
 \emph{chat}, the user could access the application at \url{http://example.com/chat}.
-The \js files include libraries like AngularJS or JQuery
-, the application code and an optional application instance(explained 
-in Section~\ref{sec:appins}) definition.
+The \js files include libraries like AngularJS or JQuery, 
+the application code and an optional application instance definition,
+(further discussed in Section~\ref{sec:appins}).
 Like in regular browser, the entry point HTML should have script tags
-specifying the \js files the developer wants to be executed in virtual browsers.
+specifying the \js files the developer wants to be executed in a virtual browser.
 
-The developer could put the application bundle in \cb's application 
-directory or upload the bundle using \cb's administrator application.
-Multiple applications could be deployed simultaneously.
+Developers create application bundles, which can be deployed
+from \cb's application directory or uploaded using \cb's administrative
+interface.  Multiple applications could be deployed simultaneously.
 
 \apphierarchyfig{}
+
+\emph{You delve into application instances as if the user knows what this
+    is - needs motivation here.  Similarly, haven't established definition
+    of single virtual browser.
+    Perhaps use motivating example - chatroom - to explain why we designed
+    application instances.
+    Perhaps this section can be reorganized by discussing the deployment
+    scenario (already described below) first and using it as a motivator for 
+    introducing the app instance idea.}
 
 As emphasized in Figure~\ref{fig:appidhierarchy},
 an application could create multiple application instances,
 each application instance could create multiple virtual browsers,
 a virtual browser could be simultaneously accessed by multiple clients.
+
 % For example, in our chat room example application, multiple clients
 % can join one chat room and each client get his own view of the
 % chat room.
@@ -409,8 +453,6 @@ a virtual browser could be simultaneously accessed by multiple clients.
 % A virtual browser could also be accessed by multiple clients,
 % the DOM updates from the virtual browser will be broadcast to all connecting
 % clients to provide a co-browsing experience.
-
-
 
 \subsection{Application Instance}
 \label{sec:appins}
