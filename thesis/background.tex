@@ -208,16 +208,14 @@ server-aware client-blindness load balancing.
 \section{\nodejs}
 
 \cb is written in \nodejs. \nodejs~\cite{tilkov2010node} is a standalone \js
-runtime
-built on Google Chrome's V8~\cite{v8} \js engine that allows \js code to be executed without a web
-browser.  \nodejs comes with a standard
-library that provides API for file system access, network IO, binary data
+runtime built on Google Chrome's V8~\cite{v8} \js engine that allows \js code
+to be executed without a web browser.  \nodejs comes with a standard library
+that provides API for file system access, network IO, binary data
 manipulation, etc. It enables developers write server side network
-applications using \js.
- \nodejs is appealing for building high performance
+applications using \js.  \nodejs is appealing for building high performance
 scalable web applications because it adopts a non-blocking event driven IO
-model which is capable  to handle a large number of concurrent
-connections using a single thread. 
+model which is capable  to handle a large number of concurrent connections
+using a single thread.
 
 \nodejs has a thriving community with a variety of third party packages.
 We have relied on a lot of packages in \cb to implement complex tasks like
@@ -250,22 +248,68 @@ console.log("Reading file");
 \label{code:nodefile}
 \end{listing}
 
-Listing~\ref{code:nodefile} shows the non-block IO concept in \nodejs.
-Because the IO API such as \emph{readFile} does not
-block, line 6 will be executed before line 3.
-To execute code after the IO operation completes,
-the developer needs to register a callback function to be fired asynchronously.
-In this example, after the file's content is read the callback function is placed on the
-event loop,
-then the runtime would dequeue this callback sometime in the future and execute it.
-Like in a web browser, \nodejs execute \js code in a single thread,
-and the runtime will not halt the current execution in the middle to execute something in
-the event loop, so it is easy to write concurrent safe programs.
-The event based non-blocking IO and simple execution semantics
-is key to the performance of \nodejs,
-the downside is that any operation that waits for IO must be implemented as a callback.
+Listing~\ref{code:nodefile} shows the non-block IO concept in \nodejs. Because
+the IO API such as \code{readFile} does not block, line 6 will be executed
+before line 3. To wait for the IO operation completes, the developer needs to
+register a callback function in the IO method  to be fired asynchronously. In
+this example, the callback function is placed on the event loop after the
+file's content is read, then the runtime will dequeue this callback sometime
+in the future and execute it. Unlike languages that support multiple threads
+where code can be executed concurrently, \js runtime has only one execution
+thread and it does not block. In this way,   thus the programmers do not need
+to use mutual exclusion mechanisms like Locks. The drawbacks of this model is
+that the programmers need to manually maintain the application context in the
+callbacks  and  it is hard to reasoning the execution order of the code.
+Listing~\ref{code:nodefile2} shows the necessity for programmers maintain the
+application context in callback. Without keeping the current \code{fileName}
+in closure using \code{createReadFileCallback}, line 18 will always print the
+last \code{fileName} while line 6 will print the correct \code{fileName}.
+There is also no guarantee that the callbacks will be called in the same order
+they are registered because the events for these callbacks can happen in any
+order. For instance, in Listing~\ref{code:nodefile2} line 6 the files can be
+print in any order although their callbacks are registered in a fixed order.
+It is also possible that a function that accepts a callback function executes
+the  callback synchronously,  thus making the reasoning of the execution order
+more difficult.
 
-\subsection{Node-http-proxy}
+
+\begin{listing}[htb,width=0.8\columnwidth]
+\begin{minted}[
+frame=lines,
+fontsize=\scriptsize,
+linenos
+]
+{javascript}
+var fs = require('fs');
+var files = ['/etc/passwd', '/etc/hosts'];
+var createReadFileCallback = function(fileName){
+    return function(err, data){
+        if (err) throw err;
+        console.log("content of " + fileName + " is "+ data);          
+    }
+};
+for (var i = 0; i < files.length; i++) {
+    var fileName = files[i];
+    fs.readFile(fileName, createReadFileCallback(fileName));
+};
+for (var i = 0; i < files.length; i++) {
+    var fileName = files[i];
+    fs.readFile(fileName, function(err, data){
+        if (err) throw err;
+        // this will always print "read /etc/hosts"
+        console.log("read " + fileName);          
+    });
+}
+\end{minted}
+\caption{Reading 2 files in a loop using \nodejs.}
+\label{code:nodefile2}
+\end{listing}
+
+
+
+\subsection{Important \nodejs Packages}
+
+\subsubsection{Node-http-proxy}
 
 Node-http-proxy~\cite{nodeproxy} is a \nodejs package for developing HTTP proxies.
 It provides programming interface to relay a HTTP request to another server and
@@ -284,7 +328,7 @@ the programmer needs only to provide the destination server on the hand shake
 request and all the subsequent WebSocket messages will
 be transparently proxyed to the destination server.
 
-\subsection{Jsdom}
+\subsubsection{Jsdom}
 
 Jsdom~\cite{JSDOM} is a \nodejs package which provides a \js implementation of 
 DOM API. We use jsdom to implement server side DOM tree.
