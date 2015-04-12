@@ -111,7 +111,9 @@ is expensive when there are many web servers.
 Large scale web applications usually adopt distributed session state management.
 Besides traditional relational databases,
 the backend session storage could be implemented by high performance key value
-stores such as Redis~\cite{} or distributed data stores such as memcached~\cite{}, or Cassandra~\cite{}.
+stores such as Redis~\cite{redis} or distributed data stores 
+such as Memcached~\cite{fitzpatrick2004distributed}, or 
+Cassandra~\cite{lakshman2010cassandra}.
 
 \subsection{Load Balancing}
 
@@ -195,11 +197,11 @@ server-aware and client-blind load balancing.
 
 \section{\nodejs}
 
-\cb is built on top of the \nodejs framework. \nodejs~\cite{tilkov2010node} is a standalone \js
-runtime built on Google Chrome's V8~\cite{v8} \js engine that allows \js code
-to be executed without a web browser.  \nodejs comes with a standard library
-that provides API for file system access, network IO, binary data
-manipulation, etc. It enables developers to write server-side network
+\cb is built on top of the \nodejs framework. \nodejs~\cite{tilkov2010node} is
+a standalone \js runtime built on Google Chrome's V8~\cite{v8} \js engine that
+allows \js code to be executed without a web browser.  \nodejs comes with a
+standard library that provides API for file system access, network IO, binary
+data manipulation, etc. It enables developers to write server-side network
 applications in \js.  \nodejs is appealing for building high performance
 scalable web applications because it adopts a non-blocking event-driven I/O
 model which is capable of handling a large number of concurrent connections
@@ -216,22 +218,37 @@ In this section we discuss \nodejs's non-blocking I/O model and some
 important third party packages we used.
 
  % it is not parallel with the next section
-\subsection{Non-blocking IO}
+\subsection{Non-blocking I/O}
+
+\js only has only one thread that executes \js code.
+In this model if a function blocks then whole process blocks and cannot
+do anything else.
+It is very different from multiple-threaded languages like Java where
+a thread can block on I/O the whole process can still do other things
+via other threads.
+To achieve concurrency, \js use a non-blocking I/O model based on a event queue.
+In this model, I/O functions return immediately after issuing the I/O operations.
+The runtime processes the I/O operations in the background and the code execution
+thread continues after the I/O functions returns.
+To get the result of an I/O function, the programmer need to register a callback
+to be fired asynchronously.
+The runtime places a new message with the callback function in the event queue after the I/O operation
+completes.
+The code execution thread polls the event queue in the event loop and fetches
+one message at a time.
+After the code execution thread fetches a message it will run its callback function
+till completion before polling the event queue again.
+In this way the program could concurrently performing multiple I/O tasks while executing
+\js code.
+% Besides I/O related functions, timers are also implemented using this event-driven model.
 
 \begin{listing}[ht,width=\columnwidth]
-\begin{minted}[
+\inputminted[
 frame=lines,
 fontsize=\scriptsize,
 linenos
 ]
-{javascript}
-var fs = require('fs');
-fs.readFile('/etc/passwd', function (err, data) {
-  if (err) throw err;
-  console.log(data);
-});
-console.log("Reading file");
-\end{minted}
+{javascript}{../codeexamples/readfile.js}
 \caption{Reading file and printing the content on console using \nodejs.}
 \label{code:nodefile}
 \end{listing}
@@ -241,98 +258,104 @@ Because the I/O API such as \code{readFile} does not block,
 the developer needs to pass a callback function to the \code{readFile} method  
 that is invoked asynchronously when the I/O operation has completed.
 
-\emph{notes:}
-introduce concept of single-threaded execution and event loop first.
-from single-threaded execution it follows that event handlers may not block
-(otherwise, entire process would be idle/blocked on individual operations).
-So - requirement to not block makes code more complex/harder to reason about,
-but also have advantages when compared to the alternative of using multiple
-threads, namely, less need for synchronization and potential for race condition. ---
+% \js's execution model is based on a event queue and 
+% a event loop.
+% In the event loop, 
+% the code execution thread fetches one message from the event queue at 
+% a time and run the entire message to completion before fetching another message.
+% Unlike multiple-threaded languages like JAVA where a thread can block on I/O
+% operation while other threads can still progress,
+% in this model if a function blocks it blocks the whole process because there
+% is only one thread executes \js code.
+% For this reason, the I/O functions are non-blocking in \js.
+% The I/O functions return immediately after issuing the I/O operations.
+% To get the result of an I/O operation, the programmer needs to pass
+% a callback function to the I/O function and 
+% after the I/O operation finishes a new message with the callback function will
+% be placed on the event queue.
+% In this way the program could concurrently performing multiple I/O tasks while executing
+% \js code.
 
-In this example, the callback function is placed on the event loop after the
-file's content is read, then the runtime will dequeue this callback sometime
-in the future and execute it. 
+In this model, a function cannot be preempted since the runtime will
+run the entire message to completion before running another.
+The program is immune to the hard to debug problems brought by multi-thread
+programming.
+It is also easy to reason the behavior of individual functions as they cannot
+be preempt.
 
-Unlike languages that support multiple threads
-where code can be executed concurrently, \js runtime has only one execution
-thread and it does not block. In this way,   thus the programmers do not need
-to use mutual exclusion mechanisms like Locks. 
-
-The drawbacks of this model is
-that the programmers need to manually maintain the application context in the
-callbacks  and  it is hard to reason about the execution order of the code.
-For instance, in Figure~\ref{above}, line 6 could be executed before line 3. 
-
-%
-this can lead to subtle mistakes.... for intsance, consider a program
-that will need to access multiple files.
-Consider figure....
-
-(figure just shows bug)
-
-....
-
-to correct this, the programmer will have to ...
-
-....
-
-(show bug fix)
-
-
-Listing~\ref{code:nodefile2} shows the necessity for programmers maintain the
-application context in callback. Without keeping the current \code{fileName}
-in closure using \code{createReadFileCallback}, line 18 will always print the
-last \code{fileName} while line 6 will print the correct \code{fileName}.
-There is also no guarantee that the callbacks will be called in the same order
-they are registered because the events for these callbacks can happen in any
-order. For instance, in Listing~\ref{code:nodefile2} line 6 the files can be
-print in any order although their callbacks are registered in a fixed order.
-It is also possible that a function that accepts a callback function executes
-the  callback synchronously,  thus making the reasoning of the execution order
-more difficult.
-
+A downside of this model is that it is hard to reason the execution order.
+First, asynchronously callbacks may be executed in a order that is different 
+from the order they are registered.
+For example, in Listing~\ref{code:nodefile} the program called \code{readFile}
+twice and it is possible that the callback for the second \code{readFile} be
+executed first.
+Second, it is impossible to tell from the function signature along if a 
+callback will be called asynchronously via the event queue mechanism or be
+called synchronously right away. In Listing~\ref{code:nodefile} line 10 is
+be executed before line 3. If in the future \code{readFile} is updated such
+that it caches files read before and calls the callback function right away
+if the file in the parameter is cached, then line 3 will be executed before
+line 10 if the file is cached and after line 10 if it is not.
+Thus the programmer must take extra caution if the program depends on certain
+execution order.
 
 \begin{listing}[htb,width=0.8\columnwidth]
-\begin{minted}[
+\inputminted[
 frame=lines,
 fontsize=\scriptsize,
 linenos
 ]
-{javascript}
-var fs = require('fs');
-var files = ['/etc/passwd', '/etc/hosts'];
-var createReadFileCallback = function(fileName){
-    return function(err, data){
-        if (err) throw err;
-        console.log("content of " + fileName + " is "+ data);          
-    }
-};
-for (var i = 0; i < files.length; i++) {
-    var fileName = files[i];
-    fs.readFile(fileName, createReadFileCallback(fileName));
-};
-for (var i = 0; i < files.length; i++) {
-    var fileName = files[i];
-    fs.readFile(fileName, function(err, data){
-        if (err) throw err;
-        // this will always print "read /etc/hosts"
-        console.log("read " + fileName);          
-    });
-}
-\end{minted}
-\caption{Reading 2 files in a loop using \nodejs.}
+{javascript}{../codeexamples/read2files.js}
+\caption{Reading two files in a loop using \nodejs.}
 \label{code:nodefile2}
 \end{listing}
 
-Expand your point - what do developer of complex applications do?
 
-Tame.js?
+This asynchronous execution model requires the programmer to preserve the
+application context in the callback functions' closure.  Sometimes it requires
+subtle tricks that make the code hard to read. For example, suppose we want to
+read a list of files and prints out the files' name and content. In
+Listing~\ref{code:nodefile2}  line 3 - 10 shows a incorrect solution that
+iterates an array of file names  and calls \code{readFile} with a callback
+that prints the current file name and file content. The printed file name is
+always the last file name because the callback functions registered in the
+loop reference the \code{fileName} variable on the stack and it is updated
+before these callbacks are triggered. Line 11 - 20 shows a correct
+implementation  that includes a function that  stores the current file name in
+the closure of the function it returns, it is harder to follow.
 
-Async.js?  
 
-other parallel frameworks?
+%callback hell
+
+The prevalent asynchronous callbacks in \js are not intuitive for the
+programmers that are used to traditional languages like Java or C. When
+writing applications with complex logic, programmers often end up with deeply
+nested callbacks which make the code hard to understand, the developer
+community call it \emph{callback hell}. For example, to print the content of
+two files one by one, a developer may call \code{readFile} with the callback
+to print the second file  inside the callback of the first \code{readFile}
+call. The nested callbacks get more convoluted for more complex task. Consider
+the situation when a bootstrap function need to start various components in
+the order that a competent must be started after all the components it depends
+on are started.  To simplify the management of execution order of callbacks,
+developers use libraries like async~\cite{async} (see
+Section~\ref{sec:nodepackage}) when writing complex applications.
+
+
+% We will briefly discuss async in Section~\ref{sec:nodepackage}.
+
 
 \subsection{Important \nodejs Packages}
+\label{sec:nodepackage}
+
+\subsubsection{async}
+Async is a library that helps developers implement complex control flow of asynchronous 
+functions without nested callbacks. 
+It supports various control flows such as calling asynchronous functions in
+series, in parallel, in the order that meets predefined dependencies, etc.
+The developers can focus on the implementation of individual steps
+of control flows and async will make these steps be executed in the right order.
+
 
 \subsubsection{Node-http-proxy}
 
