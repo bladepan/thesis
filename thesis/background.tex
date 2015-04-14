@@ -198,10 +198,10 @@ server-aware and client-blind load balancing.
 \section{\nodejs}
 
 \cb is built on top of the \nodejs framework. \nodejs~\cite{tilkov2010node} is
-a standalone \js runtime built on Google Chrome's V8~\cite{v8} \js engine that
+a standalone \js runtime built on Google Chrome's V8 \js engine~\cite{v8} that
 allows \js code to be executed without a web browser.  \nodejs comes with a
 standard library that provides API for file system access, network I/O, binary
-data manipulation, etc. It enables developers to write server-side network
+data manipulation, and others. It enables developers to write server-side network
 applications in \js.  \nodejs is appealing for building high performance
 scalable web applications because it adopts a non-blocking, event-driven I/O
 model which is capable of handling a large number of concurrent connections
@@ -313,14 +313,14 @@ This asynchronous execution model requires the programmer to preserve the
 application context in the callback functions' closure.  This process
 is prone to subtle mistakes.  For example, suppose we want to
 read a list of files and print out each file's name and content.
-Listing~\ref{code:nodefile2}  lines 3--10 shows a incorrect solution that
+Listing~\ref{code:nodefile2}  lines 4--11 shows a incorrect solution that
 iterates over an array of file names and calls \code{readFile} with a callback
 that prints the current file name and file content. 
 If the callback fires synchronously, filename will refer to the currently
 read file. If, however, the callback fires asynchronously - as it likely will
 in the current implementation of \code{readFile}, filename will refer to the
 name of the last file in the list.
-Line 11--20 shows a correct implementation that dynamically creates a function 
+Line 13--22 shows a correct implementation that dynamically creates a function 
 that references the current file name in its closure.
 Though correct, the resulting code is more difficult to read.
 

@@ -1,5 +1,6 @@
 var fs = require('fs');
 var files = ['/etc/passwd', '/etc/hosts'];
+// incorrect implementation
 for (var i = 0; i < files.length; i++) {
     var fileName = files[i];
     fs.readFile(fileName, function(err, data){
@@ -8,6 +9,7 @@ for (var i = 0; i < files.length; i++) {
         console.log("content of " + fileName + " is "+ data);
     });
 }
+// correct implementation
 var createReadFileCallback = function(fileName){
     return function(err, data){
         if (err) throw err;

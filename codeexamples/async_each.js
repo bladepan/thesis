@@ -11,10 +11,10 @@ for (var i = 0; i < files.length; i++) {
         };
     });
 };
-async.each(files, function(fileName, next){
+async.each(files, function(fileName, done){
     fs.readFile(fileName, function(err, data){
         totalSize2 += data.length;
-        next();
+        done();
     });
 }, function(err){
     console.log("total file size "+ totalSize2);
