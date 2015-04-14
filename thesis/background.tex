@@ -200,17 +200,17 @@ server-aware and client-blind load balancing.
 \cb is built on top of the \nodejs framework. \nodejs~\cite{tilkov2010node} is
 a standalone \js runtime built on Google Chrome's V8~\cite{v8} \js engine that
 allows \js code to be executed without a web browser.  \nodejs comes with a
-standard library that provides API for file system access, network IO, binary
+standard library that provides API for file system access, network I/O, binary
 data manipulation, etc. It enables developers to write server-side network
 applications in \js.  \nodejs is appealing for building high performance
-scalable web applications because it adopts a non-blocking event-driven I/O
+scalable web applications because it adopts a non-blocking, event-driven I/O
 model which is capable of handling a large number of concurrent connections
 using a single thread.
 
 \nodejs has a thriving community with a variety of third party packages.
-We have relied on multiple packages in \cb to implement complex tasks like
+We have relied on multiple packages in \cb to implement complex tasks such as
 server side DOM manipulation as well as for many utility or formatting functions. 
-Another reason we chose \nodejs is that we can write the \cb infrastructure 
+Another reason we chose \nodejs is that we are able to write the \cb infrastructure 
 in the same language as its applications, avoiding costs associated with
 crossing languages.
 
@@ -220,26 +220,29 @@ important third party packages we used.
  % it is not parallel with the next section
 \subsection{Non-blocking I/O}
 
-\js only has only one thread that executes \js code.
-In this model if a function blocks then whole process blocks and cannot
-do anything else.
-It is very different from multiple-threaded languages like Java where
-a thread can block on I/O the whole process can still do other things
-via other threads.
-To achieve concurrency, \js use a non-blocking I/O model based on a event queue.
-In this model, I/O functions return immediately after issuing the I/O operations.
-The runtime processes the I/O operations in the background and the code execution
-thread continues after the I/O functions returns.
-To get the result of an I/O function, the programmer need to register a callback
-to be fired asynchronously.
-The runtime places a new message with the callback function in the event queue after the I/O operation
-completes.
-The code execution thread polls the event queue in the event loop and fetches
-one message at a time.
-After the code execution thread fetches a message it will run its callback function
-till completion before polling the event queue again.
-In this way the program could concurrently performing multiple I/O tasks while executing
-\js code.
+A \js engine has only one thread that executes \js code.
+In this model, if a function blocks on some operation such as I/O,
+then whole process blocks and cannot make progress.
+By contrast, in a multi-threaded languages such as Java only the
+current thread is blocked whereas other threads within the same process can
+still make progress.
+To avoid blocking and achieve concurrent execution of multiple tasks, 
+\js uses a non-blocking I/O model based on a event queue.
+In this model, I/O functions return immediately after issuing I/O requests.
+The runtime processes I/O operations in the background 
+and keeps track of when they complete.  Upon completion, an
+event is scheduled that, when executed, will fire a programmer-provided
+callback function.
+In this way, the program can concurrently performing multiple I/O tasks 
+while executing \js code.
+
+The execution thread polls the event queue in the event loop, processing
+events in order.  The handlers/callback functions associated with each
+event must run to completion.  This lack of preemption means that 
+\js code is immune from the race conditions that arise in preemptive,
+multi-threaded environments, and makes it simpler to reason about
+the behavior of individual functions.
+
 % Besides I/O related functions, timers are also implemented using this event-driven model.
 
 \begin{listing}[ht,width=\columnwidth]
@@ -249,11 +252,11 @@ fontsize=\scriptsize,
 linenos
 ]
 {javascript}{../codeexamples/readfile.js}
-\caption{Reading file and printing the content on console using \nodejs.}
+\caption{Reading a file and printing its content using \nodejs.}
 \label{code:nodefile}
 \end{listing}
 
-Listing~\ref{code:nodefile} shows an example of the non-blocking IO concept in \nodejs. 
+Listing~\ref{code:nodefile} shows an example of the non-blocking I/O concept in \nodejs. 
 Because the I/O API such as \code{readFile} does not block, 
 the developer needs to pass a callback function to the \code{readFile} method  
 that is invoked asynchronously when the I/O operation has completed.
@@ -276,28 +279,23 @@ that is invoked asynchronously when the I/O operation has completed.
 % In this way the program could concurrently performing multiple I/O tasks while executing
 % \js code.
 
-In this model, a function cannot be preempted since the runtime will
-run the entire message to completion before running another.
-The program is immune to the hard to debug problems brought by multi-thread
-programming.
-It is also easy to reason the behavior of individual functions as they cannot
-be preempt.
-
-A downside of this model is that it is hard to reason the execution order.
-First, asynchronously callbacks may be executed in a order that is different 
-from the order they are registered.
-For example, in Listing~\ref{code:nodefile} the program called \code{readFile}
-twice and it is possible that the callback for the second \code{readFile} be
-executed first.
-Second, it is impossible to tell from the function signature along if a 
-callback will be called asynchronously via the event queue mechanism or be
-called synchronously right away. In Listing~\ref{code:nodefile} line 10 is
-be executed before line 3. If in the future \code{readFile} is updated such
-that it caches files read before and calls the callback function right away
-if the file in the parameter is cached, then line 3 will be executed before
-line 10 if the file is cached and after line 10 if it is not.
-Thus the programmer must take extra caution if the program depends on certain
+Although event handler run to completion, the order in which events fire
+is unpredictable.  As a result, it can be hard to reason about a program's
 execution order.
+Asynchronous callbacks may be executed in a order that is different 
+from the order in which they were registered.
+For example, in Listing~\ref{code:nodefile} the program called \code{readFile}
+twice but it is possible that the callback for the second \code{readFile} call
+is executed first.
+It is also impossible to tell from the function signature alone if a 
+callback will be called asynchronously via the event queue mechanism or if
+it could be called synchronously. In Listing~\ref{code:nodefile} line 10 is
+be executed before line 3 if readFile's callback fires asynchronously. 
+If, in the future \code{readFile} were changed such
+that it caches the contents of files, it may call the callback function synchronously
+if it finds cached data in a request, so line 3 will be executed before line 10.
+Thus the programmer must take extra caution to not depend on a certain execution
+order.
 
 \begin{listing}[htb,width=0.8\columnwidth]
 \inputminted[
@@ -312,65 +310,62 @@ linenos
 
 
 This asynchronous execution model requires the programmer to preserve the
-application context in the callback functions' closure.  Sometimes it requires
-subtle tricks that make the code hard to read. For example, suppose we want to
-read a list of files and prints out the files' name and content. In
-Listing~\ref{code:nodefile2}  line 3 - 10 shows a incorrect solution that
-iterates an array of file names  and calls \code{readFile} with a callback
-that prints the current file name and file content. The printed file name is
-always the last file name because the callback functions registered in the
-loop reference the \code{fileName} variable on the stack and it is updated
-before these callbacks are triggered. Line 11 - 20 shows a correct
-implementation  that includes a function that  stores the current file name in
-the closure of the function it returns, it is harder to follow.
-
+application context in the callback functions' closure.  This process
+is prone to subtle mistakes.  For example, suppose we want to
+read a list of files and print out each file's name and content.
+Listing~\ref{code:nodefile2}  lines 3--10 shows a incorrect solution that
+iterates over an array of file names and calls \code{readFile} with a callback
+that prints the current file name and file content. 
+If the callback fires synchronously, filename will refer to the currently
+read file. If, however, the callback fires asynchronously - as it likely will
+in the current implementation of \code{readFile}, filename will refer to the
+name of the last file in the list.
+Line 11--20 shows a correct implementation that dynamically creates a function 
+that references the current file name in its closure.
+Though correct, the resulting code is more difficult to read.
 
 %callback hell
 
-The prevalent asynchronous callbacks in \js are not intuitive for the
-programmers that are used to traditional languages like Java or C. When
-writing applications with complex logic, programmers often end up with deeply
-nested callbacks which make the code hard to understand, the developer
-community call it \emph{callback hell}. For example, to print the content of
-two files one by one, a developer may call \code{readFile} with the callback
-to print the second file  inside the callback of the first \code{readFile}
-call. The nested callbacks get more convoluted for more complex task. Consider
-the situation when a bootstrap function need to start various components in
-the order that a competent must be started after all the components it depends
-on are started.  To simplify the management of execution order of callbacks,
-developers use libraries like async~\cite{async} (see
-Section~\ref{sec:nodepackage}) when writing complex applications.
+The prevalence of asynchronous callbacks in \js is not intuitive for
+programmers that are used to languages like Java or C that provide blocking I/O 
+primitives.
+When writing applications with complex logic, programmers often end up with deeply
+nested callbacks which make their code hard to understand, something which has
+been referred to by the developer community as \emph{callback hell}. 
 
+For instance, to read two files in order, the program in Listing\ref{} could
+be changed such that the I/O for the second file is initiated in the callback
+that is fired when the first file has been read, which adds a level of nesting.
+However, this approach will not allow the I/O of those files to overlap.
+To handle this situation and more complex scenarios, developers frequently use 
+libraries like async~\cite{async}. % (see Section~\ref{sec:nodepackage}).
 
 % We will briefly discuss async in Section~\ref{sec:nodepackage}.
 
-
-\subsection{Important \nodejs Packages}
+\subsection{\nodejs Packages Used in \cb}
 \label{sec:nodepackage}
 
 % do not deal with err in the examples in sake of clarity
 \subsubsection{async}
-\emph{Async} is a library that helps developers implement complex control flow of asynchronous 
-functions without nested callbacks. 
-It supports various control flows such as calling asynchronous functions in
-series, in parallel, in the order that meets predefined dependencies, etc.
+\emph{Async} is a library that helps developers implement complex control 
+flow patterns of asynchronous functions without nested callbacks.
+It supports various recurring patterns, including
+execution in series, in parallel, or in an order that meets predefined dependencies,
+and others.
 The developers can focus on the implementation of individual steps
-of control flows and \emph{async} will make these steps be executed in the right order.
-It is hard to implement control flows of asynchronous functions, 
-it often leads to undecipherable code with deeply nested callbacks that
-mingles business logic with control flow management logic.
-Using \emph{async} makes the code
-much easier to understand because the semantics of the control flows are represented
-by well named functions like \code{each}, \code{series}, etc., and the code is more
-focused on business logic. 
+and \emph{async} will execute them in the right order, while simultaneously 
+documenting the desired semantics.
 
-
-For example, suppose we want to print the total size of multiple files,
-we would want to read these files in parallel and print the sum of their sizes
-after every file is read. Listing~\ref{code:async_each} shows two implementations,
-line 5-14 use vanilla \js, line 15-21 use \code{each} function in \emph{async}
-which provides parallel iteration on an array. Although this is a 
-simple use case, \emph{async} still makes the code much clearer.
+For example, to compute the combined size of multiple files,
+it is necessary to read these files in parallel, add each file's size 
+to a running total, and then output the total sum after every file is read. 
+Listing~\ref{code:async_each} shows two implementations,
+lines 5--14 implement a barrier-style counter in vanilla \js, whereas 
+lines 15--21 uses async's \code{each} function, which provides parallel 
+iteration over an array. 
+Although this is a simple use case, the use of \emph{async} makes the
+intended control flow pattern more clear and includes proper exception
+handling.
 
 \begin{listing}[htb,width=0.8\columnwidth]
 \inputminted[
@@ -379,27 +374,26 @@ fontsize=\scriptsize,
 linenos
 ]
 {javascript}{../codeexamples/async_each.js}
-\caption{Print total size of multiple files using async.}
+\caption{Print the total size of multiple files using async.}
 \label{code:async_each}
 \end{listing}
 
 
 \subsubsection{Node-http-proxy}
 
-In \cbtwo, we need to implement a reverse proxy that allows us to specify
-destination servers programmatically for incoming HTTP requests.
+In \cbtwo, we needed to implement a reverse proxy that allows us to specify
+destination servers for incoming HTTP requests.
+Furthermore, we required the ability to add and remove forwarding rules programmatically.
 Existing standalone reverse proxy software such as nginx 
-rely on the user to pre-define
-URL matching rules or simple dispatch policies like round-robin in configuration
-files to select destination servers.
-For these software, it is not feasible to change the behavior of choosing destination server
-on the fly.
+rely on pre-defined URL matching rules and support only fixed dispatch policies 
+such as round-robin when selecting destination servers.
+We found this software too difficult to adapt to achieve the required behavior.
 
 Node-http-proxy~\cite{nodeproxy} is a \nodejs package that helps developers to 
-write reverse proxies.
-It allows the developer to write customized logic of choosing destination servers
-for incoming HTTP requests and 
-handles the network communication of proxying requests.
+implement customizable reverse proxy software.
+It allows the developer to write customized logic to implement specific
+forwarding policies for incoming HTTP requests and provides the necessary
+code to handle the network communication for proxying these requests.
 
 It also supports the WebSocket~\cite{rfc6455} protocol.
 WebSocket is a TCP-based protocol which provides a bidirectional, full-duplex 
@@ -407,61 +401,72 @@ communication mechanism between web browsers and servers.
 Using WebSockets, servers can send information to clients without requiring
 a previous request by the client, unlike in traditional HTTP.
 It also avoids the overhead of repeatedly establishing connections.
-We use WebSockets to implement DOM synchronization between client and server so
-the server can send DOM changes to clients.  
-
+We use WebSockets to implement DOM synchronization between clients and server.
 In node-http-proxy,
-the programmer needs only to provide the destination server for the hand shake
-request and all the subsequent WebSocket messages will
-be transparently proxied to the destination server.
-
+the programmer needs to provide the destination server only for the hand shake
+request that establishes the connection, then all subsequent WebSocket messages will
+be transparently proxied to the destination server.  
+This feature greatly simplified our implementation.
 
 \subsubsection{Jsdom}
 
-% \emph{reads a little bit out of place... not sure we want this here separate...}
+\emph{reads a little bit out of place... not sure we want this here separate...
+%
+    Maybe you want to fold this material into the following section where 
+    server-side documents are discussed.
+}
 
-Jsdom~\cite{JSDOM} is a \nodejs package which provides a \js implementation of 
-DOM API. We use jsdom to implement server side DOM tree.
+Jsdom~\cite{JSDOM} is a \nodejs package which provides a \js implementation of the
+DOM API. % We use jsdom to implement the server side DOM tree.
 Jsdom works like a web browser except it does not render the DOM tree:
 it reads HTML documents to build the initial DOM tree and executes \js files specified in script tags.
 It is possible to create multiple jsdom instances in the same process,
 each of these jsdom instance will have its own DOM tree and
 isolated namespace for its \js code.
-In our model, a virtual browser corresponds to a jsdom instance.
+% In our model, a virtual browser corresponds to a jsdom instance.
 The client events will be applied to the jsdom instances and
 trigger DOM events and fires listeners defined in the \js code if necessary.
-To capture DOM updates, we patched jsdom so that the methods that modifies DOM
+To capture DOM updates, we patched jsdom so that the methods that modify the DOM
 will call \cb{} to send these updates to the connected clients.
 
 \section{\cb}
 
 \architectureoverview{}
 
-In this section we sketch the implementation of
-the original, single-process version \cb{}~\cite{mcdaniel2012cloudbrowser}.
+This section reviews the implementation of
+the original, single-process version \cb{}~\cite{mcdaniel2012cloudbrowser},
+which formed the basis for this work.
 Figure \ref{fig:cb1arch} shows the relationship
 between the client engine running in the user's browser and the virtual browser
-running server side.  When the user visits the application, the client engine
-code is downloaded and restores the current view of the application by
+running server side.  When the user visits an application, the client engine
+code is downloaded, which then restores the current view of the application by
 copying the current state of the server document.  Subsequently, user input
 is captured, forwarded to the server engine inside the virtual browser,
 which then dispatches events to the document.  All application logic runs
 in the global scope associated with the virtual browser's window object.
 Since the server environment faithfully mimics a real browser, libraries
-such as AngularJS~\cite{hevery2009angular} can be used unchanged to implement the user interface.
+such as AngularJS~\cite{hevery2009angular} can be used unchanged to implement 
+the user interface.
 Client and server communicate through a lightweight RPC protocol that is
-layered on top of a bidirectional WebSocket communication.
+layered on top of a bidirectional WebSocket communication channel.
 Stylesheets, images, etc. are provided to the client through a resource
-proxy.
+proxy.  The client's browser is responsible for rendering the document
+on the screen using the provided styles.
 
 \subsection{Deployment Model}
 \label{sec:deploymodel}
 
 \appbundlefig{}
 
-As shown in Figure~\ref{fig:appbundle}, 
-a \cb application bundle is a directory
-containing descriptor files, an entry point HTML file,
+\cb uses an application server model.  Application code is packaged in
+bundles in a well-defined format.
+Developers create application bundles, which can be deployed
+from \cb's application directory or uploaded using \cb's administrative
+interface.  Multiple applications can be deployed simultaneously.
+
+Figure~\ref{fig:appbundle} shows an example of an \cb application bundle
+contained in a directory.
+The bundle includes descriptor files, an entry point HTML file,
 \js files and resource files such as CSS files, images, etc.
 The descriptor files specify the application's name, owner, mount point, and
 other application configuration information.
@@ -474,43 +479,47 @@ file (detailed later).
 Like in regular browser, the entry point HTML can have script tags
 specifying the \js files the developer wants to be executed.
 
-Developers create application bundles, which can be deployed
-from \cb's application directory or uploaded using \cb's administrative
-interface.  Multiple applications could be deployed simultaneously.
-
 % motivation
 \chatappfig{}
 
 \appinstancefig{}
 
-As an example, consider a scenario for a Chat application developed using
-AngularJS, depicted in Figure~\ref{fig:chatapp}. A system administrator of a
-\cb deployment would install the application, which gives users the ability to
-create chatrooms and join existing chatrooms. For a given chatroom, the joined
-users need to have separate views so they do not interfere with each other.
-These views are represented as virtual browsers in \cb. For the virtual
-browsers in the same chatroom, they share chatroom related session state such
-as chatroom's title, chatting history, etc. \cb provides \appins to model
-session state that can be shared by multiple virtual browsers. The developer
-can implement \appins{}es in the \emph{application instance
-definition} file in the application bundle. For the chat application, the developer
-can implement a chatroom object for each \appins  to manage chatting messages and
-participants(See Figure~\ref{fig:appinstance}). 
+%
+Application execution in \cb is organized via \emph{application
+instances} and \emph{virtual browsers}.  
+We motivate these abstractions using the following use case scenario.
+Consider a Chat application developed using
+AngularJS, as depicted in Figure~\ref{fig:chatapp}. After a \cb administrator 
+installs this application, authorized users will have the ability to
+create chatrooms and join existing chatrooms.  Each user who has joined is
+provided with its own view.
+These views are represented as virtual browsers in \cb. 
+
+Virtual browsers in the same chatroom must share related session state such
+as chatroom's title, chatting history, etc. Simultaneously, it should be
+possible for multiple users to create separate, unrelated chatrooms.
+\cb provides \appins to achieve this behavior. Application instance state 
+can be shared by multiple virtual browsers. The developer
+describe the state underlying an \appins{} in the \emph{application instance
+definition} file in the application bundle. For the chat application, this state
+may include the messages and participants of one or more chatrooms shared
+by these participants, see Figure~\ref{fig:appinstance}. 
+
 To create a chatroom, a user would create an \appins{} and share
 its URL with chat participants. As the participants join the chat site, a
 virtual browser is created on demand for each participant, which is connected
 to the application instance (the users can bookmark their virtual browser's
-URL to later return.) The virtual browser could directly access the \appins
-object which is the chatroom object to access the shared chatroom-related
-information. The advantage of this design is the update to the \appins object
-is instantly available for all the \appins{}'s virtual browsers.
+URL to later return.) The virtual browser can directly access the \appins
+that contains the shared chatroom-related state, which simplifies the 
+synchronization between this state and the virtual browser's DOM.
 
 \apphierarchyfig{}
 
 Thus in our model, 
 an application can have multiple \appins{}s,
-each \appins{} can have multiple virtual browsers,
-and a virtual browser can be simultaneously accessed by multiple clients
+each \appins{} can have multiple virtual browsers.
+It is also possible for multiple clients to simultaneously access a virtual browser,
+although in this case all users will see exactly the same UI 
 (See Figure~\ref{fig:appidhierarchy}).
 
 
@@ -536,90 +545,109 @@ and a virtual browser can be simultaneously accessed by multiple clients
 
 \subsection{Authentication}
 
-\cb provides authentication support that implements account related features
-for applications,
-such as registering a new account, login and logout an account, etc.
-The application developer can enable the authentication support for an
-application by setting the authentication option in the application's descriptor
-files.
-After that,
-the system will redirect the user's request to a login page if it detects the
-user has not logged in that application,
-the application can get the user's account information via \cb API if the user
-has logged in.
+\cb provides support for common authentication-related features
+to applications, such as registering user accounts, external authentication
+through outside providers, and maintains a authentication state transparently
+and outside the actual application code.
 
-The login page itself is implemented by creating a virtual
-browser in the system login application. The login page provides two
+The application developer can enable authentication support for an
+application by setting the authentication option in the application's descriptor.
+The system will then redirect the user to a login page if the
+user has not been authenticated.
+Applications can access the user's account information via the \cb API 
+once the user has logged in.
+
+The login page itself is implemented by a virtual
+browser representing the system's login application. The login page provides two
 authentication options: a local authentication option where the user's
-credentials are stored in MongoDB; an OAuth~\cite{hardt2012oauth} option which
-authenticate user via Google's openID. The user could submit his email address
-and password directly in the login page for local authentication option. Then
-the system will lookup the user's account in the account table.
-The login page also has a register link which directs the user to a simple
-account register page to create a new local account.
-For the OAuth
-option, the user clicks a \emph{Login with Google Account} link to land on a
-Goolge account authorization page asking the user to authorize \cb{} to access
+credentials are stored in a local database, for \cb supports local account creation and lookup.
+Second, and an OAuth~\cite{hardt2012oauth} option which
+authenticate users via Google's openID authentication services. 
+In this option, the user clicks a \emph{Login with Google Account} button which redirects
+to a Google account authorization page asking the user to authorize \cb{} to access
 the user's Google account information.
-After the user confirms Goolge will request \cb{}'s authentication
+After the user confirms Google will request \cb{}'s authentication
 callback URL to finalize the authentication.
 
 After the user logs in using either mode, the system adds an entry of the
-user's email address and the application's mount point in the user's session
-(stored in MongoDB as well). That entry indicates the user has logged in the
-application. Then the login page virtual browser is closed and the user is
-redirected to  the URL he originally requested. 
-For the subsequent requests from the user session,
-the system will detect the user has logged in and the requests are handed over
-to the application directly.
+user's email address and the application's mount point to the user's session.
+% That entry indicates the user has logged in the application. 
+Then the login page virtual browser is closed and the user is
+redirected to the URL he originally requested. 
+For all subsequent requests of this session, the system will detect the user has 
+logged in and the requests are handling directly by the application.
 
 The user is automatically logged out after the session expires.
 The application can also display a link to the application's logout URL 
- in the user interface to allow the user to manually logout the application.
-
+in the user interface to allow the user to manually logout the application.
 
 \subsection{Application Instantiation Strategy}
 \label{sec:appinstantiation}
 
-Different types of applications need different strategies as regard to how to 
+Different types of applications need different strategies with regard to how to 
 create \appins{}s and virtual browsers.
-A chat application may need multiple \appins{} to represent multiple chatrooms
-and multiple virtual browsers in each \appins{} to provide separate user
-interfaces for the users in the associated chatroom.
-A todo-list application may need only one virtual browser for each user to 
-display the user's todo-lists.
+These strategies differ with respect to how many instance there can be
+per application, and how many virtual browser a user may create for each
+application instance.
+
+%A chat application may use multiple \appins{} to represent multiple chatrooms
+%and support multiple virtual browsers for each \appins{} to provide separate user
+%interfaces for the users in the associated chatroom.  However, each authenticated
+%user is allowed only one virtual browser per chatroom \appins{}.
+%A todo-list application may need only one virtual browser for each user to 
+%display the user's todo-lists.
 
 \cb{} provides four application instantiation strategies that
 specify different ways to initiate \appins{}s and virtual browsers.
-The developer can set the application to adopt one of the application instantiation strategies
-in the application's descriptor files.
+The developer can set the application to adopt one of the application instantiation 
+strategies in the application's descriptor files.
 
 \begin{description}
 
-\item[singleAppInstance] The application supports only one instance and single virtual browser.
-    All connected clients will share a single server-side document in this singleton - this can be
+\item[multiInstance]
+    This is the most flexible option, which
+    allows users to have multiple, separate virtual browsers connected to an application
+    instance. For instance, a user could participate using separate nicknames in a chatroom.
+    In those cases, the user has the largest flexibility, but will be exposed to having
+    to manage the virtual browser created for them.  For instance, when visiting a chatroom
+    application instance, they will need to manage whether
+    to join an existing virtual browser or create a new one
+    - similar to the choice a user may have when deciding whether to navigate to 
+    a new site in an existing browser tab or open a new one.
+    In this model, there are also no restrictions on the number of instances created
+    for an application.
+
+\item[singleBrowserPerUser]  
+    In this mode, users may not create more than one virtual browser per
+    application instance.  When users access the application instance's URL, they will either
+    be forwarded to their virtual browser or a virtual browser will be instantiated for them.
+    This has the advantage that users will not be exposed to the management of 
+    virtual browsers - the application will appear to them as a standard web application
+    whose URL they can bookmark.
+    An example might be a chatroom application that only allows users to participate
+    under a single nickname in each instance.
+    This instantation mode requires user authentication to establish a user's identity. 
+
+\item[singleInstancePerUser] 
+    Whereas multiInstance and singleBrowserPerUser support an arbitrary number of
+    application instance per application, and thus require the explicit creation and
+    management of application instances, singleInstancePerUser applications support only
+    a single application instance per user, which is automatically created on demand.
+    singleInstancePerUser applications also limit users to a single virtual browser
+    for their instance, in the same way singleBrowserPerUser instances do.
+    This mode is ideal for model single-page web applications that only one view is needed
+    for each user.
+    The instantion mode  requires authentication to establish a user identity. 
+
+\item[singleAppInstance] The application supports only one instance and single virtual browser
+    that is shared by all users.
+    All connected clients will share a single server-side document in this singleton mode - this can be
     used for applications that display data, such as a weather application. These applications will not
     typically react to user input and users do not need to be authenticated.
 
-\item[singleBrowserPerUser] The application requires authentication to establish a
-    user identity. Each user can only create one \appins and one virtual browser.
-    This mode is ideal to model single-page web applications that only one view is needed
-    for each user.
-
-\item[singleUserInstance]  This application requires authentication to establish a
-    user identity. In this mode, users may not create more than one virtual browser per
-    application instance.  When users access the application instance's URL, they will either
-    be forwarded to their virtual browser or a virtual browser will be instantiated for them.
-
-\item[multiInstance]
-    Allows users to have multiple, separate virtual browsers connected to an application
-    instance. For instance, a user may have to be in two separate chatrooms offered by one chat site.
-    In those cases, the user has the largest flexibility, but will need to manage whether
-    to join an existing virtual browser or create a new one when they visit the application instance
-    - similar to the choice a user may have when deciding whether to navigate to a new site in
-    an existing browser tab or open a new one.
-
 \end{description}
+
+\emph{Would a table showing the dimension make sense?}
 
 For \emph{singleAppInstance} and \emph{singleBrowserPerUser} applications,
 the existence of \appins{} and virtual browsers is not exposed to a given user as
