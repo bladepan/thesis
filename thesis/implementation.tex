@@ -35,7 +35,10 @@ messages for which there is relatively little per-message overhead.
 \label{sec:reqdis}
 % ---- motivation, use cases here
 % ---- make it clear that after dispatch, the messages websocket
-A user can access a \cb{} application using an URL of the following types:
+
+
+For \cb{} applications, we expose the following three types of URL
+to the end user.
 
 \begin{description}
 
@@ -56,34 +59,48 @@ Format: \url{http://example.com/[app]/a/[appInstanceId]},
 \item[Browser URL] \label{itm:vburl} \hfill \\
 Format: \url{http://example.com/[app]/a/[appInstanceId]/b/[browserId]},
 \code{[browserId]} represents a virtual browser's id. For example, if a
-virtual browser's id is \emph{browser1} and its \appins{} is the application
-instance \emph{appins1} in the previous example, then the virtual browser's
+virtual browser's id is \emph{browser1} and its \appins{} id is 
+ \emph{appins1} and its application's mount point is \emph{chat},
+  then the virtual browser's
 Browser URL is \url{http://example.com/chat/a/appins1/b/browser1}.
 
 \end{description}
 % -----scenario of these URLs, when low load, the reverse proxy could be embedded
 
-For a \emph{multiInstance} application(application instantiation strategies
-are discussed in Section~\ref{sec:appinstantiation}), the \emph{Application
-URL} takes the user to a landing page listing all his \appins{}s and virtual
-browsers including those are shared with other users. The user can share his
-\appins{}s to someone else on that page and the system will send the
-\emph{\appins{} URL}s to that user. When a user requests \emph{\appins{} URL}
-that he has rights to access, the system will either create a new virtual
-browser for him or redirect him to his existing virtual browser in the
-\appins{}. The \emph{Browser URL} is used to connect to a specific virtual
-browser. The user can bookmark \emph{\appins{} URL}s and \emph{Browser URL}s
-for future visits.
+For all application instantiation strategies (discussed in
+Section~\ref{sec:appinstantiation}), \emph{Application URL} is a convenient
+way for the user to access the application. Like in a traditional web
+application, users prefer to access the application using the homepage URL
+because it is easy to remember and they can navigate to other pages from the
+home page. For \emph{singleAppInstance}   and \emph{singleBrowserPerUser}
+applications where the user can access only one   virtual browser, the system
+redirects the user to that virtual browser when handling \emph{Application
+URL}. For \emph{singleUserInstance} and \emph{multiInstance} applications, the
+system will present the user a landing page listing all his \appins{}s and
+virtual browsers when handling \emph{Application URL}. The landing page is
+equivalent to the home page in a traditional web application. The user can
+access any of his \appins{} via the landing page.
 
-For a \emph{singleAppInstance} application, the system
-creates only one virtual browser for all users. When the user requests the
-\emph{Application URL}, the system redirects the user with the only virtual
-browser's \emph{Browser URL}. The user could bookmark the \emph{Browser URL}
-and visit the application with that URL without redirect. The \emph{\appins
-URL} is not exposed to the users in a \emph{singleAppInstance} application
-because there is no use case of sharing \appins. If the user requests with the
-only virtual browser's \emph{\appins URL}, the system will send back a
-redirect response with the \emph{Browser URL}.
+
+\emph{\appins{} URL} is used for joining  a specific \appins{}.  It is not
+directly exposed to the end users in \emph{singleAppInstance}   and
+\emph{singleBrowserPerUser} applications because there is only one \appins{}
+for a given user. For \emph{singleUserInstance} applications where each user
+can create only  one virtual browser for a given \appins{}, the system directs
+the user to his own virtual browser in the specified \appins{} when handling
+\emph{\appins{} URL}, the system will create new virtual browser if the
+\appins{} does not have the user's virtual browser. For \emph{multiInstance}
+applications, the system will present the user the landing page when handling
+the \appins{} URL, it is the user's responsibility to decide either joining an
+existing virtual browser or create a new one. For \emph{singleUserInstance}
+and \emph{multiInstance} applications, users can share an \appins{} with
+others by sharing its \emph{\appins{} URL}.
+
+
+\emph{Browser URL} is for joining a specific virtual browser. The user can
+bookmark a \emph{Browser URL} so he can revisit that specific  virtual browser
+in the future. The user can also share a virtual browser with other people by
+sharing its \emph{Browser URL}.
 
 
 
@@ -143,24 +160,23 @@ inter-process overhead is introduced.
 \label{sec:lb}
 
 % ------- explain when lb decision is been made, don't introduce new term
-When the master receives a HTTP request that does not have an \appins id,
-the master does not know if the request would result in creating a new \appins
-or be handled by an existing \appins,
-it needs to find a worker process to handle it using application specific
-logic.
+
+
+When the master receives a user request that does not contain an \appins id,
+since the master does not contain application logic,
+it does not know if the system will create a new \appins{} for
+the request or redirect the request to an existing \appins{},
+the master needs to find a worker and let the worker to handle 
+the request.
+To dispatch these requests evenly, the master needs to call the load
+balancing algorithm to select workers.
+
 When a new \appins{} is going to be created,
 the system needs to select a worker process to place it.
-In these two cases, load balancing algorithm is invoked to make the load
-of the system more evenly distributed among workers.
-For other cases, there is no need to call the load balancing algorithm
-because the load is already fixed.
-For instance,
-if a request contains \appins id, the master dispatches the request to
-the worker that hosts the \appins via its lookup table and
-the master cannot dispatch the request elsewhere.
-If the system needs to create a new virtual browser,
-it could only be created in the same worker process as its \appins{}.
 
+% For a user request that contains an \appins id,
+% the master can only dispatch it to the worker that has the associated \appins{}.
+%-------------- 
 
 
 We support two load balancing strategies: first, the master can assign the
