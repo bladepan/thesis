@@ -348,58 +348,90 @@ Section~\ref{sec:nodepackage}) when writing complex applications.
 \subsection{Important \nodejs Packages}
 \label{sec:nodepackage}
 
+% do not deal with err in the examples in sake of clarity
 \subsubsection{async}
-Async is a library that helps developers implement complex control flow of asynchronous 
+\emph{Async} is a library that helps developers implement complex control flow of asynchronous 
 functions without nested callbacks. 
 It supports various control flows such as calling asynchronous functions in
 series, in parallel, in the order that meets predefined dependencies, etc.
 The developers can focus on the implementation of individual steps
-of control flows and async will make these steps be executed in the right order.
+of control flows and \emph{async} will make these steps be executed in the right order.
+It is hard to implement control flows of asynchronous functions, 
+it often leads to undecipherable code with deeply nested callbacks that
+mingles business logic with control flow management logic.
+Using \emph{async} makes the code
+much easier to understand because the semantics of the control flows are represented
+by well named functions like \code{each}, \code{series}, etc., and the code is more
+focused on business logic. 
+
+
+For example, suppose we want to print the total size of multiple files,
+we would want to read these files in parallel and print the sum of their sizes
+after every file is read. Listing~\ref{code:async_each} shows two implementations,
+line 5-14 use vanilla \js, line 15-21 use \code{each} function in \emph{async}
+which provides parallel iteration on an array. Although this is a 
+simple use case, \emph{async} still makes the code much clearer.
+
+\begin{listing}[htb,width=0.8\columnwidth]
+\inputminted[
+frame=lines,
+fontsize=\scriptsize,
+linenos
+]
+{javascript}{../codeexamples/async_each.js}
+\caption{Print total size of multiple files using async.}
+\label{code:async_each}
+\end{listing}
 
 
 \subsubsection{Node-http-proxy}
 
-Node-http-proxy~\cite{nodeproxy} is a \nodejs package for developing HTTP proxies.
-It provides a programming interface to relay HTTP requests to another server and
-automatically copy the response from that server to the original requester.
+In \cbtwo, we need to implement a reverse proxy that allows us to specify
+destination servers programmatically for incoming HTTP requests.
+Existing standalone reverse proxy software such as nginx 
+rely on the user to pre-define
+URL matching rules or simple dispatch policies like round-robin in configuration
+files to select destination servers.
+For these software, it is not feasible to change the behavior of choosing destination server
+on the fly.
+
+Node-http-proxy~\cite{nodeproxy} is a \nodejs package that helps developers to 
+write reverse proxies.
+It allows the developer to write customized logic of choosing destination servers
+for incoming HTTP requests and 
+handles the network communication of proxying requests.
+
 It also supports the WebSocket~\cite{rfc6455} protocol.
 WebSocket is a TCP-based protocol which provides a bidirectional, full-duplex 
 communication mechanism between web browsers and servers.
 Using WebSockets, servers can send information to clients without requiring
 a previous request by the client, unlike in traditional HTTP.
 It also avoids the overhead of repeatedly establishing connections.
-
 We use WebSockets to implement DOM synchronization between client and server so
-the server can send DOM changes to clients.  In node-http-proxy,
-the programmer needs only to provide the destination server on the hand shake
+the server can send DOM changes to clients.  
+
+In node-http-proxy,
+the programmer needs only to provide the destination server for the hand shake
 request and all the subsequent WebSocket messages will
 be transparently proxied to the destination server.
 
 
-Missing: motivation for using http-node-proxy instead of nginx as originally
-planned?  Scalability? Easy of use?
+\subsubsection{Jsdom}
 
-Most of this section so far is really about what websockets are and our motivation
-for using them? (Which should be discussed somewhere) 
-Not about node-http-proxy.  Make separate section?  Different title?
-
-\subsubsection{JSDom}
-
-\emph{reads a little bit out of place... not sure we want this here separate...}
+% \emph{reads a little bit out of place... not sure we want this here separate...}
 
 Jsdom~\cite{JSDOM} is a \nodejs package which provides a \js implementation of 
 DOM API. We use jsdom to implement server side DOM tree.
 Jsdom works like a web browser except it does not render the DOM tree:
-it reads HTML documents to build the initial DOM tree,
-it also executes \js files specified in script tags.
-It is possible to create multiple jsdom instances in a same process,
+it reads HTML documents to build the initial DOM tree and executes \js files specified in script tags.
+It is possible to create multiple jsdom instances in the same process,
 each of these jsdom instance will have its own DOM tree and
-script execution environment,
-the scripts in each jsdom instance will have its own isolated view of global variables.
-In our model, each virtual browser has one jsdom instance and
-forwards client events to the jsdom DOM tree.
-We also patched jsdom to get notifications for DOM updates.
-
+isolated namespace for its \js code.
+In our model, a virtual browser corresponds to a jsdom instance.
+The client events will be applied to the jsdom instances and
+trigger DOM events and fires listeners defined in the \js code if necessary.
+To capture DOM updates, we patched jsdom so that the methods that modifies DOM
+will call \cb{} to send these updates to the connected clients.
 
 \section{\cb}
 
@@ -424,7 +456,9 @@ proxy.
 
 \subsection{Deployment Model}
 \label{sec:deploymodel}
+
 \appbundlefig{}
+
 As shown in Figure~\ref{fig:appbundle}, 
 a \cb application bundle is a directory
 containing descriptor files, an entry point HTML file,
@@ -433,32 +467,52 @@ The descriptor files specify the application's name, owner, mount point, and
 other application configuration information.
 The mount point is the URL path to the application, for example,
 if a \cb is deployed at \url{example.com} and an application's mount point is
-\emph{chat}, the user could access the application at \url{http://example.com/chat}.
+\emph{chat}, the user could access the application via \url{http://example.com/chat}.
 The \js files include libraries like AngularJS or JQuery, 
-the application code and an optional application instance definition,
-(further discussed in Section~\ref{sec:appins}).
-Like in regular browser, the entry point HTML should have script tags
-specifying the \js files the developer wants to be executed in a virtual browser.
+the application code and an optional \emph{application instance definition}
+file (detailed later).
+Like in regular browser, the entry point HTML can have script tags
+specifying the \js files the developer wants to be executed.
 
 Developers create application bundles, which can be deployed
 from \cb's application directory or uploaded using \cb's administrative
 interface.  Multiple applications could be deployed simultaneously.
 
+% motivation
+\chatappfig{}
+
+\appinstancefig{}
+
+As an example, consider a scenario for a Chat application developed using
+AngularJS, depicted in Figure~\ref{fig:chatapp}. A system administrator of a
+\cb deployment would install the application, which gives users the ability to
+create chatrooms and join existing chatrooms. For a given chatroom, the joined
+users need to have separate views so they do not interfere with each other.
+These views are represented as virtual browsers in \cb. For the virtual
+browsers in the same chatroom, they share chatroom related session state such
+as chatroom's title, chatting history, etc. \cb provides \appins to model
+session state that can be shared by multiple virtual browsers. The developer
+can implement \appins{}es in the \emph{application instance
+definition} file in the application bundle. For the chat application, the developer
+can implement a chatroom object for each \appins  to manage chatting messages and
+participants(See Figure~\ref{fig:appinstance}). 
+To create a chatroom, a user would create an \appins{} and share
+its URL with chat participants. As the participants join the chat site, a
+virtual browser is created on demand for each participant, which is connected
+to the application instance (the users can bookmark their virtual browser's
+URL to later return.) The virtual browser could directly access the \appins
+object which is the chatroom object to access the shared chatroom-related
+information. The advantage of this design is the update to the \appins object
+is instantly available for all the \appins{}'s virtual browsers.
+
 \apphierarchyfig{}
 
-\emph{You delve into application instances as if the user knows what this
-    is - needs motivation here.  Similarly, haven't established definition
-    of single virtual browser.
-    Perhaps use motivating example - chatroom - to explain why we designed
-    application instances.
-    Perhaps this section can be reorganized by discussing the deployment
-    scenario (already described below) first and using it as a motivator for 
-    introducing the app instance idea.}
+Thus in our model, 
+an application can have multiple \appins{}s,
+each \appins{} can have multiple virtual browsers,
+and a virtual browser can be simultaneously accessed by multiple clients
+(See Figure~\ref{fig:appidhierarchy}).
 
-As emphasized in Figure~\ref{fig:appidhierarchy},
-an application could create multiple application instances,
-each application instance could create multiple virtual browsers,
-a virtual browser could be simultaneously accessed by multiple clients.
 
 % For example, in our chat room example application, multiple clients
 % can join one chat room and each client get his own view of the
@@ -477,77 +531,68 @@ a virtual browser could be simultaneously accessed by multiple clients.
 % the DOM updates from the virtual browser will be broadcast to all connecting
 % clients to provide a co-browsing experience.
 
-\subsection{Application Instance}
-\label{sec:appins}
-\appinstancefig{}
 
 
-Application instance allows multiple virtual browsers to share data structure.
-As in Figure~\ref{fig:appinstance} shows, 
-every virtual browser is created inside an application instance
-and virtual browsers inside an application instance share application instance object.
-The application instance itself
-consists metadata about the application instance object
- such as ownership and access permissions.
-The application instance object is defined
-the application instance definition file 
-in the application bundle (see Figure~\ref{fig:appbundle}).
-When a virtual browser is created in the application instance,
-the application instance object is injected into that virtual browser
-and the application code could reference it directly.
-
-\chatappfig{}
-
-As an example, consider a scenario for a Chat application developed using AngularJS,
-depicted in Figure~\ref{fig:chatapp}.
-A system administrator of a \cb deployment would install the application, which give users the
-ability to create application instances. To start a chat site, a user would create
-an application instance and share its URL with chat participants.  As the participants join
-the chat site, a virtual browser is created on demand for each participant, which is connected
-to the application instance (the users can bookmark their virtual browser's URL to later return.)
-The shared application instance data in such an application
-consist of the chatroom(s), users and their associated messages.  The advantage of this design
-is that AngularJS's dirty-checking mechanism will reflect updates to the shared instance data
-in each virtual browsers' document automatically, thus ensuring that new message are broadcast
-to each.
 
 \subsection{Authentication}
 
-When an application is enabled with authentication, the system will redirect
-the user's request to a login page if it detects the user has not logged in
-that application. The login page itself is implemented by creating a virtual
+\cb provides authentication support that implements account related features
+for applications,
+such as registering a new account, login and logout an account, etc.
+The application developer can enable the authentication support for an
+application by setting the authentication option in the application's descriptor
+files.
+After that,
+the system will redirect the user's request to a login page if it detects the
+user has not logged in that application,
+the application can get the user's account information via \cb API if the user
+has logged in.
+
+The login page itself is implemented by creating a virtual
 browser in the system login application. The login page provides two
 authentication options: a local authentication option where the user's
 credentials are stored in MongoDB; an OAuth~\cite{hardt2012oauth} option which
 authenticate user via Google's openID. The user could submit his email address
-and password directly in the login page  for local authentication option. Then
-the system will find the matching record in the account table.   For the OAuth
-option, the user clicks a \emph{Login with Google Account} link  to land on a
-Goolge account authorization page. After the user authorizes \cb{} to access
-his Goolge account information, Goolge will request \cb{}'s authentication
-callback URL and \cb{} will get the user's email address.
+and password directly in the login page for local authentication option. Then
+the system will lookup the user's account in the account table.
+The login page also has a register link which directs the user to a simple
+account register page to create a new local account.
+For the OAuth
+option, the user clicks a \emph{Login with Google Account} link to land on a
+Goolge account authorization page asking the user to authorize \cb{} to access
+the user's Google account information.
+After the user confirms Goolge will request \cb{}'s authentication
+callback URL to finalize the authentication.
 
 After the user logs in using either mode, the system adds an entry of the
 user's email address and the application's mount point in the user's session
 (stored in MongoDB as well). That entry indicates the user has logged in the
 application. Then the login page virtual browser is closed and the user is
-redirected to  the URL he originally requested. The subsequent requests from
-the user will pass the authentication check until the session expires or the
-user logs out the application.
+redirected to  the URL he originally requested. 
+For the subsequent requests from the user session,
+the system will detect the user has logged in and the requests are handed over
+to the application directly.
+
+The user is automatically logged out after the session expires.
+The application can also display a link to the application's logout URL 
+ in the user interface to allow the user to manually logout the application.
 
 
 \subsection{Application Instantiation Strategy}
 \label{sec:appinstantiation}
 
-The application instantiation strategy specifies
-how the application instance and virtual browsers are instantiated.
+Different types of applications need different strategies as regard to how to 
+create \appins{}s and virtual browsers.
+A chat application may need multiple \appins{} to represent multiple chatrooms
+and multiple virtual browsers in each \appins{} to provide separate user
+interfaces for the users in the associated chatroom.
+A todo-list application may need only one virtual browser for each user to 
+display the user's todo-lists.
 
-Application programmers can create CloudBrowser applications in the same way in which
-they create the client-side portion of a client-centric application, using low or high level
-JavaScript libraries such as jQuery~\cite{jquery} or AngularJS.  
-A descriptor in the application's manifest describes 
-their application's instantiation strategy.
-The supported strategies include
+\cb{} provides four application instantiation strategies that
+specify different ways to initiate \appins{}s and virtual browsers.
+The developer can set the application to adopt one of the application instantiation strategies
+in the application's descriptor files.
 
 \begin{description}
 
@@ -556,10 +601,14 @@ The supported strategies include
     used for applications that display data, such as a weather application. These applications will not
     typically react to user input and users do not need to be authenticated.
 
+\item[singleBrowserPerUser] The application requires authentication to establish a
+    user identity. Each user can only create one \appins and one virtual browser.
+    This mode is ideal to model single-page web applications that only one view is needed
+    for each user.
+
 \item[singleUserInstance]  This application requires authentication to establish a
-    user identity, which we provide through a local database as well as through external OpenID
-    authentication.   In this mode, users may not create more than one virtual browser per
-    application instance.  When a user accesses the application instance's URL, they will either
+    user identity. In this mode, users may not create more than one virtual browser per
+    application instance.  When users access the application instance's URL, they will either
     be forwarded to their virtual browser or a virtual browser will be instantiated for them.
 
 \item[multiInstance]
@@ -572,8 +621,20 @@ The supported strategies include
 
 \end{description}
 
-Except for multiInstance applications, the existence of virtual browsers is not exposed to
-end users that merely join existing application instances.
+For \emph{singleAppInstance} and \emph{singleBrowserPerUser} applications,
+the existence of \appins{} and virtual browsers is not exposed to a given user as
+the user's requests are served by one single virtual browser.
+For \emph{singleUserInstance} and \emph{multiInstance} applications where the user
+needs to manually create \appins{}s,
+the system provides landing pages where the user 
+could view and manage his \appins{}s and virtual browsers.
+For instance, in a chat application, if the user requests the application's URL,
+he is redirected to the application's landing page where all the
+ chatrooms (i.e. \appins{}s) he is participating are listed,
+from there the user can create new \appins{}s, delete existing \appins{}s, share
+\appins{}s with other users, etc.
+
+
 
 
 % The hierarchy that results from applications, application instances, and virtual browsers is

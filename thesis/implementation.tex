@@ -17,11 +17,12 @@ workers. The actual dispatching is implemented by the reverse proxies, they
 forward users' requests to workers and copy workers' responses back to users.
 The reverse proxy processes are bound to the socket that accepts client
 requests, allowing the OS to distribute pending client connections in a round-
-robin fashion. The reverse proxy can relay both HTTP requests/responses as
-well as the bidirectional WebSocket protocol after the connection has been
-upgraded.  Once established, the majority of traffic will be WebSocket
-messages for which there is relatively little per-message overhead.  We
-implemented the proxy using the \nodejs{} module node-http-proxy~\cite{nodeproxy}.
+robin fashion.
+The reverse proxy can relay both HTTP requests/responses as
+well as the bidirectional WebSocket protocol (see Section~\ref{sec:nodepackage}).
+Once the client established WebSocket connection with
+the server side, the majority of traffic will be WebSocket
+messages for which there is relatively little per-message overhead.
 
 
 % The master process is a single point of failure,
@@ -199,7 +200,7 @@ reads the application bundles (discussed in Section~\ref{sec:deploymodel}) and
 initiate data structures to represent applications.
 
 \item[Worker Manager] \hfill \\
-Worker manager is responsible for the request dispatch 
+Worker manager is responsible for the request dispatch
 and the load balance algorithm (detailed in Section~\ref{sec:lb}).
 
 \item[Reverse Proxy Manager] \hfill \\
@@ -211,7 +212,7 @@ processes of the master and handles queries from them.
 
 After initiation, the master exposes \emph{Application Manager} and
 \emph{Worker Manager} to the workers via nodermi's \code{registerObj}  method
-(discussed in Chapter~\ref{ch:rmi}).  
+(discussed in Chapter~\ref{ch:rmi}).
 
 The \emph{Application Manager} has
 methods to list all applications, to create a new application, to  remove an
@@ -229,7 +230,7 @@ that worker and remove an application from that worker.
 The \emph{Worker Manager} contains methods for worker to register its HTTP
 hostname/port and report its load. It also maintains a table of \appins{} id
 to worker HTTP hostname/port. This table is updated every time a \appins{}
-is registered or removed from the \emph{Application Manager}. 
+is registered or removed from the \emph{Application Manager}.
 
 
 
@@ -248,7 +249,7 @@ If the master is not running, the worker will keep on retrying until the
 remote references are obtained.
 
 % ------ mapping bid to browser is in worker, make it clear, use html5 history
-% to change url in location bar 
+% to change url in location bar
 The worker process maintains the mappings of \appins{} id to its local
 \appins{}s and browser id to its local virtual browsers.
 When a worker receives a HTTP request, it parses the request to extract
