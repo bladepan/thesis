@@ -275,3 +275,29 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \label{fig:apireference}
     \end{figure}
 }
+
+
+
+% http://www.tablesgenerator.com/latex_tables
+% supports load table in latex code
+\newcommand{\instantiationStrategyTbl}{
+
+    \begin{table}[htb]
+    \centering
+
+    \begin{tabular}{|c|l|l|l|l|}
+    \hline
+    \multirow{2}{*}{Instantiation Strategy} & \multicolumn{2}{l|}{Number of \appins{}s} & \multicolumn{2}{l|}{Number of Virtual Browsers} \\ \cline{2-5} 
+     & Per App & Per User & Per Instance & Per Instance Per User \\ \hline
+    multiInstance & more than 1 & more than 1 & more than 1 & more than 1 \\ \hline
+    singleBrowserPerUser & more than 1 & more than 1 & more than 1 & 1 \\ \hline
+    \multicolumn{1}{|l|}{singleInstancePerUser} & more than 1 & 1 & 1 & 1 \\ \hline
+    \multicolumn{1}{|l|}{singleAppInstance} & 1 & NA & 1 & NA \\ \hline
+    \end{tabular}
+
+    \caption[Application Instantiation Strategy]{Application Instantiation Strategy : For \emph{singleAppInstance}
+    all users share a single instance and virtual browser, so the columns for \emph{Per User} is ``NA''.}
+    \label{tab:appinstantiationstrategy}
+    \end{table}
+
+}

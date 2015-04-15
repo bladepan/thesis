@@ -600,7 +600,7 @@ application instance.
 \cb{} provides four application instantiation strategies that
 specify different ways to initiate \appins{}s and virtual browsers.
 The developer can set the application to adopt one of the application instantiation 
-strategies in the application's descriptor files.
+strategies in the application's descriptor.
 
 \begin{description}
 
@@ -626,7 +626,7 @@ strategies in the application's descriptor files.
     whose URL they can bookmark.
     An example might be a chatroom application that only allows users to participate
     under a single nickname in each instance.
-    This instantation mode requires user authentication to establish a user's identity. 
+    This instantiation mode requires user authentication to establish a user's identity. 
 
 \item[singleInstancePerUser] 
     Whereas multiInstance and singleBrowserPerUser support an arbitrary number of
@@ -637,7 +637,7 @@ strategies in the application's descriptor files.
     for their instance, in the same way singleBrowserPerUser instances do.
     This mode is ideal for model single-page web applications that only one view is needed
     for each user.
-    The instantion mode  requires authentication to establish a user identity. 
+    The instantiation mode  requires authentication to establish a user identity. 
 
 \item[singleAppInstance] The application supports only one instance and single virtual browser
     that is shared by all users.
@@ -647,10 +647,13 @@ strategies in the application's descriptor files.
 
 \end{description}
 
-\emph{Would a table showing the dimension make sense?}
+\instantiationStrategyTbl{}
+
+Table~\ref{tab:appinstantiationstrategy} summarizes how many \appins{}s and virtual browsers
+each initiation strategy allows applications to create.
 
 For \emph{singleAppInstance} and \emph{singleBrowserPerUser} applications,
-the existence of \appins{} and virtual browsers is not exposed to a given user as
+the existence of \appins{}s and virtual browsers is not exposed to the end user as
 the user's requests are served by one single virtual browser.
 For \emph{singleUserInstance} and \emph{multiInstance} applications where the user
 needs to manually create \appins{}s,
@@ -661,8 +664,6 @@ he is redirected to the application's landing page where all the
  chatrooms (i.e. \appins{}s) he is participating are listed,
 from there the user can create new \appins{}s, delete existing \appins{}s, share
 \appins{}s with other users, etc.
-
-
 
 
 % The hierarchy that results from applications, application instances, and virtual browsers is
