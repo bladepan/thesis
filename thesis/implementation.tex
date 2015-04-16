@@ -283,14 +283,17 @@ is registered or removed from the \emph{Application Manager}.
 \section{Worker Implementation}
 \label{sec:worker}
 
-When a worker process starts up, it first reads a configuration file that
-specifies the port it is going to listen for HTTP requests,  the hostname/port
-pair of the master process's nodermi instance   and the hostname/port pair for
-its own nodermi instance. After initializing, the worker process obtains
-remote references to the master's \emph{Application Manager} and \emph{Worker
+For each worker, the system administrator needs to specify a hostname/port
+pair the worker listens for HTTP requests,  the master's nodermi instance's
+hostname/port, and a hostname/port for its own nodermi instance in a
+configuration file. To ease the deployment effort, we provide a tool that can
+generate multiple worker configuration files. Based on the information in the
+configuration file, the worker creates a HTTP server and a nodermi instance.
+After creating its internal modules, the worker process obtains remote
+references to the master's \emph{Application Manager} and \emph{Worker
 Manager} via nodermi, then  it fetches all the applications' metadata and
 registers itself to the master by invoking methods of these remote references.
-If the master is not running, the worker will keep on retrying until the
+If the master is not running, the worker will keep on retrying until these
 remote references are obtained.
 
 % ------ mapping bid to browser is in worker, make it clear, use html5 history
