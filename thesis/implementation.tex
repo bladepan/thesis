@@ -186,24 +186,16 @@ comparing to using multiple reverse proxies.
 \section{Load Balancing}
 \label{sec:lb}
 
-% ------- explain when lb decision is been made, don't introduce new term
-
-
-When the master receives a user request that does not contain an \appins id,
-since the master does not contain application logic,
-it does not know if the system will create a new \appins{} for
-the request or redirect the request to an existing \appins{},
-the master needs to find a worker and let the worker to handle 
-the request.
-To dispatch these requests evenly, the master needs to call the load
-balancing algorithm to select workers.
-
-When a new \appins{} is going to be created,
-the system needs to select a worker process to place it.
-
-% For a user request that contains an \appins id,
-% the master can only dispatch it to the worker that has the associated \appins{}.
-%-------------- 
+The load balancing algorithm is invoked in two scenarios:
+First, when the user requests an \emph{Application URL},
+the master needs to find a worker to handle this request.
+As discussed before, for other user requests the routing is already fixed
+so there is no need for load balancing.
+Second, when the system is about to create a \appins{}.
+In this case, the master has the flexibility to choose a worker.
+When the system creates a virtual browser, the virtual browser has
+to be placed in the same worker that hosts its \appins{}, the system
+cannot place it somewhere else for the load balancing purpose.
 
 
 We support two load balancing strategies: first, the master can assign the
@@ -216,19 +208,24 @@ master will select the worker with the lowest load when placing new load.  We
 have found the amount of heap memory that is currently in use a good measure
 of a worker's  momentary load.
 
-In the load-based mode,  the worker's load could change during the interval
-between the worker's updates, and the master's knowledge is not updated. This
-could lead to problematic load distribution. For example,  when the system is
-creating a burst of \appins{}s, they could all be assigned to the same worker
-that has the lowest load at that moment.  This could cause extremely uneven
-load distribution. To mitigate this issue,  after the load balancing algorithm
-selects a worker, the algorithm makes a projection of the worker's load. Based
-on our evaluation, a virtual browser in a non-trivial application takes about
-6M.  We increase a worker's load by 10M for every new \appins assignment
-assuming each \appins will have 1 or 2  virtual browsers. Although this
-estimate is not accurate, the worker's load will be fixed upon receiving next
-load update. In this way, even under bursts of new requests,  the load
-distribution between the workers would not vary greatly.
+In the load-based mode, the master's knowledge of a worker's load is not
+always up-to-date as the worker's load can change before the master sees the
+next report message from the worker. This can lead to problematic load
+distribution. For example, when the system is creating a burst of \appins{}s,
+they are all assigned to the same worker that has the lowest load at that
+moment and the worker ends up hosting a disproportional load.  To mitigate
+this issue,  after the load balancing algorithm selects a worker, the
+algorithm makes a projection of the worker's load after accepting the new
+load. The projected value is used as the worker's load value  until the master
+sees the worker's new report message. Based on our evaluation, a virtual
+browser in a non-trivial application takes about 6M.  The master projects a
+worker's load increase by 10M for every new \appins assignment assuming every
+\appins will create 1 or 2  virtual browsers.  For most cases, the master
+overestimates the actual load increase. It is not a problem because
+overestimation helps spread load among multiple  workers and the master will
+fix its estimation when it sees the worker's report message. In our
+experience, even under bursts of new requests the load distribution among the
+workers does not vary greatly.
 
 
 
