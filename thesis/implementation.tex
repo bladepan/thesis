@@ -254,18 +254,23 @@ After initiation, the master exposes \emph{Application Manager} and
 \emph{Worker Manager} to the workers via nodermi's \code{registerObj}  method
 (discussed in Chapter~\ref{ch:rmi}).
 
-The \emph{Application Manager} has
-methods to list all applications, to create a new application, to  remove an
-application, etc. Each application object has methods to maintain the internal
-state of the application, such as change the application's authentication
-policy, register a new \appins, remove an \appins, etc. The worker invoke
-these methods remotely to obtain metadata of all applications, register an
-\appins, etc. The worker also register its own \emph{Application Manager}  and
-application objects to the master's \emph{Application Manager}  via remote
-method invocation. The master \emph{Application Manager}  uses stubs to these
-worker objects to push changes to the  workers. For instance, the master uses
-stubs to the worker's \emph{Application Manager} to push new application to
-that worker and remove an application from that worker.
+The \emph{Application Manager} has application management related  methods,
+such as list applications, create a new application, remove an application,
+etc.  The applications are represented by application objects. An application
+object has methods to maintain the internal state of the application, such as
+change the application's authentication policy, register a new \appins, remove
+an \appins, etc.  Since \emph{Application Manager} is registered in nodermi,
+the worker can remote reference to it and get remote references to application
+objects by calling its methods remotely. Via remote method invocation of
+\emph{Application Manager} and application objects, the worker can get
+metadata of all applications and register \appins{}s.  The worker also passes
+reference to its own \emph{Application Manager}  and application objects to
+the master's \emph{Application Manager} via remote method invocation.  The
+master \emph{Application Manager}  uses remote references to these worker
+objects to push application-related changes to the  workers.  For instance,
+the master calls  the worker's  \code{addApplication} method remotely   to
+push new application to that worker and remove an application from that worker
+by calling the worker's \code{removeApplication} method remotely.
 
 The \emph{Worker Manager} contains methods for worker to register its HTTP
 hostname/port and report its load. It also maintains a table of \appins{} id
