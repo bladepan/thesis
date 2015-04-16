@@ -586,8 +586,8 @@ in the user interface to allow the user to manually logout the application.
 
 Different types of applications need different strategies with regard to how to 
 create \appins{}s and virtual browsers.
-These strategies differ with respect to how many instance there can be
-per application, and how many virtual browser a user may create for each
+These strategies differ with respect to how many instances there can be
+per application, and how many virtual browsers a user may create for each
 application instance.
 
 %A chat application may use multiple \appins{} to represent multiple chatrooms
@@ -609,7 +609,7 @@ strategies in the application's descriptor.
     allows users to have multiple, separate virtual browsers connected to an application
     instance. For instance, a user could participate using separate nicknames in a chatroom.
     In those cases, the user has the largest flexibility, but will be exposed to having
-    to manage the virtual browser created for them.  For instance, when visiting a chatroom
+    to manage the virtual browsers created for them.  For instance, when visiting a chatroom
     application instance, they will need to manage whether
     to join an existing virtual browser or create a new one
     - similar to the choice a user may have when deciding whether to navigate to 
@@ -635,11 +635,11 @@ strategies in the application's descriptor.
     a single application instance per user, which is automatically created on demand.
     singleInstancePerUser applications also limit users to a single virtual browser
     for their instance, in the same way singleBrowserPerUser instances do.
-    This mode is ideal for model single-page web applications that only one view is needed
-    for each user.
-    The instantiation mode  requires authentication to establish a user identity. 
+    This mode is ideal for modeling single-page web applications in which only one 
+    view is needed for each user.
+    This instantiation mode  requires authentication to establish a user's identity. 
 
-\item[singleAppInstance] The application supports only one instance and single virtual browser
+\item[singleAppInstance] The application supports only one instance and a single virtual browser
     that is shared by all users.
     All connected clients will share a single server-side document in this singleton mode - this can be
     used for applications that display data, such as a weather application. These applications will not
@@ -652,12 +652,8 @@ strategies in the application's descriptor.
 Table~\ref{tab:appinstantiationstrategy} summarizes how many \appins{}s and virtual browsers
 each initiation strategy allows applications to create.
 
-For \emph{singleAppInstance} and \emph{singleBrowserPerUser} applications,
-the existence of \appins{}s and virtual browsers is not exposed to the end user as
-the user's requests are served by one single virtual browser.
 For \emph{singleUserInstance} and \emph{multiInstance} applications where the user
-needs to manually create \appins{}s,
-the system provides landing pages where the user 
+needs to manually create \appins{}s, the system provides landing pages where the user 
 could view and manage his \appins{}s and virtual browsers.
 For instance, in a chat application, if the user requests the application's URL,
 he is redirected to the application's landing page where all the
