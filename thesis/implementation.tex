@@ -36,9 +36,8 @@ messages for which there is relatively little per-message overhead.
 % ---- motivation, use cases here
 % ---- make it clear that after dispatch, the messages websocket
 
-
-For \cb{} applications, we expose the following three types of URL
-to the end user.
+The system exposes three types of URLs for the users to access \cb applications.
+The format of these URLs are as follows:
 
 \begin{description}
 
@@ -68,93 +67,121 @@ Browser URL is \url{http://example.com/chat/a/appins1/b/browser1}.
 % -----scenario of these URLs, when low load, the reverse proxy could be embedded
 
 For all application instantiation strategies (discussed in
-Section~\ref{sec:appinstantiation}), \emph{Application URL} is a convenient
-way for the user to access the application. Like in a traditional web
-application, users prefer to access the application using the homepage URL
-because it is easy to remember and they can navigate to other pages from the
-home page. For \emph{singleAppInstance}   and \emph{singleBrowserPerUser}
+Section~\ref{sec:appinstantiation}), 
+the user may prefer to access the application use 
+\emph{Application URL}
+because it is easy to remember and
+it leads to a default view where user can navigate to other views (if he has any).
+From the user's point of view,
+the \emph{Application URL} is similar to the homepage URL in a traditional web application.
+For \emph{singleAppInstance}   and \emph{singleInstancePerUser}
 applications where the user can access only one   virtual browser, the system
 redirects the user to that virtual browser when handling \emph{Application
-URL}. For \emph{singleUserInstance} and \emph{multiInstance} applications, the
+URL}. 
+For \emph{singleBrowserPerUser} and \emph{multiInstance} applications, the
 system will present the user a landing page listing all his \appins{}s and
-virtual browsers when handling \emph{Application URL}. The landing page is
-equivalent to the home page in a traditional web application. The user can
-access any of his \appins{} via the landing page.
+virtual browsers when handling \emph{Application URL}. From there the user can
+access any of his \appins{}.
 
-
-\emph{\appins{} URL} is used for joining  a specific \appins{}.  It is not
+\emph{\appins{} URL} is used for joining  a specific \appins{}.  
+It is not
 directly exposed to the end users in \emph{singleAppInstance}   and
-\emph{singleBrowserPerUser} applications because there is only one \appins{}
-for a given user. For \emph{singleUserInstance} applications where each user
+\emph{singleInstancePerUser} applications because there is only one \appins{}
+for a given user. 
+For \emph{singleBrowserPerUser} applications where each user
 can create only  one virtual browser for a given \appins{}, the system directs
 the user to his own virtual browser in the specified \appins{} when handling
-\emph{\appins{} URL}, the system will create new virtual browser if the
-\appins{} does not have the user's virtual browser. For \emph{multiInstance}
-applications, the system will present the user the landing page when handling
-the \appins{} URL, it is the user's responsibility to decide either joining an
-existing virtual browser or create a new one. For \emph{singleUserInstance}
+\emph{\appins{} URL}. 
+For \emph{multiInstance}
+applications, it is the user's responsibility to decide whether joining an
+existing virtual browser or create a new one,
+ the system will present the user the landing page to make that decision. 
+For \emph{singleBrowserPerUser}
 and \emph{multiInstance} applications, users can share an \appins{} with
 others by sharing its \emph{\appins{} URL}.
-
 
 \emph{Browser URL} is for joining a specific virtual browser. The user can
 bookmark a \emph{Browser URL} so he can revisit that specific  virtual browser
 in the future. The user can also share a virtual browser with other people by
 sharing its \emph{Browser URL}.
 
+The semantics of \appins (discussed in Section~\ref{sec:deploymodel})
+requires an \appins{}'s virtual browsers be able to reference shared data structure.
+In \cbtwo, the system keeps every \appins and its virtual browsers in the same worker process.
+Thus the routing for \emph{\appins{} URL}s and \emph{Browser URL}s is fixed to 
+the workers that host the associated \appins{}s.
+For \emph{Application URL}s, the system need first allocate an \appins{} and virtual
+browser to handle the request according to the instantiation strategy, and then
+redirect the request with the virtual browser's URL.
 
 
-To preserve the semantics of \appins (discussed in Section~\ref{sec:appins})
-that virtual browsers in an \appins could directly share data structure, each
-\appins and its virtual browsers must be allocated in the same worker process
-as emphasized in Figure~\ref{fig:appidhierarchy}. The master keeps a lookup
-table of \appins id to worker process mappings.  When the request URL contains
-an \appins id,  the master could find the corresponding worker right away.
 
 When the client sends a HTTP request to the system, a reverse proxy process
 will accept this HTTP request and ask the master where to dispatch this
-request. If \appins id is in the request URL, the master would find a worker
-via the lookup table. Otherwise, the master would find a worker using load
-balance algorithm detailed in Section~\ref{sec:lb}. The reverse proxy then
-forwards the request to the worker process. If the request URL does not
-contain virtual browser id, the worker process would allocate a new virtual
-browser or find an existing virtual browser in the system and sends back a
-redirect response with the virtual browser's Browser URL. Upon receiving the
-redirect response, the user will send another HTTP request with the Browser
-URL.
+request. 
+
+If the request URL is a \emph{Browser URL} or \emph{\appins URL}, 
+the master extracts \appins id from the URL and returns the associated
+worker via a \appins id to worker lookup table.
+This lookup table is updated every time an \appins{} is created or removed.
+For an \emph{\appins URL} request, the worker will continue to find the associated
+virtual browser for the user and send back a redirect with the virtual browser's URL.
+
+If the request URL is an \emph{Application URL}, 
+the system's behavior varies according to the application's instantiation strategy.
+For example, for a \emph{singleInstancePerUser} application,
+the system can either create a new \appins{} for the user if the user does not have an
+\appins or use the user's existing \appins{} if otherwise.
+Since the master does not have application specific logic,
+the master first picks a worker using load
+balance algorithm (detailed in Section~\ref{sec:lb}) to handle the request
+temporarily, and the selected worker will then process the request according
+to the instantiation strategy.
+It is not necessary for the selected worker to serve this request because
+the \appins{} that the worker finds for this request might be in another 
+worker.
+After the selected worker finds the \appins{} and virtual browser for this
+request, it will send a redirect request with the virtual browser's URL
+back to the user.
 
 When a worker process receives a Browser URL request, it will locate the
 corresponding virtual browser and responds a HTML document that contains
-information to bootstrap the client engine. The client engine will create a
-WebSocket connection to synchronize DOM nodes. First, the client engine sends
-a WebSocket handshake request which is a HTTP request to initiate the
-WebSocket connection, the \appins id is embedded in the handshake request URL.
-Like we discussed, a reverse proxy will receive this request and forward it to
-the worker. After the worker send back the handshake response, the connection
-between the worker and the reverse proxy, and the connection between the
-reverse proxy and the user remains open. Subsequent WebSocket messages will go
-through these two opened connections to forward user events and synchronize
-DOM states for the specific virtual browser. The reverse proxy will just copy
-the WebSocket messages back and forth without parsing them.
+information to bootstrap the client engine. 
+The client engine will create a
+WebSocket connection to synchronize DOM nodes. 
+First, the client engine sends
+a WebSocket handshake request to initiate the
+WebSocket connection.
+The handshake request URL contains the associated \appins id and virtual browser
+id so
+the master can find the corresponding worker for this request.
+After the worker sends back handshake response, the connection
+between the worker and the reverse proxy that receives the handshake
+, and the connection between the
+reverse proxy and the user remains open. The reverse proxy will just copy
+the subsequent WebSocket messages back and forth without parsing them and
+asking the master for destination.
+
+After the WebSocket connection establishes, the subsequent requests such as
+requests for resource files all have \appins{} id in the URLs or in the referrer
+header fields, the master can find destination for these requests directly. 
 
 If any exception happens, for example, the user sends a Browser URL with no
 corresponding virtual browser in the system, the system will reject the
 request with an error message.
 
-After client engine establishes WebSocket connections, the client could send
-additional HTTP requests to fetch resources such as stylesheets, images, etc.
-Since the URLs for these resources contains the current \appins id and virtual
-browser id, these request could be dispatched to the right worker and  served
-without redirect.
-
 In this design, the reverse proxies ask the master for the dispatch decision
 for every HTTP request.  Since the majority of the system's network traffic
-are WebSocket messages and they do not need to invoke dispatch logic,  this
+are WebSocket messages and they do not trigger dispatch logic,  this
 overhead of inter-process communication between the master and the reverse
-proxies   only affects a small portion of the network traffic. We also provide
-an option to embed a reverse proxy instance inside the master process. The
-embedded reverse proxy  communicates with the master via method calls thus no
-inter-process overhead is introduced.
+proxies   only affects a small portion of the network traffic. 
+We also provide
+an option to embed a reverse proxy instance inside the master process.
+If the system is configured with one single embedded reverse proxy,
+the overhead of inter-process communication between the master and the reverse
+proxy is eliminated entirely.
+However, in this mode the system has a lower capacity of supporting concurrent users
+comparing to using multiple reverse proxies.
 
 \section{Load Balancing}
 \label{sec:lb}
