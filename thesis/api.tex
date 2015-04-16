@@ -1,9 +1,6 @@
 \section{Secure Access to Framework Object}
 \label{sec:api}
 
-% ------ namespace based, carefully control objects app can access
-% ------ the access is made by place the object into the global name
-
 There are many use cases when an application needs to access framework's
 internal objects. For administrator applications that monitor and manage the
 system, nearly every feature requires access to the framework's internals. For
@@ -59,26 +56,26 @@ for the API:
 \item[APICloudBrowser]
 The entry point for the application.
 For every virtual browser one APICloudBrowser object is created and injected as
-a global variable in the application code name space.
+a global variable in the application code namespace.
 
 \item[APIApplication] Represents an application in the framework.
-It contains methods to manipulate the application, such as modify the application's
+It contains methods to manipulate the associated application, such as modify the application's
 description, change its owner, close the application, etc.
 
 \item[APIAppInstance] Represents an application instance in the framework.
-It has methods to manipulate the application instance.
+It has methods to manipulate the associated application instance.
 
 \item[APIBrowser] Represents a virtual browser in the framework.
-It has methods to manipulate the virtual browser.
+It has methods to manipulate the associated virtual browser.
 
 \end{description}
 
 \apiclassfig{}
 
-Initially, the application code could get a reference to a
-\emph{APICloudBrowser} object. As emphasized in Figure~\ref{fig:apiclass}, via
-this object, the application code could get API objects representing
-applications, application instances and virtual browsers.
+Initially, the application code can get a reference to a
+\emph{APICloudBrowser} object. As emphasized in
+Figure~\ref{fig:apiclass}, via this object, the application code can get API
+objects representing applications, application instances and virtual browsers.
 
 
 \subsection{Implementation}
@@ -86,15 +83,15 @@ applications, application instances and virtual browsers.
 API objects themselves are just proxies of the internal objects they
 represented so they need to keep reference to these internal objects. If we
 referenced the internal objects as properties of the API objects, the
-application code could get reference to internal objects via reading
+application code can get reference to internal objects via reading
 properties  since there is no language support for private properties in \js.
 Using hidden non-enumerable property is not safe either because the
-application code could guess the property name.
+application code can guess the property name.
 
 We use closure visibility to implement a equivalence of private property as
 shown in Listing~\ref{code:apiconstructor}. We store internal objects as local
 variables in the API objects' constructors and define API methods inside the
-constructors. Then in the API methods we could reference internal objects
+constructors. Then in the API methods we can reference internal objects
 directly because the API methods and the variables referencing to the internal
 objects are in the same closure. The application code cannot get the
 references to internal objects because they cannot be read as properties or be
@@ -126,31 +123,29 @@ function APICloudBrowser(virtualBrowser){
 \end{listing}
 
 
-As the application code could hold reference to internal objects indirectly
+Because the application code can hold reference to internal objects indirectly
 through API, it is possible that a virtual browser hogs large amount of memory
 by keeping alive the internal objects that are no longer needed elsewhere in
 the system.  For example, if a page lists all the virtual browsers in the
 system, then it holds references to these virtual browsers indirectly. Then
-the closed virtual browsers could not be reclaimed if such references exist.
+the closed virtual browsers can not be reclaimed if such references exist.
 To avoid this issue, the API objects only keep weak references to the internal
 objects(See Figure~\ref{fig:apireference}). We use a \nodejs{} package node-
 weak~\cite{nodeweak} to implement weak reference. Unlike ordinary references,
 the objects referenced only by weak references are free to be garbage
-collected. Using this method, the internal objects could be garbage collected
+collected. Using this method, the internal objects can be garbage collected
 if they are no longer needed in the framework.
 
 
 \apireferencefig{}
 
 
-The framework can also obtain references to the application object.  The API
-provides methods for the application to register event listeners to internal
-objects. For example, the application could register a event listener to
-notify the current user when someone shares an virtual browser to him. To
-prevent the framework referencing objects from a destructed virtual browser,
-Because the application code could only interact with the framework via API
-layer, the API layer is fully aware of such references. We store such
-references inside the API objects and clean these references in the virtual
-browser's \code{close} method.
-
-
+The framework can also obtain references to the application object.  Right now
+these references are created by the event register methods provided by API for
+the application to register event listeners to internal objects. For example,
+the application can register a event listener to notify the current user when
+someone shares an virtual browser to him. Because these listeners are
+registered via API, the API layer remembers these listeners and unregister
+them when the virtual browser's \code{close} method is called. In this way,
+when a virtual browser is closed, the framework won't keep reference to the
+objects it created.

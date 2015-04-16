@@ -296,15 +296,17 @@ registers itself to the master by invoking methods of these remote references.
 If the master is not running, the worker will keep on retrying until these
 remote references are obtained.
 
-% ------ mapping bid to browser is in worker, make it clear, use html5 history
-% to change url in location bar
-The worker process maintains the mappings of \appins{} id to its local
-\appins{}s and browser id to its local virtual browsers.
+
+The worker process maintains the mappings of \appins{} ids to its local
+\appins{}s and browser ids to its local virtual browsers.
+It tries to handle incoming HTTP requests with its local virtual browser
+if possible.
 When a worker receives a HTTP request, it parses the request to extract
-\appins id, virtual browser id and user information. If the request does not
-have an \appins id, the worker would find an existing virtual browser in the
-system or tell the master to create a new one  based on the application
-instantiation strategy discussed in Section~\ref{sec:appinstantiation}. After
+\appins id, virtual browser id and get associated user information
+from session. If the request does not
+have an \appins id, the worker will find an existing virtual browser in the
+system or tell the master to create a new one based on the application
+instantiation strategy. After
 that, the worker sends back a redirect response with the virtual browser's
 \emph{Browser URL}. If the request has an \appins id, the worker first check
 if the id matches any local \appins and rejects the request if the check
@@ -318,16 +320,17 @@ requests, the worker sends back the initial  HTML document; For resource
 requests, the virtual browser will read the corresponding local resource files
 from file system or from Internet, and send back the content. For WebSocket
 handshake requests, the worker would send back a handshake response message
-and add the connection to the virtual browser.
+and add the WebSocket connection to the virtual browser.
+The subsequent WebSocket messages will be directly handled by the virtual browser.
 
 
-If the application requires authorization in the configuration, the
-worker would also check if the user has the permission to access the \appins
-or virtual browser specified in the request. The framework has a default
-permission policy that is useful for most cases. For example, by default the
-user could only access the virtual browsers he creates. We also provide a
-default web interface for users to manage the permissions of their \appins{}s
-and virtual browsers. The programmer could also explicitly manage user
-permissions in application code.
+% If the application requires authorization in the configuration, the
+% worker would also check if the user has the permission to access the \appins
+% or virtual browser specified in the request. The framework has a default
+% permission policy that is useful for most cases. For example, by default the
+% user could only access the virtual browsers he creates. We also provide a
+% default web interface for users to manage the permissions of their \appins{}s
+% and virtual browsers. The programmer could also explicitly manage user
+% permissions in application code.
 
 \input{api}
