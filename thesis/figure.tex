@@ -59,6 +59,16 @@
     \end{figure}
 }
 
+\newcommand{\landingpagefig}{
+    \begin{figure}[htb]
+    \centering
+    \includegraphics[width=\textwidth]{../figs/landing_page}
+    \caption[User interface of a landing page]{User interface of a landing page : The user can
+    manage all his \appins{}s and virtual browsers including those shared by others in the landing page.}
+    \label{fig:landingpage}
+    \end{figure}
+}
+
 
 \newcommand{\clickthroughput}{
     \begin{figure}[ht]
@@ -281,22 +291,20 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 % http://www.tablesgenerator.com/latex_tables
 % supports load table in latex code
 \newcommand{\instantiationStrategyTbl}{
-
     \begin{table}[htb]
     \centering
 
-\begin{tabular}{|c|l|l|l|l|}
-\hline
-Instantiation Strategy & \begin{tabular}[c]{@{}l@{}}Number of \\ App Instances\end{tabular} & \begin{tabular}[c]{@{}l@{}}Number of Browsers \\ Per App Instance\end{tabular} & \begin{tabular}[c]{@{}l@{}}User Manages \\ App Instances\end{tabular} & \begin{tabular}[c]{@{}l@{}}User Manages\\ Virtual Browser\end{tabular} \\ \hline
-multiInstance & any & any & Yes & Yes \\ \hline
-singleBrowserPerUser & any & 1 per user & Yes & No \\ \hline
-singleInstancePerUser & 1 per user & 1 total & No & No \\ \hline
-singleAppInstance & 1 total & 1 total & No & No \\ \hline
-\end{tabular}
+    \begin{tabular}{|c|l|l|l|l|}
+    \hline
+    Instantiation Strategy & \begin{tabular}[c]{@{}l@{}}Number of \\ App Instances\end{tabular} & \begin{tabular}[c]{@{}l@{}}Number of Browsers \\ Per App Instance\end{tabular} & \begin{tabular}[c]{@{}l@{}}User Manages \\ App Instances\end{tabular} & \begin{tabular}[c]{@{}l@{}}User Manages\\ Virtual Browser\end{tabular} \\ \hline
+    multiInstance & any & any & Yes & Yes \\ \hline
+    singleBrowserPerUser & any & 1 per user & Yes & No \\ \hline
+    singleInstancePerUser & 1 per user & 1 total & No & No \\ \hline
+    singleAppInstance & 1 total & 1 total & No & No \\ \hline
+    \end{tabular}
 
 
     \caption[Application Instantiation Strategy]{Application Instantiation Strategy}
     \label{tab:appinstantiationstrategy}
     \end{table}
-
 }
