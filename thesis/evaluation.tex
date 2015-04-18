@@ -1,8 +1,6 @@
 \chapter{Evaluation}
 \markright{Evaluation}
 
-
-% \cite{mcdaniel2012cloudbrowser}
 Our main focus in this evaluation is to demonstrate that the multiprocess implementation
 in \cbtwo can scale with the number of available cores on which to place separate workers.
 Our secondary focus is to investigate the cost of using different client libraries on 
@@ -30,15 +28,15 @@ in a log.  We then transform this log manually into a test script that is later 
 by our test tool.  To avoid limiting throughput when the test client becomes CPU bound,
 we can start multiple instances of the client.
 
-We used a dual-socket, 8 core Intel Xeon 2.27GHz processor with 38GB of RAM on the machine
-on which we run \cbtwo{}'s master, worker, and proxies.  We colocate the first proxy with
-the master in the same process.
-This system is connected via Gigabit Ethernet to a 8 core AMD
-machine with 16GB of RAM on which the test client(s) execute. Both machines run 
-Ubuntu 14.04 with a stock Linux 3.13 kernel.  We use \nodejs{} 0.10.33 and the version
-of JSDOM 2.0 we customized.  We use the static load balancing strategy discussed in 
-Section~\ref{sec:distribution} to ensure an exactly predictable distribution of application
-instances onto workers.
+We used a dual-socket, 8 core Intel Xeon 2.27GHz processor with 38GB of RAM on
+the machine on which we run \cbtwo{}'s master, worker, and reverse proxies.
+We colocate the first reverse proxy with the master in the same process. This
+system is connected via Gigabit Ethernet to a 8 core AMD machine with 16GB of
+RAM on which the test client(s) execute. Both machines run  Ubuntu 14.04 with
+a stock Linux 3.13 kernel.  We use \nodejs{} 0.10.33 and the version of JSDOM
+2.0 we customized.  We use the round robin load balancing strategy discussed in
+Section~\ref{sec:lb} to ensure an exactly predictable distribution
+of application instances onto workers.
 
 %
 %
@@ -57,7 +55,7 @@ with no thinking times between clicks, and a more ``Human-paced'' click applicat
 in which there is a think time drawn from a uniform distribution in the range of
 1 to 2 seconds.  We perform 5 runs for each data point and report the mean.
 For all benchmarks, the variance was small. The vast majority of data points incurred
-a relative standard error below 5\%, the maximum relative standard error was 11\%.
+a relative standard deviation below 5\%, the maximum relative standard deviation was 11\%.
 
 \clickthroughput{}
 \clicklatency{}
@@ -66,9 +64,9 @@ We measure throughput in terms of operations per second and average latency.
 Figure~\ref{fig:clickthroughput} shows the throughput of the application for different
 numbers of workers. In those cases, all workers become CPU bound, adding more workers
 that can use additional cores increases throughput near linearly up to 6 workers. 
-In this scenario, a single proxy is sufficient to support up to
+In this scenario, a single reverse proxy is sufficient to support up to
 8,000 operations per second at which point it becomes CPU bound;
-for the 6 and 8 worker cases, we add a second proxy process.
+for the 6 and 8 worker cases, we add a second reverse proxy process.
 Since the reverse proxy processes run on the same machine as the workers, throughput 
 does not increase beyond 6 workers since this machine has only 8 cores.
 We carefully monitor the CPU usage on the benchmark client machine, adding new
@@ -113,7 +111,7 @@ creating chatrooms, joining them, chatting and changing the desired display name
 
 \chatroomfig{}
 
-We make use of shared application instance data as discussed in Section~\ref{sec:appmodel}
+We make use of shared application instance data as discussed in Section~\ref{sec:deploymodel}
 to hold the last 50 chat messages.  Each application instance is visited by 5 simulated users,
 each instantiating their own virtual browser.  Each user sends 100 chat messages in our
 script, consisting of a sentence of 15-20 characters.  We set the think time to 5-10 seconds
@@ -122,13 +120,13 @@ appears in the chat window.
 
 \angularchatlatency{}
 
-Fig.\ref{fig:angularchatlatency} shows the latency perceived by benchmark tool
+Figure\ref{fig:angularchatlatency} shows the latency perceived by benchmark tool
 under different numbers of clients. While scaling to multiple workers remains effective,
 the use of AngularJS imposes a significant cost, reducing the number of concurrent users 
 that can be supported with the same hardware.  Most of the time is spent in the AngularJS
 framework, which we discovered through profiling.  Optimizations made in successive revisions
 of AngularJS heavily impacted our performance; for instance, a single commit to optimize
-needless reexecution of so-called filters in AngularJS improved benchmark performance by 20\%.
+needless re-execution of so-called filters in AngularJS improved benchmark performance by 20\%.
 As such, our numbers provide limited information about the performance envelope of
 server-side environments; rather, they provide a snapshot into the current state of
 engineering high-level libraries such as AngularJS.  
