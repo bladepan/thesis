@@ -1,11 +1,16 @@
 \chapter{Related Work}
 \markright{Related Work}
 
-\section{Remote Procedure Call(RPC) Frameworks}
+In this chapter, we first discuss remote procedure call frameworks 
+related to nodermi, then we discuss web frameworks and thin-client systems
+that share similar features with \cb.
+
+\section{Remote Procedure Call Frameworks}
 \label{sec:relatedrpc}
+
 Some remote procedure call frameworks share similar features and challenges 
-with nodermi, such as object oriented remote method invocation,
-distributed garbage collection, etc.
+with nodermi, such as object oriented way of remote method invocation
+and distributed garbage collection.
 
 Dnode~\cite{dnode} is a RPC framework for \nodejs{}.  Like nodermi, the remote
 methods are asynchronous and the remote references are created automatically
@@ -68,21 +73,18 @@ original methods.
 
 \section{Server-centric Web Frameworks}
 
-ZK~\cite{ChenCheng:book2007},
-which we use as part of our motivation in Section~\ref{sec:background}
-is a Java-based server-centric web framework that is in wide use.
-ZK applications are constructed using components, which are represented
-using the ZK User Interface Markup Language (ZUML).  ZUML components
-are translated into HTML and CSS when a page is rendered.
-A client-side library handles synchronization between the client's 
-view of and interaction with components and their server-side 
-representation.  Our extensive experience deploying applications
-with ZK~\cite{Tilevich:aop2008,EdwardsBack:csc2011} inspired the 
-work on \cb.  As discussed, ZK does not maintain a representation
-of the server document across page reloads, which means that
-all presentation state must be tied to session or persistent state.
-To scale ZK to multiple processes or servers, this session state must
-be replicated.
+ZK~\cite{ChenCheng:book2007} is a Java-based server-centric web framework that
+is in wide use. ZK applications are constructed using components, which are
+represented using the ZK User Interface Markup Language (ZUML).  ZUML
+components are translated into HTML and CSS when a page is rendered. A client-
+side library handles synchronization between the client's  view of and
+interaction with components and their server-side  representation.  ZK does
+not maintain a representation of the server document across page reloads,
+which means that all presentation state must be tied to session or persistent
+state. To scale ZK to multiple processes or servers, this session state must
+be replicated across servers using application servers' session replicate
+support  (discussed in Section~\ref{sec:sessionmanage}) which broadcast
+changes to session to all the servers.
 
 Unlike \projectname{}, ZK aims to support layout attributes, but
 we have found that the complexity of its client engine leads to 
@@ -97,11 +99,6 @@ ZUML to express server documents, along with the Java W3C implementation.
 Unlike \projectname, it also does not maintain the server document 
 state across visits, and cannot make use of existing JavaScript libraries.
 
-The Google Web Toolkit~\cite{GWT} allows the implementation of
-AJAX applications in Java that are compiled to JavaScript (or other
-targets).  Like \projectname, it provides an environment similar to 
-that provided by desktop libraries, but focuses on the client-side only; 
-communication with the server is outside its scope.
 
 % Fiz~\cite{OusterhoutFiz2009} is a server centric component based web framework
 
@@ -116,7 +113,13 @@ communication with the server is outside its scope.
 % session replication "replication costly while cluster nodes more then three (it's about math, think about fully connected graph K3~K4"
 % TODO every node pick an arbitrary node to replicate is also an option, wonder why they do not use this option
 
-\section{Other Systems}
+\section{Client-centric Web Frameworks}
+
+The Google Web Toolkit~\cite{GWT} allows the implementation of
+AJAX applications in Java that are compiled to JavaScript (or other
+targets).  Like \projectname, it provides an environment similar to 
+that provided by desktop libraries, but focuses on the client-side only; 
+communication with the server is outside its scope.
 
 A closely related project that pursues similar goals in simplifying the development
 of rich web applications is Meteor~\cite{meteor}, a full stack platform for building 
@@ -136,6 +139,7 @@ Meteor also does not focus on the problem of simplifying the retention of presen
 state across visits, either making that state ephemeral, or requiring the programmer
 use session state or store all necessary model variables in the database.
 
+\section{Thin-client Systems}
 
 Lastly, our system shares ideas with traditional thin-client and remote display 
 systems, going back to ``dumb terminals'' based on the X Window 
