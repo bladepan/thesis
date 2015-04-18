@@ -41,49 +41,53 @@ references to each other.
 
 \subsection{Overall Design}
 
-
-
-The first objective is that the API should provides enough features to cover
-all the scenarios where the applications need to access framework internals.
-We designed the API alongside developing several example applications
-including some administrator applications and some general multiple user
-applications. In our experience, the current API covers the essential features
-that are commonly needed. We concluded that the API should allow developers to
-access applications, application instances and virtual browsers in the whole
-system. Besides these internal objects, the API should also provide some
-auxiliary services like sending emails. Below are the key classes we designed
-for the API:
+The \cb API has four major classes covering essential features applications
+need to access framework objects.
 
 \begin{description}
+
+\item[APIBrowser] Represents a virtual browser.
+It has methods to manipulate the associated virtual browser, such as
+set the browser's permissions, close the browser, etc.
+
+\item[APIAppInstance] Represents an \appins{}. It has methods to manipulate
+the associated \appins{} and list the \appins{}'s virtual browsers as 
+\emph{APIBrowser} objects.
+
+
+\item[APIApplication] Represents an application object.
+It has methods to manipulate the associated application
+and list the application's \appins{}s as \emph{APIAppInstance} objects.
+
+
 \item[APICloudBrowser]
-The entry point for the application.
-For every virtual browser one APICloudBrowser object is created and injected as
+It has methods to manage applications and list applications as \emph{APIApplication} objects.
+For every virtual browser one single APICloudBrowser object is created and injected as
 a global variable in the application code namespace.
-
-\item[APIApplication] Represents an application in the framework.
-It contains methods to manipulate the associated application, such as modify the application's
-description, change its owner, close the application, etc.
-
-\item[APIAppInstance] Represents an application instance in the framework.
-It has methods to manipulate the associated application instance.
-
-\item[APIBrowser] Represents a virtual browser in the framework.
-It has methods to manipulate the associated virtual browser.
 
 \end{description}
 
 \apiclassfig{}
 
+
 Initially, the application code can get a reference to a
-\emph{APICloudBrowser} object. As emphasized in
-Figure~\ref{fig:apiclass}, via this object, the application code can get API
-objects representing applications, application instances and virtual browsers.
+\emph{APICloudBrowser} object. As shown in Figure~\ref{fig:apiclass}, from
+this object, the application code can get API objects representing
+applications, application instances and virtual browsers. 
+For most cases, the
+current application object, the current \appins{} and the current virtual browser are
+the most frequently visited framework objects for the application code, thus
+the \emph{APICloudBrowser} object also contains API object properties
+represent these objects so that  the application code can get reference to
+these API objects without calling a chain of methods. Besides framework
+objects, the \emph{APICloudBrowser} object also contains properties that
+provide auxiliary services such as sending emails.
 
 
 \subsection{Implementation}
 
 API objects themselves are just proxies of the internal objects they
-represented so they need to keep reference to these internal objects. If we
+represent so they need to keep reference to these internal objects. If we
 referenced the internal objects as properties of the API objects, the
 application code can get reference to internal objects via reading
 properties  since there is no language support for private properties in \js.
