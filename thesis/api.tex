@@ -16,30 +16,32 @@ code directly for the following reasons:
 
 \begin{description}
 
-\item[Security] \cb has a privilege system (discussed in
-Section~\ref{sec:worker})  that manages the permissions of users. For example,
-only the system administrator is allowed to shutdown all the  applications. We
-want to enforce permission check so that users' actions  are limited by the
-privilege system. Using the internal API directly, the application code could
-easily allow any user to do almost anything. The only way to do it is
-providing an intermediate level  that checks privilege violations between the
-application code and the framework.
+\item[Security]  We want to enforce permission check for users' actions so that
+they do not violate the permission settings (discussed in
+Section~\ref{sec:worker}). For example, only the system administrator is
+allowed to shutdown all the  applications. 
+If we allow the application use the internal API directly,
+the application can allow any user do anything.
 
-\item[Isolation] With direct access to internal objects, the application  code
-could manipulate them in unexpected ways thus poses great threat to  the
-integrity of the framework. Even the application is well implemented, the
-coupling between application and framework internals makes the changes made to
-the framework code could easily break the existing applications. Also with
-direct access to framework objects, the application could prevent framework
-objects from properly released. On the other direction, via method calls, the
-framework could also hold references to the application objects, thus prevent
-the application objects allocated inside a virtual browser from being
-reclaimed after the virtual browser's destruction. 
+
+\item[Isolation]  First, we want to prevent the application code from
+manipulating the internal objects in unexpected ways. Second, we want to
+decouple the application code and the framework code so  that changes made to
+the framework code do not break the applications.   Third,   we want the
+framework objects to be available for garbage collection after they are no
+longer needed by the framework,  and the objects created by application code
+to be available for garbage collection after their associated virtual browsers
+and \appins{}s are closed.  If the applications are allowed to access the
+framework objects directly,   it is impossible to fulfill these requirements
+since the objects created by application code and framework objects can create
+references to each other.
 
 \end{description}
 
 
 \subsection{Overall Design}
+
+
 
 The first objective is that the API should provides enough features to cover
 all the scenarios where the applications need to access framework internals.
@@ -140,7 +142,8 @@ if they are no longer needed in the framework.
 \apireferencefig{}
 
 
-The framework can also obtain references to the application object.  Right now
+The framework can also obtain references to the objects created by the applications.  
+Right now
 these references are created by the event register methods provided by API for
 the application to register event listeners to internal objects. For example,
 the application can register a event listener to notify the current user when

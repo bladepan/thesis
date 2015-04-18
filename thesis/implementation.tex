@@ -314,6 +314,7 @@ browsers by ids. It also processes incoming HTTP requests.
 to the \emph{Application Manager}. 
 
 \item[Permission Manager] 
+Manages users' permissions to applications, \appins{}s and virtual browsers.
 If an application enables authentication, it can call \emph{Permission
 Manager} to grant/revoke access permissions to  \appins{}s and virtual
 browsers to specific users. The system will reject HTTP requests that violate
@@ -377,14 +378,5 @@ response message and add the WebSocket connection to the virtual browser. The
 subsequent WebSocket messages will be directly handled by RPC methods  of the
 virtual browser.
 
-
-% If the application requires authorization in the configuration, the
-% worker would also check if the user has the permission to access the \appins
-% or virtual browser specified in the request. The framework has a default
-% permission policy that is useful for most cases. For example, by default the
-% user could only access the virtual browsers he creates. We also provide a
-% default web interface for users to manage the permissions of their \appins{}s
-% and virtual browsers. The programmer could also explicitly manage user
-% permissions in application code.
 
 \input{api}
