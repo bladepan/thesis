@@ -2,14 +2,15 @@
 \markright{Conclusion}
 
 \section{Future Work}
-The upcoming \js standard brings a lot of promising features. 
-One of the new language feature in ECMAScript 7 proposal is native
-support for observing changes to objects~\cite{jsobserveprop}.
-A evaluation shows that dirty checking in Angular.js becomes
-20 to 40 times faster using this feature~\cite{angularjsspeedup}.
-We could also design new APIs in application instance to provide
-notifications of changes to share objects based on this feature.
-We will investigate new opportunities brought by language updates
+
+The upcoming \js standard brings a lot of promising features.  One of the new
+language feature in ECMAScript 7 proposal is native support for observing
+changes to objects~\cite{jsobserveprop}. A evaluation shows that dirty
+checking in Angular.js becomes 20 to 40 times faster using this
+feature~\cite{angularjsspeedup}. This will increase our system's capacity when
+libraries like Angular.js  adopt this new feature. We can also design new APIs
+in \appins to provide notifications of changes to share objects based on this
+feature. We will investigate new opportunities brought by language updates
 like such to further improve our framework.
 
 % 
@@ -20,3 +21,16 @@ like such to further improve our framework.
 
 
 \section{Summary}
+
+Maintaining the rich presentation state  of a web application server-side has
+many potential benefits, ranging from simplified application development,
+improved user experience, to increased security.  There is strong interest,
+primarily outside of academia, in the development of platforms that simplify
+cloud-based  application development.
+
+We have prototyped and extensively tested this approach, focusing on a
+scalable multiprocess version of our \cb{} platform. The key limitations we
+encountered were not aspects of systems architecture or design,  but the
+overhead cost of running rich frameworks, primarily in terms of CPU time.   As
+these costs shift with the further refinement of these frameworks, we expect
+that the use of this approach become more realistic.
