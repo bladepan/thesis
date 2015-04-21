@@ -259,7 +259,7 @@ This stub registers the callback, using its id, in the
 method invocation handler's object map.
 
 If nodermi naively kept references to objects such as
-\emph{callbackA} indefinitely, it would incur memory leaks as all
+\code{callbackA} indefinitely, it would incur memory leaks as all
 objects that are even once referenced remotely will never be garbage
 collected even after the local and remote processes no longer use them.
 
@@ -362,7 +362,10 @@ If the ping message is not answered within some timeout, all records of that
 process will be removed from the object map.  Thus, a terminated process
 will be detected and all its remote references will be removed from the system.
 
-TBA: discuss cycles.
+% TBA: discuss cycles. --------
+It is possible for remote references to form distributed cycles.
+For example, 
+Our garbage collection algorithm does not deal with cyclic 
 
 
 % FIXME comparison

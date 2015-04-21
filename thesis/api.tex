@@ -88,7 +88,7 @@ provide auxiliary services such as sending emails.
 
 \subsection{Implementation}
 
-API objects are implemented using a proxy design pattern~\cite{GangOfFour}:  
+API objects are implemented using a proxy design pattern~\cite{gamma1994design}:  
 when their methods are
 called, they will first perform permission checking if necessary and then call
 the corresponding methods of the framework objects they represent. The proxy
@@ -100,11 +100,9 @@ underlying object being represented. Since there is no language support for priv
 properties in \js, we cannot  store the internal objects as properties of the
 API objects because the application code could then obtain a reference to internal
 objects using object inspection. 
-% Even if we used hidden non-enumerable property
-% the application code can still guess the property name.
 
-% \cite http://javascript.crockford.com/private.html
-We use closures to implement an equivalence to private properties as
+
+We use closures to implement an equivalence to private properties~\cite{jsprivate} as
 shown in Listing~\ref{code:apiconstructor}. We store internal objects as local
 variables in the API objects' constructors and define API methods inside the
 constructors. The API methods can reference internal objects
@@ -122,13 +120,13 @@ linenos
 // constructor. virtualBrowser is the actual virtual browser object
 function APICloudBrowser(virtualBrowser){
     // store the internal object as a local variable
-    var virtualbrowser = virtualBrowser;
+    var _virtualBrowser = virtualBrowser;
     // define API methods here
     this.close = function(){
-        // check if the user has the privilege to close this virtual browser
+        // check if the caller has the privilege to close this virtual browser
         privilegeCheckingCode();
         // forward the operation to the internal object
-        virtualbrowser.close();
+        _virtualBrowser.close();
     };
 }
 \end{minted}

@@ -38,12 +38,8 @@ messages for which there is relatively little per-message overhead.
 % but it is light weight and does less computation,
 % so it is less likely to fail in practice.
 
-% discuss the user request, message flow
-
 \section{Request Dispatch}
 \label{sec:reqdis}
-% ---- motivation, use cases here
-% ---- make it clear that after dispatch, the messages websocket
 
 When a request is being dispatched, the reverse proxy uses information
 contained in the request URL to make an appropriate forwarding decision. 
@@ -76,7 +72,7 @@ Browser URL is \url{http://example.com/chat/a/appins1/b/browser1}.
 
 \end{description}
 
-% justify why you included /a and /b (for clarity?)
+% TODO justify why you included /a and /b (for clarity?)
 
 From the user's point of view, the \emph{Application URL} is similar to  the
 homepage URL in a traditional web application. For a \emph{singleAppInstance}
@@ -305,13 +301,16 @@ Workers pass a reference to the \emph{Application Manager} and application objec
 the master's \emph{Application Manager} via remote method invocation.  The
 master uses remote references to these worker
 objects to push application-related changes to the  workers.  For instance,
-the master calls  the worker's \code{addApplication} method remotely to
-push new application to that worker and remove an application from that worker
+the master calls  a worker's \code{addApplication} method remotely to
+push new applications to that worker and remove an application from that worker
 by calling the worker's \code{removeApplication} method remotely.
 
-\item[Session Manager] Manages HTTP sessions and users' login state. 
+\item[Session Manager] 
+Manages HTTP sessions and users' login states. The sessions
+are stored in a database server that is accessible for all workers. 
+The users' login states are stored in session properties 
+as discussed in Section~\ref{sec:auth}.
 
-    \emph{say more here.}
 
 \item[HTTP Server] Listens for HTTP requests from reverse proxies and dispatches 
     the requests to the \emph{Application Manager}. 
