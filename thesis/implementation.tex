@@ -202,7 +202,7 @@ when using multiple reverse proxies.
 The load balancing algorithm is invoked in two scenarios:
 First, when the user requests an \emph{Application URL},
 the master needs to find a worker to handle this request.
-Second, it is invoked when the system is about to create a \appins{}.
+Second, it is invoked when the system is about to create an \appins{}.
 Although such action can originate in any worker,
 the load balancing algorithm is performed by the master.
 
@@ -245,61 +245,53 @@ corrects its estimate as soon as it sees the worker's next report.
 
 \section{Master Implementation}
 
-This section describes main modules in the master and how they interact
+This section describes the main modules in the master and how they interact
 with worker processes.
 
 \begin{description}
 \item[Application Manager] \hfill \\
-Application Manager is responsible to maintain the state of applications. It
-reads the application bundles (discussed in Section~\ref{sec:deploymodel}) and
-initiate data structures to represent applications.
+The Application Manager is responsible for maintaining the state of applications. 
+It reads application bundles (discussed in Section~\ref{sec:deploymodel}) and
+initializes the data structures used to represent applications.
 
 \item[Worker Manager] \hfill \\
-Worker manager is responsible for the request dispatch
-and the load balance algorithm.
+The Worker Manager is responsible for the request dispatch
+and the load balancing algorithm.
 
 \item[Reverse Proxy Manager] \hfill \\
-Reverse proxy manager starts multiple reverse proxy processes as child
-processes of the master and handles communications between the master and
+The Reverse Proxy Manager starts multiple reverse proxy processes as child
+processes of the master and handles the communication between the master and
 the reverse proxies.
 % the queries are sent from pipe, called ipc channel in node.js
 % https://github.com/joyent/node/blob/master/lib/child_process.js
 \end{description}
 
-After initiation, the master exposes \emph{Application Manager} and
-\emph{Worker Manager} to the workers via nodermi's \code{registerObj} method
+After initialization, the master exposes the \emph{Application Manager} and
+\emph{Worker Manager} objects to the workers via nodermi's \code{registerObj} method
 (discussed in Chapter~\ref{ch:rmi}).
 
-The \emph{Application Manager} has application management related  methods,
-such as list applications, create a new application, remove an application,
+The \emph{Application Manager} includes methods related to application management,
+such as listing applications, creating new applications, removing applications,
 etc.  The applications are represented by application objects. An application
-object has methods to maintain the internal state of the application, such as
-change the application's authentication policy, register a new \appins, remove
-an \appins, etc.  Since \emph{Application Manager} is registered in nodermi,
-the worker can remote reference to it and get remote references to application
-objects by calling its methods remotely.
-The worker also passes
-its own \emph{Application Manager}  and application objects to
-the master's \emph{Application Manager} via remote method invocation.  The
-master uses remote references to these worker
-objects to push application-related changes to the  workers.  For instance,
-the master calls  the worker's \code{addApplication} method remotely to
-push new application to that worker and remove an application from that worker
-by calling the worker's \code{removeApplication} method remotely.
+object has methods to manage the internal state of an application, which include
+methods to change the application's authentication policy, register a new \appins, 
+remove an \appins, etc.  Since the \emph{Application Manager} is registered in nodermi,
+workers can obtain remote references to it; the application objects returned by its
+methods are also automatically represented as nodermi remote references.
+The master's Application Manager coordinates with the Application Manager
+objects in each worker as described in Section~\ref{sec:worker}.
 
-The \emph{Worker Manager} contains methods for workers to register their HTTP
-hostname/port and report their load.  It maintains a table of \appins{} id to
-worker HTTP hostname/port for request dispatching.  This table is updated
+The \emph{Worker Manager} contains methods for workers to register the URL at which
+they can be reached and report their load.  It maintains a table of \appins{} id to
+worker URL for dispatching requests.  This table is updated
 every time a \appins{} is registered or removed from the \emph{Application
 Manager}.
-
-
 
 \section{Worker Implementation}
 \label{sec:worker}
 
-This section provides the implementation of worker processes.
-Below is a list of some key components of a worker process:
+This section describes the implementation of worker processes.
+The key components of a worker process include:
 
 \begin{description}
 
@@ -308,23 +300,35 @@ logic, local \appins{}s
 and local virtual browsers. It provides methods to lookup local \appins{}s and virtual
 browsers by ids. It also processes incoming HTTP requests.
 
+Workers pass a reference to the \emph{Application Manager} and application objects to
+the master's \emph{Application Manager} via remote method invocation.  The
+master uses remote references to these worker
+objects to push application-related changes to the  workers.  For instance,
+the master calls  the worker's \code{addApplication} method remotely to
+push new application to that worker and remove an application from that worker
+by calling the worker's \code{removeApplication} method remotely.
+
 \item[Session Manager] Manages HTTP sessions and users' login state. 
 
-\item[HTTP Server] Listens for HTTP requests from reverse proxies and dispatch the requests
-to the \emph{Application Manager}. 
+    \emph{say more here.}
+
+\item[HTTP Server] Listens for HTTP requests from reverse proxies and dispatches 
+    the requests to the \emph{Application Manager}. 
 
 \item[Permission Manager] 
 Manages users' permissions to applications, \appins{}s and virtual browsers.
-If an application enables authentication, it can call \emph{Permission
-Manager} to grant/revoke access permissions to  \appins{}s and virtual
-browsers to specific users. The system will reject HTTP requests that violate
+If an application enables authentication, it can call the \emph{Permission
+Manager} to grant or revoke access to  \appins{}s and virtual
+browsers for specific users. The system will reject HTTP requests that violate
 the permission settings in the  \emph{Permission Manager}. For instance, if a
 user requests a \emph{Browser URL} of a browser he does not have permission to
 connect, this request will be rejected. If the application does not set
-customized permissions, \emph{Permission Manager} enforces a default
-permission policy which is useful for most cases.  For example, the user can
-access  can \emph{not} access the virtual browsers that are created by others.
-The landing pages of \emph{multiInstance} and \emph{singleBrowserPerUser}
+customized permissions, the \emph{Permission Manager} enforces a default
+permission policy which is useful for most cases.  For example, a user
+cannot access the virtual browsers that were created by other users, only
+those created by themselves.
+To go beyond this default policy,
+the landing pages of \emph{multiInstance} and \emph{singleBrowserPerUser}
 applications include interfaces for users to manage the permission settings of
 their \appins{}s and virtual browsers.
 
@@ -338,45 +342,47 @@ their \appins{}s and virtual browsers.
 % generate multiple worker configuration files. Based on the information in the
 % configuration file, the worker creates a HTTP server and a nodermi instance.
 
-After creating its internal modules, the worker process will try to obtain
+After creating its internal components, the worker process will try to obtain
 remote references to the master's \emph{Application Manager} and \emph{Worker
 Manager} via nodermi, then it fetches all the applications' metadata and
 registers itself to the master by remote method invocation. If the master is
 not running, the worker will keep on retrying until these remote references
 are obtained.
 
+% should above paragraph be moved closer to earlier discussion about
+% communication with master?
 
 When a worker receives an HTTP request, it parses the request to extract
-\appins id, virtual browser id and gets associated user information from
+\appins id, virtual browser id and retrieves associated user information from
 session.
 
-If the request does not have an \appins id, the worker either allocate a
-virtual browser in the system or redirect the user to a landing page.  The
-\appins{} associated with the virtual browser  can be on the worker itself or
-on another worker.  If an \appins{} needs to be created, the worker will ask
+If the request does not have an \appins id, the worker either allocates a
+virtual browser in the system or redirects the user to a landing page.  The
+\appins{} associated with the virtual browser could be located at the worker itself or
+at another worker.  If an \appins{} needs to be created, the worker will ask
 the master to  find a worker to create the new \appins{}, a virtual browser
-will also be created in the new \appins{} because the user interactions are
- handled by virtual browsers, after that the worker will redirect the user
-to the virtual browser's URL. It is noticeable that the new \appins{} may not
-be in the worker that initiates the create request.
+will also be created in the new \appins{}.  Because user interactions are
+ handled by virtual browsers, the worker then will redirect the user
+to the virtual browser's URL. 
 
-If the request has an \appins id but does not have a virtual browser id, 
+If the request contains an \appins id but does not have a virtual browser id, 
 the worker either allocates a virtual browser for the request or
 redirect the request to a landing page.
 In the first case, the worker either 
-picks an existing virtual browser in the \appins  or create a new one based on
+picks an existing virtual browser in the \appins  or creates a new one based on
 the application instantiation strategy, then the worker sends back a redirect
 response with  the virtual browser's \emph{Browser URL}.
 
 If the request has a virtual browser id, the worker finds the matching local
 virtual browser to handle the request. For \emph{Browser URL} requests, the
-worker sends back the initial  HTML document to bootstrap the client engine;
-For resource requests, the virtual browser will read the corresponding local
-resource files from file system or from Internet, and send back the content.
+worker sends back the initial  HTML document to bootstrap the client engine.
+For resource requests, the virtual browser will retrieve the corresponding
+resource files either from the local file system or from other servers based 
+on their URL, then send back the content.
 For WebSocket handshake requests, the worker will send back a handshake
-response message and add the WebSocket connection to the virtual browser. The
-subsequent WebSocket messages will be directly handled by RPC methods  of the
-virtual browser.
-
+response message and add the WebSocket connection to the virtual browser,
+which keeps track of connected clients.
+The subsequent WebSocket messages will be directly handled by RPC methods
+of the virtual browser.
 
 \input{api}
