@@ -362,10 +362,12 @@ If the ping message is not answered within some timeout, all records of that
 process will be removed from the object map.  Thus, a terminated process
 will be detected and all its remote references will be removed from the system.
 
-% TBA: discuss cycles. --------
-It is possible for remote references to form distributed cycles.
-For example, 
-Our garbage collection algorithm does not deal with cyclic 
+% TBA: discuss cycles. -------- a fiture here example
+It is possible for remote references to form distributed cycles. 
+Because distributed cycles are rare in \cb, and nodermi helps programmers
+to break distributed cycles by allowing them explicitly specify properties
+to ignore when creating remote references,
+nodermi's garbage collection algorithm does not deal with distributed cycles. 
 
 
 % FIXME comparison

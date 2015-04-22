@@ -319,10 +319,14 @@ as discussed in Section~\ref{sec:auth}.
 Manages users' permissions to applications, \appins{}s and virtual browsers.
 If an application enables authentication, it can call the \emph{Permission
 Manager} to grant or revoke access to  \appins{}s and virtual
-browsers for specific users. The system will reject HTTP requests that violate
+browsers for specific users. 
+
+The system will reject HTTP requests that violate
 the permission settings in the  \emph{Permission Manager}. For instance, if a
 user requests a \emph{Browser URL} of a browser he does not have permission to
-connect, this request will be rejected. If the application does not set
+connect, this request will be rejected. 
+
+If the application does not set
 customized permissions, the \emph{Permission Manager} enforces a default
 permission policy which is useful for most cases.  For example, a user
 cannot access the virtual browsers that were created by other users, only

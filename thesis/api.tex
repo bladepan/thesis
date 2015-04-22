@@ -19,11 +19,22 @@ code directly for the following reasons:
 
 \begin{description}
 
-\item[Security]  We want to enforce permission checks for users' actions so that
-they do not violate permission settings (discussed in
-Section~\ref{sec:worker}). For example, only the system administrator is
+\item[Security] 
+% Since a virtual browser's creator is usually the user of
+% the virtual browser,
+The application code in a given virtual browser runs with
+the permissions of the virtual browser's creator.
+When the application does not require user identification, then 
+the creators of the application's virtual browser are 
+set to be the application's owner.
+
+The operations issued by the application code need to conform with the 
+permission settings in the \emph{Permission Manager} (discussed in
+Section~\ref{sec:worker}).
+For example, only the system administrator is
 allowed to shutdown all applications. 
 These checks take place in the API layer.
+
 
 \item[Isolation]  Application code must not 
 manipulate internal objects in unexpected ways. 
@@ -134,6 +145,17 @@ function APICloudBrowser(virtualBrowser){
 \label{code:apiconstructor}
 \end{listing}
 
+
+% \emph{Need to explain when we would do this. For instance, if an virtual browser
+% is closed, then an API object referring to it will be invalid - its weak reference
+% will turn to null. Maybe use analogy for OS fds vs OS pids?}
+
+The internal objects' life-cycle should be managed by the framework.
+When applications obtain references to the internal objects via the API
+layer, they should not prevent the internal objects from being reclaimed.
+For instance, when a virtual browser object is referenced indirectly by
+an application, the framework should be able to close it and after that
+the garbage collector should be able to reclaim the virtual browser object.
 To avoid holding references to the internal objects that are no longer needed
 by the framework, the API objects only keep weak references to the internal
 objects (See Figure~\ref{fig:apireference}). We use a \nodejs{} package node-
@@ -142,11 +164,12 @@ objects referenced only by weak references are free to be garbage
 collected.
 In this way, when an internal object is no longer referenced
 inside the framework, it is available for garbage collection even 
-it is still referenced by API.
+it is still referenced by the API layer.
+After an internal object is garbage collected, the API objects that used to 
+represent it are invalid, they
+will throw exceptions when their methods are called so that
+ the applications will know the internal object ceased to exist.
 
-\emph{Need to explain when we would do this. For instance, if an virtual browser
-is closed, then an API object referring to it will be invalid - its weak reference
-will turn to null. Maybe use analogy for OS fds vs OS pids?}
 
 \apireferencefig{}
 
@@ -162,10 +185,10 @@ way, when a virtual browser is closed, the framework won't keep references
 to application-created objects that would otherwise cause leaks and prevent
 full reclamation.
 
-\emph{You don't precisely define the security model. If you say a caller's permissions
-    are being checked - really who is the caller?  I think it's virtual browsers
-    are associated with the identity of the authenticated user on whose behalf
-    they were created?  But if user 2 cobrowser a virtual browser instantiated
-    by user 1?  Which identity is in effect when handling an event triggered by
-    user 2? Clarify.}
+% \emph{You don't precisely define the security model. If you say a caller's permissions
+%     are being checked - really who is the caller?  I think it's virtual browsers
+%     are associated with the identity of the authenticated user on whose behalf
+%     they were created?  But if user 2 cobrowser a virtual browser instantiated
+%     by user 1?  Which identity is in effect when handling an event triggered by
+%     user 2? Clarify.}
 
