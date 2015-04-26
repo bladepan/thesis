@@ -231,32 +231,38 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 
 
 \newcommand{\nodermipassbyreffig}{
-    \begin{figure}[tb]
+    \begin{figure}[htb]
     \centering
-    \includegraphics[width=\textwidth]{../figs/nodermi_passbyreference}
-    \caption[Nodermi passes arguments by reference]
-    {Nodermi passes argument by reference: When passing an argument to a remote
-    method call, a remote reference is created for the argument in the server
-    process of the remote method. The exception is that 
-    when the argument is a stub, nodermi creates
-    remote reference for the argument's source object or directly locate
-    the source object.}
+    \includegraphics[width=\textwidth]{../figs/nodermi_passstubbyreference}
+    \caption[Passing stubs by reference in remote method invocations]
+    {Passing stubs by reference in remote method invocations:
+    When the argument is a stub, nodermi creates
+    remote reference for the argument's source object.}
     \label{fig:nodermipassbyref}
     \end{figure}
 }
 
 \newcommand{\nodrmipassbyvalfig}{
-    \begin{figure}[tb]
+    \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.8\textwidth]{../figs/nodermi_passbyvalue}
-    \caption[Nodermi passes arguments by value]
-    {Nodermi passes argument by value: When passing an argument to a remote
-    method call and the argument is a simple object with no methods
-    , a new copy of the argument is created in the server
-    process of the remote method. When the argument is of certain built-in types,
-    a new copy is created via constructors, so the new copy has all the methods
-    of the original arguments.}
+    \includegraphics[width=\textwidth]{../figs/nodermi_passbyvalue2}
+    \caption[Passing arguments by value in remote method invocations]
+    {Passing arguments by value in remote method invocations: \code{objB} is a \code{Date}
+    object. When it is passed to a remote method, the receiving process creates an exact copy of 
+    \code{objB}.}
     \label{fig:nodermipassbyval}
+    \end{figure}
+}
+
+\newcommand{\nodrmicyclefig}{
+    \begin{figure}[htb]
+    \centering
+    \includegraphics[width=\textwidth]{../figs/nodermi_cycle}
+    \caption[Distributed cyclic reference]
+    {Distributed cyclic reference: \code{objA} references \code{stubB}, \code{stubB}
+    is a remote reference of \code{objB}, \code{objB} references \code{stubA} which
+    is a remote reference of \code{objA}. Neither of them can be garbage collected. }
+    \label{fig:nodermicycle}
     \end{figure}
 }
 

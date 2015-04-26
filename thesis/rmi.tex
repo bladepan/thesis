@@ -166,7 +166,7 @@ An alternative design would have been to disallow properties that
 are not methods.
 However, in this design, we would need to implement an asynchronous method
 for each read property of each object, requiring changes to many
-callsites.
+call sites.
 This would severely change the structure of existing code
 and introduce performance penalties from extra round trips.
 For most use cases in our system, providing a snapshot of a
@@ -362,13 +362,15 @@ If the ping message is not answered within some timeout, all records of that
 process will be removed from the object map.  Thus, a terminated process
 will be detected and all its remote references will be removed from the system.
 
-% TBA: discuss cycles. -------- a fiture here example
-It is possible for remote references to form distributed cycles. 
-Because distributed cycles are rare in \cb, and nodermi helps programmers
-to break distributed cycles by allowing them explicitly specify properties
-to ignore when creating remote references,
-nodermi's garbage collection algorithm does not deal with distributed cycles. 
+\nodrmicyclefig{}
 
+% TBA: discuss cycles. -------- a fiture here example
+It is possible for remote references to form distributed cyclic references as shown
+in Figure~\ref{fig:nodermicycle}.
+Nodermi does not support garbage collect distributed cyclic references.
+We think distributed cyclic references are rare in practice and the
+programmers can always break the cycle by nullify the properties
+introducing the cycles.
 
 % FIXME comparison
 
