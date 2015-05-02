@@ -8,9 +8,12 @@ that share similar features with \cb.
 \section{Remote Procedure Call Frameworks}
 \label{sec:relatedrpc}
 
-Some remote procedure call frameworks share similar features and challenges 
-with nodermi, such as object oriented way of remote method invocation
-and distributed garbage collection.
+In this section we  discuss RPC frameworks that present remote method
+invocations in object-oriented style.  We are interested in how these
+frameworks abstract the remote method invocations, the effort that these
+frameworks require developers to make, and their special features and
+drawbacks.
+
 
 Dnode~\cite{dnode} is a RPC framework for \nodejs{}.  Like nodermi, the remote
 methods are asynchronous and the remote references are created automatically
@@ -18,37 +21,41 @@ as a result of remote method calls. However, it does not distinguish remote
 references from local objects  when passing them as arguments of remote
 methods. As a consequence, dnode can create a remote reference representing
 another remote reference,  thus  a remote method call can cause a long chain
-of inter-process communications ( the ``zig-zag'' problem we discussed in
-section~\ref{sec:semantics}). Although this design introduces extra network
-round trips, it simplifies the distributed garbage collection implementation.
-Dnode keeps reference to the object in a reference map when the object  is
-remotely referenced. When a remote reference is garbage collected,  a
-\code{cull} message (similar to the release message in nodermi)  is sent to inform
-the remote reference's host   to remove the original object from its reference
-map.
+of inter-process communications (the ``zig-zag'' problem we discussed in
+section~\ref{sec:semantics}). 
+
+
+% Although this design introduces extra network
+% round trips, it simplifies the distributed garbage collection implementation.
+% Dnode keeps reference to the object in a reference map when the object  is
+% remotely referenced. When a remote reference is garbage collected,  a
+% \code{cull} message (similar to the release message in nodermi)  is sent to inform
+% the remote reference's host   to remove the original object from its reference
+% map.
 
  
 Pyro~\cite{pyro} is an object oriented RPC framework for python programming
-language. Unlike nodermi and dnode, Pyro synchronizes the modifications of
-remote references' properties to their source  objects and vice versa. This
-makes remote references act more like regular references. There are two major
-drawbacks for pyro : First, pyro does not automatically create remote
-references for objects passed to remote methods, programmers need to manually
-register these objects. If an object is not registered, it is recreated as a
-\code{dict} structure (a hash map equivalent data structure in python) in the
-remote process, thus lose all its methods. However, since remote method calls
-look like local method calls, it is tricky for the programmers to identify
-whether an object needs to be registered or not. Second, pyro lacks garbage
-collection mechanism,  objects that passed to remote methods are kept forever.
+language. Unlike nodermi and dnode, Pyro synchronizes  property modifications
+between remote references and their source objects. This makes remote
+references act more like regular references.  But if used unwisely, remote
+property access can slow down the program. There are two major drawbacks for
+pyro : First, pyro does not automatically create remote references for objects
+passed to remote methods, programmers need to manually register these objects.
+If an object is not registered, it is recreated as a \code{dict} structure (a
+hash map equivalent data structure in python) in the remote process, thus lose
+all its methods. Since remote method calls look like local method calls, it is
+tricky for the programmers to identify whether an object needs to be
+registered or not. Second, pyro lacks garbage collection mechanism, objects
+that passed to remote methods are kept forever.
 
 
 Druby(drb)~\cite{druby} is an object oriented RPC framework in ruby's standard
 library. Like pyro, it is the programmer's responsibility to explicitly tell
 the framework an object needs to be passed as a remote reference. It also
-requires user to explicitly hold reference  to objects that are remotely
-referenced  to prevent them from being prematurely garbage collected. While in
-nodermi, the framework automatically creates remote references and takes care
-of distributed garbage collection.
+requires users to explicitly hold reference  to objects that are remotely
+referenced  to prevent these objects from being prematurely garbage collected.
+While in nodermi, the framework automatically creates remote references and
+takes care of distributed garbage collection.
 
 
 
@@ -56,20 +63,28 @@ Network objects~\cite{birrell1993distributed} is a distribute programming
 paradigm that provides RPC in a object oriented style. Java RMI~\cite{j2eedoc}
 is a object oriented RPC frameworks for Java programming language. Unlike the
 RPC frameworks we discussed before, these two are built on static languages.
-Unlike nodermi, the remote references in these systems do not have properties,
-so the properties of a remote object could only be accessed via remote method
-calls.
+They both need the programmers to explicitly implement objects to inherit some
+predefined interfaces in order to pass them by reference to remote processes.
+While in nodermi, whether an object need to be passed by reference is inferred
+by the framework  automatically. The remote references in these systems do not
+have properties, so the properties of a remote object could only be accessed
+via remote method calls. In nodermi, remote references have properties,
+although these properties are only snapshots of the original properties, they
+can be read directly.
 
 % They all have sophisticated distributed garbage collected
 % mechanisms and they create remote references automatically.
 
-Except for dnode, all the frameworks we discussed  are based on
-``synchronous'' languages. In these frameworks, remote method invocations
-block until  the remote processes complete the execution of the  corresponding
-original methods.
+Pyro, druby, network objects and Java RMI are based on ``synchronous''
+languages. In these frameworks, remote method invocations block until the
+remote processes complete the execution of the original methods.
 
 
-
+CORBA~\cite{vinoski1997corba} is a RPC standard that facilitate implementation
+of cross-platform RPC systems. CORBA requires programmers to specify  the
+remote object's interface using IDL and provide IDL to object mapping code
+(the mapping can be generated by tool). While in our system, the remote
+references are generated dynamically without IDL.
 
 \section{Server-centric Web Frameworks}
 
@@ -129,8 +144,6 @@ It also does not utilize the existing technology of building web user interface.
 % These models present the problems we try to solve in \cb.
 
 
-
-\section{Hybrid Web Frameworks}
 A closely related project that pursues similar goals in simplifying the development
 of rich web applications is Meteor~\cite{meteor}, a full stack platform for building 
 web and mobile applications.  Meteor provides mechanisms that tie a client's presentation
