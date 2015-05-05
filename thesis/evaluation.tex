@@ -6,6 +6,7 @@ in \cbtwo can scale with the number of available cores on which to place separat
 Our secondary focus is to investigate the cost of using different client libraries on 
 the throughput we achieve.
 
+\section{Methodology}
 To test \cbtwo with existing applications, we developed a small expect-like language 
 in which to describe scenarios. A client test tool interprets test scripts written in
 this language and makes RPC calls to a server in the same way the client engine would
@@ -16,18 +17,21 @@ However, to minimize CPU consumption, the tool does not maintain a DOM in the sa
 way a real browser would.
 
 Like a (patient) human user, the script will not send the next event until after the
-previous event resulted in the expect DOM update.  
+previous event resulted in the expected DOM update.
 Our test language allows us to express repetition and has the ability to check
-the correctness of expected responses.  
+the correctness of expected responses.
 To simulate human processing speed, a programmable ``thinking delay'' can be introduced 
 between receiving an expected response and sending the next event.
 
-To create test scenario from actual applications,
+To create test scenarios from actual applications,
 we run those applications using a real browser and record the client/server interactions
 in a log.  We then transform this log manually into a test script that is later run 
 by our test tool.  To avoid limiting throughput when the test client becomes CPU bound,
 we can start multiple instances of the client.
 
+\emph{include a figure with an excerpt from an example}
+
+\subsection{Experimental Testbed}
 We used a dual-socket, 8 core Intel Xeon 2.27GHz processor with 38GB of RAM on
 the machine on which we run \cbtwo{}'s master, worker, and reverse proxies.
 We colocate the first reverse proxy with the master in the same process. This
@@ -120,8 +124,8 @@ appears in the chat window.
 
 \angularchatlatency{}
 
-Figure\ref{fig:angularchatlatency} shows the latency perceived by benchmark tool
-under different numbers of clients. While scaling to multiple workers remains effective,
+Figure\ref{fig:angularchatlatency} shows the latency perceived by our benchmark tool
+for different numbers of clients.  While scaling to multiple workers remains effective,
 the use of AngularJS imposes a significant cost, reducing the number of concurrent users 
 that can be supported with the same hardware.  Most of the time is spent in the AngularJS
 framework, which we discovered through profiling.  Optimizations made in successive revisions
