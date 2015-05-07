@@ -122,26 +122,13 @@ The application code cannot get references to internal objects because they
 are not stored as properties and they cannot be revealed by reflection.
 
 \begin{listing}[ht,width=\columnwidth]
-\begin{minted}[
+\inputminted[
 frame=lines,
 fontsize=\scriptsize,
 linenos
 ]
-{javascript}
-// constructor. virtualBrowser is the actual virtual browser object
-function APICloudBrowser(virtualBrowser){
-    // store the internal object as a local variable
-    var _virtualBrowser = virtualBrowser;
-    // define API methods here
-    this.close = function(){
-        // check if the caller has the privilege to close this virtual browser
-        privilegeCheckingCode();
-        // forward the operation to the internal object
-        _virtualBrowser.close();
-    };
-}
-\end{minted}
-\caption{Snippet of Class APIBrowser: the API Class for virtual browsers}
+{javascript}{../codeexamples/api_example.js}
+\caption{Code snippet of API classes}
 \label{code:apiconstructor}
 \end{listing}
 
@@ -158,7 +145,7 @@ an application, the framework should be able to close it and after that
 the garbage collector should be able to reclaim the virtual browser object.
 To avoid holding references to the internal objects that are no longer needed
 by the framework, the API objects only keep weak references to the internal
-objects (See Figure~\ref{fig:apireference}). We use a \nodejs{} package node-
+objects (See Listing~\ref{code:apiconstructor} line 5). We use a \nodejs{} package node-
 weak~\cite{nodeweak} to implement weak reference. Unlike ordinary references,
 objects referenced only by weak references are free to be garbage
 collected.
@@ -171,7 +158,6 @@ will throw exceptions when their methods are called so that
  the applications will know the internal object ceased to exist.
 
 
-\apireferencefig{}
 
 The framework may store references to objects created by application
 code.  Right now these references are created by the event register methods

@@ -1,0 +1,20 @@
+{"type" : "textInput", "target" : "node40", "textType":"clientId", 
+    "endEvent" : "enterKey", "keyEvent" : "basic"}
+===
+{"type": "expect","expect": 
+    [{"event": "DOMCharacterDataModified", "containsText" : [{"type" : "previousInputValue"}]}]}
+===
+{"type" : "eventGroup", "count" : 300,
+"events" : [
+    {"type" : "textInput", "target" : "node68", "textType" : "random", "endEvent" : "enterKey", 
+    "keyEvent" : "basic", "tag": "textarea"},
+    {"type" : "expect", 
+        "expect" :[
+            {"event": "DOMCharacterDataModified", 
+            "containsText" : [{"type" : "previousInputValue"}]}
+        ],
+        "wait" : {"type":"random", "max":10000, "min":5000}
+    }
+]
+}
+===

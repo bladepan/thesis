@@ -334,7 +334,7 @@ When writing applications with complex logic, programmers often end up with deep
 nested callbacks which make their code hard to understand, something which has
 been referred to by the developer community as \emph{callback hell}. 
 
-For instance, to read two files in order, the program in Listing\ref{} could
+For instance, to read two files in order, the program in Listing\ref{code:nodefile2} could
 be changed such that the I/O for the second file is initiated in the callback
 that is fired when the first file has been read, which adds a level of nesting.
 However, this approach will not allow the I/O of those files to overlap.
@@ -346,8 +346,7 @@ libraries like async~\cite{async}. % (see Section~\ref{sec:nodepackage}).
 \subsection{\nodejs Packages Used in \cb}
 \label{sec:nodepackage}
 
-% do not deal with err in the examples in sake of clarity
-\subsubsection{async}
+\subsubsection{Async}
 \emph{Async} is a library that helps developers implement complex control 
 flow patterns of asynchronous functions without nested callbacks.
 It supports various recurring patterns, including
@@ -411,11 +410,6 @@ This feature greatly simplified our implementation.
 
 \subsubsection{Jsdom}
 
-\emph{reads a little bit out of place... not sure we want this here separate...
-%
-    Maybe you want to fold this material into the following section where 
-    server-side documents are discussed.
-}
 
 Jsdom~\cite{JSDOM} is a \nodejs package which provides a \js implementation of the
 DOM API. % We use jsdom to implement the server side DOM tree.
@@ -424,11 +418,7 @@ it reads HTML documents to build the initial DOM tree and executes \js files spe
 It is possible to create multiple jsdom instances in the same process,
 each of these jsdom instance will have its own DOM tree and
 isolated namespace for its \js code.
-% In our model, a virtual browser corresponds to a jsdom instance.
-The client events will be applied to the jsdom instances and
-trigger DOM events and fires listeners defined in the \js code if necessary.
-To capture DOM updates, we patched jsdom so that the methods that modify the DOM
-will call \cb{} to send these updates to the connected clients.
+
 
 \section{\cb}
 
@@ -438,7 +428,8 @@ This section reviews the implementation of
 the original, single-process version \cb{}~\cite{mcdaniel2012cloudbrowser},
 which formed the basis for this work.
 Figure \ref{fig:cb1arch} shows the relationship
-between the client engine running in the user's browser and the virtual browser
+between the client engine running in the user's browser and the virtual browser 
+(implemented using jsdom)
 running server side.  When the user visits an application, the client engine
 code is downloaded, which then restores the current view of the application by
 copying the current state of the server document.  Subsequently, user input
@@ -453,6 +444,7 @@ layered on top of a bidirectional WebSocket communication channel.
 Stylesheets, images, etc. are provided to the client through a resource
 proxy.  The client's browser is responsible for rendering the document
 on the screen using the provided styles.
+
 
 \subsection{Deployment Model}
 \label{sec:deploymodel}

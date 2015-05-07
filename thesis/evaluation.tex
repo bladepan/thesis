@@ -16,6 +16,30 @@ user sees.
 However, to minimize CPU consumption, the tool does not maintain a DOM in the same
 way a real browser would.
 
+
+\begin{listing}
+\inputminted[
+frame=lines,
+fontsize=\scriptsize,
+linenos
+]
+{javascript}{../codeexamples/benchmarktool_config.json}
+\caption{Configuration language for the benchmark tool} 
+\label{code:benchmarktoolconfig}
+\end{listing}
+
+Our user scenario description language is built on JSON, it is
+able to describe all client triggered DOM events and server side responses. 
+Listing~\ref{code:benchmarktoolconfig} is an example benchmark tool configuration
+written in this language.
+Line 1--5
+ describes a test scenario in which the simulated user first types a string
+in a input box, then waits for a DOM event update from the server that contains
+the previously input string.
+Line 7--20 describes a loop in which the simulated user repeats the specified actions 
+300 times.
+ 
+
 Like a (patient) human user, the script will not send the next event until after the
 previous event resulted in the expected DOM update.
 Our test language allows us to express repetition and has the ability to check
@@ -29,7 +53,7 @@ in a log.  We then transform this log manually into a test script that is later 
 by our test tool.  To avoid limiting throughput when the test client becomes CPU bound,
 we can start multiple instances of the client.
 
-\emph{include a figure with an excerpt from an example}
+
 
 \subsection{Experimental Testbed}
 We used a dual-socket, 8 core Intel Xeon 2.27GHz processor with 38GB of RAM on
