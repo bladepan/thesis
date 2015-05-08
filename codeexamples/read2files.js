@@ -5,7 +5,8 @@ for (var i = 0; i < files.length; i++) {
     var fileName = files[i];
     fs.readFile(fileName, function(err, data){
         if (err) throw err;
-        // this will always print "content of /etc/hosts is ..."
+        // this will always print "content of /etc/hosts is ...", 
+        // fileName is assigned with the last element of files
         console.log("content of " + fileName + " is "+ data);
     });
 }
