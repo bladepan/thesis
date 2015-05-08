@@ -170,9 +170,9 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 
 
 \newcommand{\nodermifig}{
-    \begin{figure}[ht]
+    \begin{figure}[htb]
     \centering
-    \includegraphics[width=\textwidth]{../figs/nodermi}
+    \includegraphics[width=0.8\textwidth]{../figs/nodermi}
     \caption[Overall Design of nodermi]{Overall Design of nodermi}
     \label{fig:nodermi}
     \end{figure}
@@ -180,7 +180,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 
 % deprecated
 \newcommand{\nodermimethodinvokefig}{
-    \begin{figure}[ht]
+    \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_method_invoke}
     \caption[Remote method invocation via a stub object]{Process A invoke a method of a stub object}
@@ -190,7 +190,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 
 % deprecated
 \newcommand{\nodermicallbackfig}{
-    \begin{figure}[ht]
+    \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_callback}
     \caption[Remote callback via a stub function]{Process B invoke a callback that itself is a stub}
@@ -199,7 +199,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 }
 
 \newcommand{\nodermiexamplefig}{
-    \begin{figure}[tb]
+    \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_example}
     \caption{Nodermi remote method invocation example}
@@ -210,17 +210,28 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 \newcommand{\nodermiobjmapfig}{
     \begin{figure}[htb]
     \centering
-    \includegraphics[width=\textwidth]{../figs/nodermi_objectmap}
-    \caption[Nodermi memory management]{Nodermi memory management : Nodermi holds 
-    strong references to local objects that are remotely referenced in \emph{object map},
-    holds weak references to \emph{stub}s in \emph{stub map}.}
+    \includegraphics[width=0.8\textwidth]{../figs/nodermi_objectmap}
+    \caption[Nodermi object map]{Nodermi memory management : Nodermi holds 
+    strong references to local objects that are remotely referenced in \emph{object map}.}
     \label{fig:nodermiobjmap}
+    \end{figure}
+}
+
+
+\newcommand{\nodermistubmapfig}{
+    \begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figs/nodermi_objectmap}
+    \caption[Nodermi stub map]{Nodermi memory management : Nodermi creates weak
+    references to the stubs so it can be notified when stubs are no longer used in
+    the system.}
+    \label{fig:nodermistubmap}
     \end{figure}
 }
 
 %deprecated
 \newcommand{\nodermiracefig}{
-    \begin{figure}[ht]
+    \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_race}
     \caption[Race condition when dereferencing a remote reference]
@@ -230,27 +241,40 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \end{figure}
 }
 
-
 \newcommand{\nodermipassbyreffig}{
     \begin{figure}[htb]
     \centering
-    \includegraphics[width=\textwidth]{../figs/nodermi_passstubbyreference}
+    \includegraphics[width=0.6\textwidth]{../figs/nodermi_passlocalbyreference}
+    \caption[Passing by reference in remote method invocations]
+    {Passing by reference in remote method invocations:
+    When an object is passed by reference to a remote object, the
+    receiving process will create a stub to represent that object.}
+    \label{fig:nodermipassbyref}
+    \end{figure}
+}
+
+
+\newcommand{\nodermipassstubbyreffig}{
+    \begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.6\textwidth]{../figs/nodermi_passstubbyreference}
     \caption[Passing stubs by reference in remote method invocations]
     {Passing stubs by reference in remote method invocations:
-    When the argument is a stub, nodermi creates
-    remote reference for the argument's source object.}
-    \label{fig:nodermipassbyref}
+    When a stub is passed by reference to another process,
+    nodermi creates
+    a new stub to represent the stub's source object instead the stub itself.}
+    \label{fig:nodermipassstubbyref}
     \end{figure}
 }
 
 \newcommand{\nodrmipassbyvalfig}{
     \begin{figure}[htb]
     \centering
-    \includegraphics[width=\textwidth]{../figs/nodermi_passbyvalue2}
+    \includegraphics[width=0.6\textwidth]{../figs/nodermi_passbyvalue}
     \caption[Passing arguments by value in remote method invocations]
-    {Passing arguments by value in remote method invocations: \code{objB} is a \code{Date}
-    object. When it is passed to a remote method, the receiving process creates an exact copy of 
-    \code{objB}.}
+    {Passing arguments by value in remote method invocations:  
+    When \code{objectA} is passed to a remote method, the receiving process creates an exact copy of 
+    \code{objectA}.}
     \label{fig:nodermipassbyval}
     \end{figure}
 }
@@ -258,7 +282,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 \newcommand{\nodrmicyclefig}{
     \begin{figure}[htb]
     \centering
-    \includegraphics[width=\textwidth]{../figs/nodermi_cycle}
+    \includegraphics[width=0.8\textwidth]{../figs/nodermi_cycle}
     \caption[Distributed cyclic reference]
     {Distributed cyclic reference: \code{objA} references \code{stubB}, \code{stubB}
     is a remote reference of \code{objB}, \code{objB} references \code{stubA} which
@@ -268,7 +292,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
 }
 
 \newcommand{\apiclassfig}{
-    \begin{figure}[ht]
+    \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/api_classes}
     \caption[API class design]{API class design: 

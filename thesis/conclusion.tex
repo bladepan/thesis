@@ -3,23 +3,31 @@
 
 \section{Future Work}
 
-\emph{present complete ideas, one per paragraph, describing a key problem
-    with the current system, and how an emerging idea could address it,
-    sketching it out briefly}
-
+We plan to continue optimize our system by incorporating future updates of
+\js language, \js runtime engine and third party dependencies.
 The upcoming \js standard brings a lot of promising features.  One of the new
 language feature in ECMAScript 7 proposal is native support for observing
 changes to objects~\cite{jsobserveprop}. A evaluation shows that dirty
 checking in AngularJS becomes 20 to 40 times faster using this
-feature~\cite{angularjsspeedup}. This will increase our system's capacity when
-libraries like AngularJS  adopt this new feature. We can also design new APIs
-in \appins to provide notifications of changes to share objects based on this
-feature. We will investigate new opportunities brought by language updates
-like these to further improve our framework.
+feature~\cite{angularjsspeedup}.
+This will greatly improve our system's capacity.
+
 
 % improve dependency packages... 
 
+We also plan to implement failover mechanism for 
+ worker processes. 
+In current implementation, when a worker process terminates, 
+the master still dispatches requests to that worker.
+We need to implement a failure detection mechanism to detect failed workers
+and a method to migrate the failed workers' \appins{}s
+and virtual browsers to living workers.
 
+
+Finally, as a PaaS platform we need a better administrative interface 
+to enable developers to monitor and diagnose their applications.
+Currently, we only have very basic information displayed for deployed 
+applications.
 
 \section{Summary}
 
