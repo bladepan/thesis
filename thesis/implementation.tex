@@ -49,26 +49,27 @@ The formats of these URLs are as follows:
 \begin{description}
 
 \item[Application URL] \label{itm:appurl} \hfill \\
-Format: \url{http://example.com/[app]}, \code{[app]} represents an
-application's mount point.   For example, if an application's mount point is
+\url{http://example.com/[app]}. \\
+\code{[app]} represents an application's mount point. 
+For example, if an application's mount point is
 \emph{chat},  then its Application URL is \url{http://example.com/chat}.
 
 
 \item[\appins{} URL] \label{itm:appinsurl} \hfill \\
-Format: \url{http://example.com/[app]/a/[appInstanceId]},
-\code{[appInstanceId]} represents an \appins{}'s id.  For example, if an
+\url{http://example.com/[app]/a/[appInstanceId]}. \\
+\code{[app\-Instance\-Id]} represents an \appins{}'s id.  For example, if an
 \appins{}'s id is \emph{appins1} and its application's mount point is
 \emph{chat}, then its \appins{} URL is
 \url{http://example.com/chat/a/appins1}.
 
 
 \item[Browser URL] \label{itm:vburl} \hfill \\
-Format: \url{http://example.com/[app]/a/[appInstanceId]/b/[browserId]},
-\code{[browserId]} represents a virtual browser's id. For example, if a
+\url{http://example.com/[app]/a/[appInstanceId]/b/[browserId]}. \\
+\code{[browser\-Id]} represents a virtual browser's id. For example, if a
 virtual browser's id is \emph{browser1} and its \appins{} id is 
  \emph{appins1} and its application's mount point is \emph{chat},
-  then the virtual browser's
-Browser URL is \url{http://example.com/chat/a/appins1/b/browser1}.
+  then the virtual browser's Browser URL is 
+  \url{http://example.com/chat/a/appins1/b/browser1}.
 
 \end{description}
 

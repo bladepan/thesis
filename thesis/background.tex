@@ -4,7 +4,7 @@
 This chapter provides background information to understand the concepts
 underlying the design of \cbtwo. We assume the reader has basic knowledge of
 web-related protocols and languages, including HTTP~\cite{rfc7231},
-HTML~\cite{hickson2012html},  DOM~\cite{2000Document},
+HTML~\cite{hickson2012html},  DOM~\cite{wilson2000document},
 \js~\cite{ecmascript2011ecmascript} and CSS~\cite{css21}.
 
 \webscaleoutfig{}
@@ -425,8 +425,8 @@ isolated namespace for its \js code.
 \architectureoverview{}
 
 This section reviews the implementation of
-the original, single-process version \cb{}~\cite{mcdaniel2012cloudbrowser},
-which formed the basis for this work.
+the original, single-process version \cb{},
+which formed the basis for this work~\cite{mcdaniel2012cloudbrowser}.
 Figure \ref{fig:cb1arch} shows the relationship
 between the client engine running in the user's browser and the virtual browser 
 (implemented using jsdom)
