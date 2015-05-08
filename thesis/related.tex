@@ -1,10 +1,10 @@
 \chapter{Related Work}
 \markright{Related Work}
 
-Our work on \cb bears a relationship to several other related works
+Our work on \cb bears a relationship to several related works
 which this chapter discusses, which include remote procedure call frameworks 
 related to nodermi, as well as web frameworks and thin-client systems
-that share similar features with \cb.
+that share similar features or goals with \cb.
 
 \section{Remote Procedure Call Frameworks}
 \label{sec:relatedrpc}
@@ -100,18 +100,14 @@ by tool (IDL compiler). nodermi generates remote stubs dynamically without IDL.
 % We do not discuss these frameworks because they present the very problem \cb is
 % trying to solve.
 
-There are tons of web frameworks that are designed to simplify the development of
-web applications.
-We select a few web frameworks that are particularly related to \cb in the way
-that they provide interesting programming models other than request/response
-programming paradigm in traditional web frameworks.
-We categorize web
-frameworks that keep representation state in server side as server-centric
-frameworks, and web frameworks in which server side is not aware of
-representation state as client-centric.
-
-
-
+There is a large number of web frameworks that are designed to simplify
+the development of web applications.  We select a few web frameworks that
+are particularly related to \cb in the way that they provide programming
+models other than the request/response programming paradigm used in
+traditional web frameworks.  Following~\cite{ChenCheng:book2007}, we
+categorize web frameworks that keep representation state on the server
+as server-centric frameworks and web frameworks in which the server side
+is not aware of representation state as client-centric.
 
 %
 %
@@ -144,17 +140,17 @@ ZUML to express server documents, along with the Java W3C implementation.
 Unlike \projectname, it also does not maintain the server document 
 state across visits, and cannot make use of existing JavaScript libraries.
 
-JavaServer Faces (JSF) is a component-based web framework and is part of
-Java Platform Enterprise Edition~\cite{j2eedoc}.
+JavaServer Faces (JSF) is a component-based web framework that is part of
+the Java Enterprise Edition Platform~\cite{j2eedoc}.
 Developers use XML to define application views and the framework abstracts
-away server-client communications as actions and action listeners.
+away server-client communication using actions and action listeners.
 Although application developers do not need to know \js, component
-developers need use \js to write interactive AJAX components.
-To create customized user interface instead of adhering to 
+developers need to use \js to write interactive AJAX components.
+To create customized user interfaces that override the
 default behaviors of existing components,
-developers do need to understand \js, CSS, HTML plus JSF specific knowledge
-such as request processing life-cycle, component rendering, etc.
-
+developers do need to understand \js, CSS, and HTML as well as have
+JSF-specific knowledge about the request processing life-cycle, 
+the details of component rendering, and others.
 
 % Fiz~\cite{OusterhoutFiz2009} is a server centric component based web framework
 
@@ -169,12 +165,11 @@ such as request processing life-cycle, component rendering, etc.
 
 \subsection{Client-centric Web Frameworks}
 
-The Google Web Toolkit~\cite{GWT} allows the implementation of
+Google Web Toolkit~\cite{GWT} allows the implementation of
 AJAX applications in Java that are compiled to JavaScript (or other
 targets).  Like \projectname, it provides an environment similar to 
 that provided by desktop libraries, but focuses on the client-side only; 
 communication with the server is outside its scope.
-It also does not utilize the existing technology of building web user interface.
 
 % Traditional AJAX programming model in which developers manage user interface use
 % client side \js libraries like jQuery, angular, etc. and the client side communicate the server
@@ -226,8 +221,8 @@ Because terminal emulators are text based, the cost of maintaining screen
 states is not significant. Mosh is able to provide prompt feedbacks to users
 in spite of network latency by guessing the effects of users' keystrokes and
 applying the guessed effects on users' screens immediately. Unlike \cb which
-preserves the whole representation states of applications, Mosh only keeps the
-current screen state thus it does not support scrollback. Another difference
+preserves the entire user interface state of an applications, Mosh only keeps the
+current screen's state. Another difference
 from our system is that Mosh does not support reconnecting to existing
-sessions, the users are presented with new windows when they switch devices.
+sessions, the users are presented with a new window when they switch devices.
 

@@ -103,7 +103,7 @@ session state is stored in a storage system, often a relational database.
 
 If session state is stored locally, it can be accessed faster, but it is not
 accessible from other web server instances.  To overcome this limitation, some
-web servers like Tomcat support a session replication
+web servers such as Tomcat support a session replication
 mode~\cite{tomcatcluster} that  synchronizes locally stored session state
 across a cluster of web servers.  Since a web server needs to
 broadcast any changes to session state to all other web servers, this mode 
@@ -120,8 +120,8 @@ Cassandra~\cite{lakshman2010cassandra}.
 
 The design choices regarding load balancing and their implementation can 
 affect application development.  We use the taxonomy from the survey of Cardellini et
-al.~\cite{cardellini2002state} to categorize load balancing approaches into client-
-blind or client-aware, based on whether the load balancer uses information from
+al.~\cite{cardellini2002state} to categorize load balancing approaches into client-blind 
+or client-aware, based on whether the load balancer uses information from
 the client's request to perform the dispatch.
 
 A client-blind load balancer does not use information from the client when
@@ -334,7 +334,7 @@ When writing applications with complex logic, programmers often end up with deep
 nested callbacks which make their code hard to understand, something which has
 been referred to by the developer community as \emph{callback hell}. 
 
-For instance, to read two files in order, the program in Listing\ref{code:nodefile2} could
+For instance, to read two files in order, the program in Listing~\ref{code:nodefile2} could
 be changed such that the I/O for the second file is initiated in the callback
 that is fired when the first file has been read, which adds a level of nesting.
 However, this approach will not allow the I/O of those files to overlap.
