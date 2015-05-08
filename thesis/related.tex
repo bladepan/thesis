@@ -220,16 +220,14 @@ unique in that it uses a markup document and differential update to it to
 describe the structure and evolution of the user interface that is rendered 
 to the user.  
 
-Mosh~\cite{winstein2012mosh} is a remote terminal application 
-that synchronizes client screen states with server side terminal emulators. 
-Because terminal emulators are text based, the cost of maintain screen states
-is not significant.
-Mosh is able to provide prompt feedbacks to users in spite of network latency
-by guessing the effects of users' keystrokes and applying the guessed effects on
-users' screens immediately.
-Unlike \cb which preserves the whole representation states of applications,
-Mosh only keeps the current screen state thus it does not support scrollback.
-Another difference of our system is that
-Mosh does not support reconnecting to existing sessions, the users are presented
-with new windows when they switch devices.
+Mosh~\cite{winstein2012mosh} is a remote terminal application  that
+synchronizes client screen states with server side terminal emulators.
+Because terminal emulators are text based, the cost of maintaining screen
+states is not significant. Mosh is able to provide prompt feedbacks to users
+in spite of network latency by guessing the effects of users' keystrokes and
+applying the guessed effects on users' screens immediately. Unlike \cb which
+preserves the whole representation states of applications, Mosh only keeps the
+current screen state thus it does not support scrollback. Another difference
+from our system is that Mosh does not support reconnecting to existing
+sessions, the users are presented with new windows when they switch devices.
 
