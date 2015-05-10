@@ -25,7 +25,7 @@ code directly for the following reasons:
 The application code in a given virtual browser runs with
 the permissions of the virtual browser's creator.
 When the application does not require user identification, then 
-the creators of the application's virtual browser are 
+the creators of the application's virtual browsers are 
 set to be the application's owner.
 
 The operations issued by the application code need to conform with the 
@@ -155,7 +155,7 @@ it is still referenced by the API layer.
 After an internal object is garbage collected, the API objects that used to 
 represent it are invalid, they
 will throw exceptions when their methods are called so that
- the applications will know the internal object ceased to exist.
+ the applications will know the corresponding internal objects ceased to exist.
 
 
 

@@ -28,24 +28,20 @@ linenos
 \label{code:benchmarktoolconfig}
 \end{listing}
 
-Our user scenario description language is built on JSON, it is
-able to describe all client triggered DOM events and server side responses. 
-Listing~\ref{code:benchmarktoolconfig} is an example benchmark tool configuration
-written in this language.
-Line 1--5
- describes a test scenario in which the simulated user first types a string
-in a input box, then waits for a DOM event update from the server that contains
-the previously input string.
-Line 7--20 describes a loop in which the simulated user repeats the specified actions 
-300 times.
- 
-
-Like a (patient) human user, the script will not send the next event until after the
+Like a (patient) human user, the benchmark tool will not send the next event until after the
 previous event resulted in the expected DOM update.
 Our test language allows us to express repetition and has the ability to check
 the correctness of expected responses.
+Listing~\ref{code:benchmarktoolconfig} is an example benchmark tool
+configuration written in this language.
+Line 1--5  describes a test scenario
+in which the simulated user first types a string in a input box specified by
+id, then waits for a DOM event update from the server that echoes the
+previously input string. Line 7--20 describes a loop in which the simulated
+user repeats a sequence of actions 300 times.
 To simulate human processing speed, a programmable ``thinking delay'' can be introduced 
-between receiving an expected response and sending the next event.
+between receiving an expected response and sending the next event, as
+shown in line line 16.
 
 To create test scenarios from actual applications,
 we run those applications using a real browser and record the client/server interactions
@@ -61,7 +57,7 @@ the machine on which we run \cbtwo{}'s master, worker, and reverse proxies.
 We colocate the first reverse proxy with the master in the same process. This
 system is connected via Gigabit Ethernet to a 8 core AMD machine with 16GB of
 RAM on which the test client(s) execute. Both machines run  Ubuntu 14.04 with
-a stock Linux 3.13 kernel.  We use \nodejs{} 0.10.33 and the version of JSDOM
+a stock Linux 3.13 kernel.  We use \nodejs{} 0.10.33 and the version of jsdom
 2.0 we customized.  We use the round robin load balancing strategy discussed in
 Section~\ref{sec:lb} to ensure an exactly predictable distribution
 of application instances onto workers.
@@ -131,8 +127,8 @@ and that the reverse proxy in particular does not become a bottleneck.
 A key part of the productivity promise for using the server-centric \cb framework
 is the ability to reuse high-level libraries such as AngularJS with little or
 no changes, so that applications prototyped in AngularJS can be directly
-executed in virtual browsers.  These libraries are designed for client-side
-use, however.  We prototyped a Chat application to investigate the overhead
+executed in virtual browsers. These libraries are designed for client-side
+use, however. We prototyped a Chat application to investigate the overhead
 of this usage scenario, a screenshot is shown in Figure~\ref{fig:chatapp}.  
 The application is only 207 lines of HTML and JS code while providing features such as 
 creating chatrooms, joining them, chatting and changing the desired display name.
@@ -148,11 +144,11 @@ appears in the chat window.
 
 \angularchatlatency{}
 
-Figure\ref{fig:angularchatlatency} shows the latency perceived by our benchmark tool
+Figure~\ref{fig:angularchatlatency} shows the latency perceived by our benchmark tool
 for different numbers of clients.  While scaling to multiple workers remains effective,
 the use of AngularJS imposes a significant cost, reducing the number of concurrent users 
-that can be supported with the same hardware.  Most of the time is spent in the AngularJS
-framework, which we discovered through profiling.  Optimizations made in successive revisions
+that can be supported with the same hardware. Most of the time is spent in the AngularJS
+framework, which we discovered through profiling. Optimizations made in successive revisions
 of AngularJS heavily impacted our performance; for instance, a single commit to optimize
 needless re-execution of so-called filters in AngularJS improved benchmark performance by 20\%.
 As such, our numbers provide limited information about the performance envelope of
@@ -167,13 +163,15 @@ roughly doubled performance, as shown in Figure~\ref{fig:jquerychatlatency}.
 AngularJS's developers expect an order of magnitude speedup through direct VM 
 support via \code{Object.observe()} in future JavaScript VMs~\cite{angularjsspeedup}.
 
-A second example of a disproportionate impact of specific implementation limitations
-is the handling of style attributes.  For instance, jQuery's \code{toggle()} method changes an element's
-visibility by changing a style attribute.  To obtain the current value, it uses the
-\code{getComputedStyle()} function, which triggers the application of CSS selectors.
-This is a well-known performance bottleneck~\cite{Meyerovich+:WWW2010} in browser
-layout engines and not optimized at all in JSDOM.  A third example we encountered 
-is the original implementation of a frequently called function \code{length\-From\-Properties}
-which determines the number of children of a DOM node.  Profiling showed 30\% of CPU
-spent in this function, which disappeared after an upgrade that substituted a
-constant time $O(1)$ implementation.
+A second example of a disproportionate impact of specific implementation
+limitations is the handling of style attributes. For instance, jQuery's
+\code{toggle()} method changes an element's visibility by changing a style
+attribute.  To obtain the current value, it uses the \code{getComputedStyle()}
+function, which triggers the application of CSS selectors. This is a well-
+known performance bottleneck~\cite{Meyerovich+:WWW2010} in browser layout
+engines and not optimized at all in jsdom.  A third example we encountered  is
+the original implementation of a frequently called function
+\code{length\-From\-Properties} which determines the number of children of a
+DOM node.  Profiling showed 30\% of CPU spent in this function, which
+disappeared after an upgrade that substituted a constant time $O(1)$
+implementation.

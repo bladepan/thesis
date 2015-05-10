@@ -23,8 +23,8 @@ the request dispatch logic which decides how to distribute the client load to
 workers. The actual dispatching is implemented by the reverse proxies, which
 forward users' requests to workers and copy workers' responses back to users.
 All reverse proxy processes are bound to the socket that accepts client
-requests, allowing the OS to distribute pending client connections in a round-
-robin fashion.
+requests, allowing the OS to distribute pending client connections in a round-robin 
+fashion.
 The reverse proxy can relay both HTTP requests/responses as
 well as the bidirectional WebSocket protocol (see Section~\ref{sec:nodepackage}).
 Once the client has established a WebSocket connection with
@@ -135,7 +135,7 @@ will accept this HTTP request and ask the master where to dispatch this request.
 
 If the request URL is a \emph{Browser URL} or \emph{\appins URL}, 
 the master extracts \appins id from the URL and returns the associated
-worker via a \appins id to worker lookup table.
+worker via an \appins id to worker lookup table.
 This lookup table is updated every time an \appins{} is created or removed.
 For an \emph{\appins URL} request, the worker will continue to find the associated
 virtual browser for the user and send back a redirect with the virtual browser's URL.
@@ -271,7 +271,7 @@ After initialization, the master exposes the \emph{Application Manager} and
 The \emph{Application Manager} includes methods related to application management,
 such as listing applications, creating new applications, removing applications,
 etc.  The applications are represented by application objects. An application
-object has methods to manage the internal state of an application, which include
+object has methods to manage the internal state of an application, which includes
 methods to change the application's authentication policy, register a new \appins, 
 remove an \appins, etc.  Since the \emph{Application Manager} is registered in nodermi,
 workers can obtain remote references to it; the application objects returned by its
@@ -279,11 +279,11 @@ methods are also automatically represented as nodermi remote references.
 The master's Application Manager coordinates with the Application Manager
 objects in each worker as described in Section~\ref{sec:worker}.
 
-The \emph{Worker Manager} contains methods for workers to register the URL at which
-they can be reached and report their load.  It maintains a table of \appins{} id to
-worker URL for dispatching requests.  This table is updated
-every time a \appins{} is registered or removed from the \emph{Application
-Manager}.
+The \emph{Worker Manager} contains methods for workers to report their load
+and to register the URL at which they can be reached and .  It maintains a
+table of \appins{} id to worker URL for dispatching requests.  This table is
+updated every time an \appins{} is registered or removed from the
+\emph{Application Manager}.
 
 \section{Worker Implementation}
 \label{sec:worker}
@@ -298,7 +298,7 @@ logic, local \appins{}s
 and local virtual browsers. It provides methods to lookup local \appins{}s and virtual
 browsers by ids. It also processes incoming HTTP requests.
 
-Workers pass a reference to the \emph{Application Manager} and application objects to
+Workers pass references to their \emph{Application Manager}s and application objects to
 the master's \emph{Application Manager} via remote method invocation.  The
 master uses remote references to these worker
 objects to push application-related changes to the  workers.  For instance,
@@ -325,13 +325,12 @@ browsers for specific users.
 The system will reject HTTP requests that violate
 the permission settings in the  \emph{Permission Manager}. For instance, if a
 user requests a \emph{Browser URL} of a browser he does not have permission to
-connect, this request will be rejected. 
+connect, the request will be rejected. 
 
 If the application does not set
 customized permissions, the \emph{Permission Manager} enforces a default
 permission policy which is useful for most cases.  For example, a user
-cannot access the virtual browsers that were created by other users, only
-those created by themselves.
+cannot access the virtual browsers that were created by other users.
 To go beyond this default policy,
 the landing pages of \emph{multiInstance} and \emph{singleBrowserPerUser}
 applications include interfaces for users to manage the permission settings of

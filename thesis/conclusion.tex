@@ -5,14 +5,14 @@
 
 We plan to continue to optimize our system by incorporating future updates of
 the \js language, \js runtime engine and third party dependencies. The upcoming
-new ECMAScript 7 standard promises a number of useful features, such as native 
-support for observing changes to objects~\cite{jsobserveprop}. A preliminary evaluation 
+new ECMAScript 7 standard promises a number of useful features, such as native
+support for observing changes to objects~\cite{jsobserveprop}. A preliminary evaluation
 showed that dirty checking in AngularJS becomes 20 to 40 times faster using this
 feature~\cite{angularjsspeedup}, greatly improving our system's
 capacity to host AngularJS applications.
 
 
-% improve dependency packages... 
+% improve dependency packages...
 
 We also plan to implement a failover mechanism for   worker processes.  In
 the current implementation, when a worker process terminates,  the master still
@@ -21,10 +21,10 @@ mechanism to detect failed workers and a method to migrate the failed workers'
 \appins{}s and virtual browsers to living workers.
 
 
-Finally, as a PaaS platform we need a better admin interface 
+Finally, as a PaaS platform we need a better admin interface
 to enable developers to monitor and diagnose their applications.
-Currently, the admin interface displays only very basic information for deployed 
-applications. We need to expose application logs 
+Currently, the admin interface displays only very basic information for deployed
+applications. We need to expose application logs
 and performance related statistics to application developers.
 
 \section{Summary}

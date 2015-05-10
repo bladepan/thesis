@@ -55,7 +55,7 @@ the object it represents is called its \emph{source object},
 the process that creates the \emph{source object}
 is referred to as the \emph{host} of the stub.
 The \emph{host} process takes on the role of a \emph{server},
-whereas the process that holds a \emph{stub} to the object act as a \emph{client}.
+whereas the process that holds a \emph{stub} to the object acts as a \emph{client}.
 In \js{}, since functions are first class citizens, it is possible
 to pass a function as an argument or return a function as a result.
 Nodermi treats functions and objects alike so that functions can also be
@@ -104,7 +104,7 @@ For instance, in Figure~\ref{fig:nodermiexample},
 when \emph{Process B} calls the remote method \emph{method1}
 in \emph{Process A} with a function argument,
 a stub for the argument
-\emph{callbackA} is created in \emph{Process A} because
+\emph{callbackA} is created in \emph{Process B} because
 it is not possible to copy function \emph{callbackA} to \emph{Process B}.
 The stub to \emph{callbackA} is passed as an argument to
  \emph{method1}.
@@ -222,9 +222,9 @@ After process B receives the message,
 it reconstructs the arguments for the method call:
 creating stub \emph{stubCallbackA} for \emph{callbackA} since it is a function.
 The stub \emph{stubCallbackA} is a function and
-it stores \emph{callbackA}'s id and Process A's process identifier.
+it stores \emph{callbackA}'s id and process A's process identifier.
 After process B finds \emph{objB} via its object id,
-process B invokes \emph{method1} with \emph{stubCallbackA} as argument.
+process B invokes \emph{method1} with \emph{stubCallbackA} as an argument.
 \emph{method1} then invokes \emph{stubCallbackA} with \emph{result},
 which in turn initiates a remote method invocation
 to call \emph{callbackA} in process A.
@@ -241,7 +241,7 @@ has been registered via \code{registerObj} and create a stub for it.
 \paragraph{Object Encoding}
 When passing an object from one process to another,
 nodermi adopts several policies to control the encoding.
-Nodermi assumes properties whose names starts with ``\_'' are
+Nodermi assumes properties whose names start with ``\_'' are
 private properties and skips them during encoding;
 Nodermi skips properties that refer to certain types of objects, e.g. Sockets,
 which refer to native OS objects, which cannot be sent.
@@ -258,10 +258,8 @@ However, the garbage collector cannot decide if a local object
 could still be referenced by another process via nodermi.
 In the example shown in Figure~\ref{fig:nodermiexample},
 before \code{method1} of \code{stubB} is called,
-the caller creates a stub for \code{callbackA} to be able
-to dispatch invocations of this callback.
-This stub registers the callback, using its id, in the
-method invocation handler's object map.
+the caller needs to hold reference to \code{callbackA}
+to prevent it from being garbage collected.
 
 If nodermi naively kept references to objects such as
 \code{callbackA} indefinitely, it would incur memory leaks as all
@@ -270,13 +268,13 @@ collected even after the local and remote processes no longer use them.
 
 Setting timeouts for the references of these objects and cleaning
 them automatically is not going to work either,
-since there is no guarantee as to when a remote processes will
+since there is no guarantee as to when remote processes will
 no longer attempt to use a particular object.
 For example, when a process registers a listener function to a remote event publisher,
 the listener could be remotely triggered at anytime in the future.
 
 Instead, we implemented a distributed garbage collection mechanism
-that ensure that the entry to callbackA is deleted when the
+that ensures that the entry to callbackA is deleted when the
 garbage collector is certain that it may no longer be invoked.
 Our mechanism is similar to the sequence reference counting algorithm
 designed by Birrell et al.~\cite{birrell1993distributed}.
@@ -298,7 +296,7 @@ This map is also necessary for looking up local objects
 when handling \emph{method invocation} messages.
 
 Entries in the object map are removed when a nodermi process learns that there
-are no more remote stub referencing the object.   In turn, a nodermi
+are no more remote stubs referencing the object.   In turn, a nodermi
 process must inform the hosts of the objects for it has created stubs
 when those stubs become unreachable and subject to garbage collection.
 
@@ -379,7 +377,7 @@ in Figure~\ref{fig:nodermicycle}.
 Nodermi does not support garbage collect distributed cyclic references.
 We think distributed cyclic references are rare in practice and the
 programmers can always break the cycle by nullify the properties
-introducing the cycles.
+that introduce the cycles.
 
 % FIXME comparison
 

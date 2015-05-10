@@ -21,7 +21,7 @@ method invocation is asynchronous and remote references are created automaticall
 as a result of remote method calls. However, dnode does not distinguish remote
 references from local objects when passing them as arguments of remote
 methods. As a consequence, dnode may create a remote reference representing
-another remote reference,  causing  remote method call to result in long chains
+another remote reference, causing remote method calls to result in long chains
 of inter-process communications (i.e., the ``zig-zag'' problem discussed in
 Section~\ref{sec:semantics}). 
 
@@ -35,7 +35,7 @@ Section~\ref{sec:semantics}).
 % map.
 
  
-Pyro~\cite{pyro} is an object oriented RPC framework for the Python programming
+Pyro~\cite{pyro} is an object-oriented RPC framework for the Python programming
 language. Unlike nodermi and dnode, Pyro synchronizes  property modifications
 between remote references and their source objects. This makes remote
 references act more like regular references.  But if used unwisely, remote
@@ -64,7 +64,7 @@ is an object-oriented RPC framework for the Java programming language. Unlike th
 RPC frameworks discussed before, these two are designed for use with a statically typed language.
 Both require that programmers implement classes that inherit from some
 predefined interfaces in order to pass their objects by reference to remote processes.
-nodermi, on the other hand, automatically infers whether an object needs to be 
+Nodermi, on the other hand, automatically infers whether an object needs to be 
 passed by reference.  The remote references in these systems do not
 have properties, so the properties of a remote object could only be accessed
 via remote method calls. In nodermi, 
@@ -83,7 +83,7 @@ CORBA~\cite{vinoski1997corba} is a RPC standard that facilitates implementation
 of cross-platform RPC systems. CORBA requires programmers to specify  the
 remote object's interface using an interface description language (IDL) and 
 provide IDL bindings for the implementation language, which is commonly generated 
-by tool (IDL compiler). nodermi generates remote stubs dynamically without IDL.
+by tool (IDL compiler). Nodermi generates remote stubs dynamically without IDL.
 
 \section{Web Frameworks}
 
@@ -117,8 +117,8 @@ is not aware of representation state as client-centric.
 ZK~\cite{ChenCheng:book2007} is a Java-based server-centric web framework that
 is in wide use. ZK applications are constructed using components, which are
 represented using the ZK User Interface Markup Language (ZUML).  ZUML
-components are translated into HTML and CSS when a page is rendered. A client-
-side library handles synchronization between the client's  view of and
+components are translated into HTML and CSS when a page is rendered. A client-side 
+library handles synchronization between the client's  view of and
 interaction with components and their server-side  representation.  ZK does
 not maintain a representation of the server document across page reloads,
 which means that all presentation state must be tied to session or persistent
@@ -184,8 +184,10 @@ web and mobile applications.  Meteor provides mechanisms that tie a client's pre
 state directly to model state that is kept in a server-side database, which in turn is 
 partially replicated on the client.  As such, user input can be handled, optimistically, before 
 the server roundtrip has completed. If an update is rejected by the server, the optimistic 
-application is undone. Like with client-centric frameworks, no presentation state is kept on
-the server. Asynchronous updates to model data is pushed to clients.
+application is undone. 
+Asynchronous updates to model data is pushed to clients.
+Like other client-centric frameworks, no presentation state is kept on
+the server. 
 
 Meteor will have lower server-side cost, and thus higher scalability, than \cb, as well
 as the ability to reduce user-perceived latency because of its optimistic processing.

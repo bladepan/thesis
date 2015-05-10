@@ -211,8 +211,8 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_objectmap}
-    \caption[Nodermi object map]{Nodermi memory management : Nodermi holds 
-    strong references to local objects that are remotely referenced in \emph{object map}.}
+    \caption[Nodermi object map]{Nodermi object map : Nodermi holds 
+    strong references to local objects that are remotely referenced.}
     \label{fig:nodermiobjmap}
     \end{figure}
 }
@@ -222,8 +222,8 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_objectmap}
-    \caption[Nodermi stub map]{Nodermi memory management : Nodermi creates weak
-    references to the stubs so it can be notified when stubs are no longer used in
+    \caption[Nodermi stub map]{Nodermi stub map : Nodermi creates weak
+    references to stubs so it can receive notifications when stubs are no longer used in
     the system.}
     \label{fig:nodermistubmap}
     \end{figure}
@@ -295,14 +295,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/api_classes}
-    \caption[API class design]{API class design: 
-    The arrow points to the method's return value's type.
-    For instance,
-    The \emph{listApplications} returns
-    a list of \emph{APIApplication} objects.
-    ``:'' indicates an variable's class, ``currentApplication:APIApplication'' means
-     \emph{currentApplication} is a \emph{APIApplication} object.
-    }
+    \caption[API class design]{API class design}
     \label{fig:apiclass}
     \end{figure}
 }
