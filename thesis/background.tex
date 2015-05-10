@@ -39,15 +39,14 @@ sits between the clients and the web layer, which dispatches user requests to
 web servers and returns the responses from the web servers to users. The use
 of a load balancer allows users to access the web server using a single URL
 because it hides the distributed architecture from the user. There are many
-ways to implement load balancing~\cite{cardellini2002state}. For example, one can 
-use round-robin DNS~\cite{} to distribute the load to a set of servers using 
-distinct IP addresses.  The DNS server will rotate the list of addresses
-returned, causing clients to connect to different machines.
-%
-DNS-based load balancing has a number of drawbacks:  
-first, it is difficult to add or remove web servers since clients will
-cache DNS information.  Second, it requires that all servers have public 
-IP addresses so that they are directly reachable by clients.  
+ways to implement load balancing~\cite{cardellini2002state}. For example, one
+can  use round-robin DNS~\cite{brisco1995dns} to distribute the load to a set
+of servers using  distinct IP addresses.  The DNS server will rotate the list
+of addresses returned, causing clients to connect to different machines. DNS-
+based load balancing has a number of drawbacks:   first, it is difficult to
+add or remove web servers since clients will cache DNS information.  Second,
+it requires that all servers have public  IP addresses so that they are
+directly reachable by clients.
 
 To overcome the limitations of DNS-based load balancing, system architects often 
 add a layer of reverse proxies between the clients and the web servers. 
@@ -199,7 +198,7 @@ server-aware and client-blind load balancing.
 \section{\nodejs}
 
 \cb is built on top of the \nodejs framework. \nodejs~\cite{tilkov2010node} is
-a standalone \js runtime built on Google Chrome's V8 \js engine~\cite{v8} that
+a standalone \js runtime built on Google Chrome's V8 \js engine~\cite{v8} and it
 allows \js code to be executed without a web browser.  \nodejs comes with a
 standard library that provides API for file system access, network I/O, binary
 data manipulation, and others. It enables developers to write server-side network
@@ -228,7 +227,7 @@ By contrast, in a multi-threaded languages such as Java only the
 current thread is blocked whereas other threads within the same process can
 still make progress.
 To avoid blocking and achieve concurrent execution of multiple tasks, 
-\js uses a non-blocking I/O model based on a event queue.
+\js uses a non-blocking I/O model based on an event queue.
 In this model, I/O functions return immediately after issuing I/O requests.
 The runtime processes I/O operations in the background 
 and keeps track of when they complete.  Upon completion, an
@@ -263,7 +262,7 @@ the developer needs to pass a callback function to the \code{readFile} method
 that is invoked asynchronously when the I/O operation has completed.
 
 % \js's execution model is based on a event queue and 
-% a event loop.
+% an event loop.
 % In the event loop, 
 % the code execution thread fetches one message from the event queue at 
 % a time and run the entire message to completion before fetching another message.
@@ -280,7 +279,7 @@ that is invoked asynchronously when the I/O operation has completed.
 % In this way the program could concurrently performing multiple I/O tasks while executing
 % \js code.
 
-Although event handler run to completion, the order in which events fire
+Although event handlers run to completion, the order in which events are fired
 is unpredictable.  As a result, it can be hard to reason about a program's
 execution order.
 Asynchronous callbacks may be executed in a order that is different 
@@ -291,7 +290,7 @@ is executed first.
 It is also impossible to tell from the function signature alone if a 
 callback will be called asynchronously via the event queue mechanism or if
 it could be called synchronously. In Listing~\ref{code:nodefile} line 10 is
-be executed before line 3 if readFile's callback fires asynchronously. 
+ executed before line 3 if \code{readFile}'s callback fires asynchronously. 
 If, in the future \code{readFile} were changed such
 that it caches the contents of files, it may call the callback function synchronously
 if it finds cached data in a request, so line 3 will be executed before line 10.
@@ -314,7 +313,7 @@ This asynchronous execution model requires the programmer to preserve the
 application context in the callback functions' closure.  This process
 is prone to subtle mistakes.  For example, suppose we want to
 read a list of files and print out each file's name and content.
-Listing~\ref{code:nodefile2}  lines 4--12 shows a incorrect solution that
+Listing~\ref{code:nodefile2}  lines 4--12 shows an incorrect solution that
 iterates over an array of file names and calls \code{readFile} with a callback
 that prints the current file name and file content. 
 If the callback fires synchronously, filename will refer to the currently
@@ -360,8 +359,8 @@ For example, to compute the combined size of multiple files,
 it is necessary to read these files in parallel, add each file's size 
 to a running total, and then output the total sum after every file is read. 
 Listing~\ref{code:async_each} shows two implementations,
-lines 5--14 implement a barrier-style counter in vanilla \js, whereas 
-lines 15--21 uses async's \code{each} function, which provides parallel 
+lines 5--13 implement a barrier-style counter in vanilla \js, whereas 
+lines 14--21 use async's \code{each} function, which provides parallel 
 iteration over an array. 
 Although this is a simple use case, the use of \emph{async} makes the
 intended control flow pattern more clear and includes proper exception
@@ -502,7 +501,7 @@ To create a chatroom, a user would create an \appins{} and share
 its URL with chat participants. As the participants join the chat site, a
 virtual browser is created on demand for each participant, which is connected
 to the application instance (the users can bookmark their virtual browser's
-URL to later return.) The virtual browser can directly access the \appins
+URL to later return). The virtual browser can directly access the \appins
 that contains the shared chatroom-related state, which simplifies the 
 synchronization between this state and the virtual browser's DOM.
 
@@ -541,7 +540,7 @@ although in this case all users will see exactly the same UI
 
 \cb provides support for common authentication-related features
 to applications, such as registering user accounts, external authentication
-through outside providers, and maintains a authentication state transparently
+through outside providers, and maintains an authentication state transparently
 and outside the actual application code.
 
 The application developer can enable authentication support for an
@@ -551,17 +550,16 @@ user has not been authenticated.
 Applications can access the user's account information via the \cb API 
 once the user has logged in.
 
-The login page itself is implemented by a virtual
-browser representing the system's login application. The login page provides two
-authentication options: a local authentication option where the user's
-credentials are stored in a local database, for \cb supports local account creation and lookup.
-Second, and an OAuth~\cite{hardt2012oauth} option which
-authenticate users via Google's openID authentication services. 
-In this option, the user clicks a \emph{Login with Google Account} button which redirects
-to a Google account authorization page asking the user to authorize \cb{} to access
-the user's Google account information.
-After the user confirms Google will request \cb{}'s authentication
-callback URL to finalize the authentication.
+The login page itself is implemented by a virtual browser representing the
+system's login application. The login page provides two authentication
+options: a local authentication option where the user's credentials are stored
+in a local database, for \cb supports local account creation and lookup.
+Second, an OAuth~\cite{hardt2012oauth} option which authenticate users via
+Google's OAuth authentication services.  In this option, the user clicks a
+\emph{Login with Google Account} button which redirects to a Google account
+authorization page asking the user to authorize \cb{} to access the user's
+Google account information. After the user confirms Google will redirect the
+user to \cb{}'s authentication callback URL to finalize the authentication.
 
 After the user logs in using either mode, the system adds an entry of the
 user's email address and the application's mount point to the user's session.
@@ -628,7 +626,7 @@ strategies in the application's descriptor.
     management of application instances, singleInstancePerUser applications support only
     a single application instance per user, which is automatically created on demand.
     singleInstancePerUser applications also limit users to a single virtual browser
-    for their instance, in the same way singleBrowserPerUser instances do.
+    for their application instances, in the same way singleBrowserPerUser instances do.
     This mode is ideal for modeling single-page web applications in which only one 
     view is needed for each user.
     This instantiation mode  requires authentication to establish a user's identity. 

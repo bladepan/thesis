@@ -132,28 +132,44 @@ Xiaozhong Pan
 
 \end{center}
 
-Designing modern web applications involves a wide spectrum of
-choices when it comes to deciding where the different tiers of
-application and framework code that constitute these distributed
-applications should be placed.  These system design choices affect 
-programmer productivity, ease of deployment, security, and performance, 
-particularly with respect to latency and scalability.
+When developing web applications using traditional methods, the developers
+need to partition the application logic into a client side and server side,
+then implement these two parts separately (probably in two different
+programming languages) and write the communication code to synchronize
+application state between the two parts. \cb is a server-centric web
+framework that eliminates this need of partitioning application entirely. In
+\cb, the application code is executed in server side virtual browsers
+which also preserves the application's presentation state. The client web
+browsers act like rendering devices, they fetch and render representation
+states from the virtual browsers. The client-server communication and user
+interface rendering is implemented by the framework under the hood. The
+applications are developed in a way similar to regular web pages, using no
+more than HTML, CSS and \js. Since the user interface state is
+preserved server side, the framework also provides a continuous experience for
+users who can disconnect from the application at any time and reconnect to
+pick up at where they left off.
 
-\cb provides a concept that enables programmer to 
-write web applications like event based desktop GUI applications
-using purely HTML, \js and CSS.
-In \cb, the application code is executed in a headless server side
-virtual browser and the client web browser acts like a dumb display
-device, 
-the client's interaction with the application is brought to the
-server side virtual browser seamlessly by the framework. 
-Using this model, the programmer is saved from the complexity of
-client server communication while being able to
-reuse existing client side web programming technology.
-The original \cb is single process single threaded,
-we extended it to support deployment on multiple processes.
-The new system is able to be deployed on a cluster of servers
-as well as a single multi-core server.
+The original implementation of \cb is single-threaded  and supported
+deployment on only one process. We implemented \cbtwo, a multi-process
+implementation of \cb. \cbtwo can be deployed on a cluster of servers as well
+as a single multi-core server. It distributes the virtual browsers to multiple
+processes and  dispatches client requests to the associated virtual browsers.
+\cbtwo also refines the \cb application deployment model to make the framework
+a PaaS platform. The developers can develop and deploy different types of
+applications and the platform will automatically make them scalable.
+
+
+% To transparently partition the existing CloudBrowser infrastructure
+% code across nodes, we designed and implemented an object-oriented RPC
+% framework called nodermi for node.js.  Nodermi transparently creates remote
+% references during remote method invocations and garbage collects remote
+% references when they are not needed. To better understand the limitations of
+% the system and assess the feasibility of hosting real-life applications, we
+% evaluated the system's performance using different types of applications and
+% JavaScript libraries. Our experiments show that CloudBrowser 2.0 scales
+% linearly, it can support 2,800 concurrent clients interacting with a non-
+% trivial web application using a eight core machine.
+
 % ------------
 
 \vfill
