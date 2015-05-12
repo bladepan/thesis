@@ -1,6 +1,6 @@
-\chapter{Implementation}
+\chapter{Design and Implementation}
 \label{ch:impl}
-\markright{Implementation}
+\markright{Design and Implementation}
 
 This chapter first discusses the overview of the multi-process architecture of \cbtwo.
 Then we discuss how client requests are dispatched and how load balancing is implemented.
@@ -271,7 +271,7 @@ After initialization, the master exposes the \emph{Application Manager} and
 The \emph{Application Manager} includes methods related to application management,
 such as listing applications, creating new applications, removing applications,
 etc.  The applications are represented by application objects. An application
-object has methods to manage the internal state of an application, which includes
+object has methods to manage the internal state of an application, including
 methods to change the application's authentication policy, register a new \appins, 
 remove an \appins, etc.  Since the \emph{Application Manager} is registered in nodermi,
 workers can obtain remote references to it; the application objects returned by its

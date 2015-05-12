@@ -258,7 +258,7 @@ However, the garbage collector cannot decide if a local object
 could still be referenced by another process via nodermi.
 In the example shown in Figure~\ref{fig:nodermiexample},
 before \code{method1} of \code{stubB} is called,
-the caller needs to hold reference to \code{callbackA}
+the caller needs to hold a reference to \code{callbackA}
 to prevent it from being garbage collected.
 
 If nodermi naively kept references to objects such as

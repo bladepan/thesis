@@ -131,31 +131,32 @@ Xiaozhong Pan
 
 \end{center}
 
-When developing web applications using traditional methods, the developers
-need to partition the application logic into a client side and server side,
-then implement these two parts separately (probably in two different
+When developing web applications using traditional methods, developers
+need to partition the application logic between client side and server side,
+then implement these two parts separately (often using two different
 programming languages) and write the communication code to synchronize
-application state between the two parts. \cb is a server-centric web
-framework that eliminates this need of partitioning application entirely. In
+the application's state between the two parts. \cb is a server-centric web
+framework that eliminates this need for partitioning applications entirely. In
 \cb, the application code is executed in server side virtual browsers
-which also preserves the application's presentation state. The client web
-browsers act like rendering devices, they fetch and render representation
-states from the virtual browsers. The client-server communication and user
-interface rendering is implemented by the framework under the hood. The
-applications are developed in a way similar to regular web pages, using no
+which preserve the application's presentation state. The client web
+browsers act like rendering devices, fetching and rendering the presentation
+state from the virtual browsers. The client-server communication and user
+interface rendering is implemented by the framework under the hood. 
+\cb applications are developed in a way similar to regular web pages, using no
 more than HTML, CSS and \js. Since the user interface state is
-preserved server side, the framework also provides a continuous experience for
+preserved, the framework also provides a continuous experience for
 users who can disconnect from the application at any time and reconnect to
 pick up at where they left off.
 
-The original implementation of \cb is single-threaded  and supported
+The original implementation of \cb was single-threaded  and supported
 deployment on only one process. We implemented \cbtwo, a multi-process
 implementation of \cb. \cbtwo can be deployed on a cluster of servers as well
 as a single multi-core server. It distributes the virtual browsers to multiple
 processes and  dispatches client requests to the associated virtual browsers.
 \cbtwo also refines the \cb application deployment model to make the framework
 a PaaS platform. The developers can develop and deploy different types of
-applications and the platform will automatically make them scalable.
+applications and the platform will automatically scale them to multiple
+servers.
 
 
 % To transparently partition the existing CloudBrowser infrastructure
