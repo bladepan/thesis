@@ -104,12 +104,12 @@ For instance, in Figure~\ref{fig:nodermiexample},
 when \emph{Process B} calls the remote method \emph{method1}
 in \emph{Process A} with a function argument,
 a stub for the argument
-\emph{callbackA} is created in \emph{Process B} because
-it is not possible to copy function \emph{callbackA} to \emph{Process B}.
-The stub to \emph{callbackA} is passed as an argument to
- \emph{method1}.
-Then \emph{method1} invokes the stub to \emph{callbackA} as if it were an ordinary
- local function and the actual \emph{callbackA} is invoked in \emph{Process A}.
+\code{callbackA} is created in \emph{Process B} because
+it is not possible to copy function \code{callbackA} to \emph{Process B}.
+The stub to \code{callbackA} is passed as an argument to
+ \code{method1}.
+Then \code{method1} invokes the stub to \code{callbackA} as if it were an ordinary
+ local function and the actual \code{callbackA} is invoked in \emph{Process A}.
 
 % -------- TODO check the example above
 
@@ -212,22 +212,22 @@ is remotely referenced.
 
 Let us explain the message flow with the example shown in Figure~\ref{fig:nodermiexample}.
 As shown in the code snippet in the top left of the figure,
-process A invokes \emph{method1} with a function argument \emph{callbackA}.
+process A invokes \code{method1} with a function argument \code{callbackA}.
 nodermi creates a \emph{method invocation message}
-containing the object id of \emph{objB} and the method being called.
+containing the object id of \code{objB} and the method being called.
 The message also contains a description of the arguments:
-the object id of \emph{callbackA} and
-the type of \emph{callbackA}.
+the object id of \code{callbackA} and
+the type of \code{callbackA}.
 After process B receives the message,
 it reconstructs the arguments for the method call:
-creating stub \emph{stubCallbackA} for \emph{callbackA} since it is a function.
-The stub \emph{stubCallbackA} is a function and
-it stores \emph{callbackA}'s id and process A's process identifier.
-After process B finds \emph{objB} via its object id,
-process B invokes \emph{method1} with \emph{stubCallbackA} as an argument.
-\emph{method1} then invokes \emph{stubCallbackA} with \emph{result},
+creating stub \code{stubCallbackA} for \code{callbackA} since it is a function.
+The stub \code{stubCallbackA} is a function and
+it stores \code{callbackA}'s id and process A's process identifier.
+After process B finds \code{objB} via its object id,
+process B invokes \code{method1} with \code{stubCallbackA} as an argument.
+\code{method1} then invokes \code{stubCallbackA} with \code{result},
 which in turn initiates a remote method invocation
-to call \emph{callbackA} in process A.
+to call \code{callbackA} in process A.
 
 
 \paragraph{Bootstrap}
@@ -274,7 +274,7 @@ For example, when a process registers a listener function to a remote event publ
 the listener could be remotely triggered at anytime in the future.
 
 Instead, we implemented a distributed garbage collection mechanism
-that ensures that the entry to callbackA is deleted when the
+that ensures that the entry to \code{callbackA} is deleted when the
 garbage collector is certain that it may no longer be invoked.
 Our mechanism is similar to the sequence reference counting algorithm
 designed by Birrell et al.~\cite{birrell1993distributed}.
