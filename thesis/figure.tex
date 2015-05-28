@@ -50,7 +50,8 @@
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/chat_application}
     \caption[Sharing data among multiple virtual browser via application instance]
-        {This figure shows how multiple virtual browsers can directly
+        {Sharing data among multiple virtual browser via application instance.
+        This figure shows how multiple virtual browsers can directly
         and seamlessly share relevant application data, in this case chat messages,
         which then become part of the model that drives the presentation
         MVC framework.
@@ -63,7 +64,7 @@
     \begin{figure}[htb]
     \centering
     \includegraphics[width=\textwidth]{../figs/landing_page}
-    \caption[User interface of a landing page]{User interface of a landing page : The user can
+    \caption[User interface of a landing page]{User interface of a landing page. The user can
     manage all his \appins{}s and virtual browsers including those shared by others in the landing page.}
     \label{fig:landingpage}
     \end{figure}
@@ -145,7 +146,8 @@
     \begin{figure}[tb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/application_hierarchy}
-    \caption[Application deployment model]{Application deployment model: Hierarchy of applications, application instances, and virtual browsers.
+    \caption[Application deployment model]{Application deployment model.
+    Hierarchy of applications, application instances, and virtual browsers.
     Note that a single virtual browser may be broadcast to multiple clients (cobrowsing).}
     \label{fig:appidhierarchy}
     \end{figure}
@@ -159,7 +161,7 @@
     Resource Consumption of worker node running JQueryChat Application\\
 X axis is time. Left Y axis corresponds to the red line of CPU usage.
 Right Y axis corresponds to memory statistics.\\
-After about 90s after the system boots up, the benchmark tool starts to simulate 
+After about 90s after the system boots up, the benchmark tool starts to simulate
 user workload.
 When the benchmark tool sending requests, \emph{HeapUsed} fluctuates as the system creates new objects and garbage collector cleans dead objects.
 When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating garbage collector is working at that time.
@@ -211,7 +213,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_objectmap}
-    \caption[Nodermi object map]{Nodermi object map : Nodermi holds 
+    \caption[Nodermi object map]{Nodermi object map. Nodermi holds
     strong references to local objects that are remotely referenced.}
     \label{fig:nodermiobjmap}
     \end{figure}
@@ -222,7 +224,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_objectmap}
-    \caption[Nodermi stub map]{Nodermi stub map : Nodermi creates weak
+    \caption[Nodermi stub map]{Nodermi stub map. Nodermi creates weak
     references to stubs so it can receive notifications when stubs are no longer used in
     the system.}
     \label{fig:nodermistubmap}
@@ -246,7 +248,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \centering
     \includegraphics[width=0.6\textwidth]{../figs/nodermi_passlocalbyreference}
     \caption[Passing by reference in remote method invocations]
-    {Passing by reference in remote method invocations:
+    {Passing by reference in remote method invocations.
     When an object is passed by reference to a remote object, the
     receiving process will create a stub to represent that object.}
     \label{fig:nodermipassbyref}
@@ -259,7 +261,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \centering
     \includegraphics[width=0.6\textwidth]{../figs/nodermi_passstubbyreference}
     \caption[Passing stubs by reference in remote method invocations]
-    {Passing stubs by reference in remote method invocations:
+    {Passing stubs by reference in remote method invocations.
     When a stub is passed by reference to another process,
     nodermi creates
     a new stub to represent the stub's source object instead the stub itself.}
@@ -272,8 +274,8 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \centering
     \includegraphics[width=0.6\textwidth]{../figs/nodermi_passbyvalue}
     \caption[Passing arguments by value in remote method invocations]
-    {Passing arguments by value in remote method invocations:  
-    When \code{objectA} is passed to a remote method, the receiving process creates an exact copy of 
+    {Passing arguments by value in remote method invocations.
+    When \code{objectA} is passed to a remote method, the receiving process creates an exact copy of
     \code{objectA}.}
     \label{fig:nodermipassbyval}
     \end{figure}
@@ -284,7 +286,7 @@ When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating g
     \centering
     \includegraphics[width=0.8\textwidth]{../figs/nodermi_cycle}
     \caption[Distributed cyclic reference]
-    {Distributed cyclic reference: \code{objA} references \code{stubB}, \code{stubB}
+    {Distributed cyclic reference. \code{objA} references \code{stubB}, \code{stubB}
     is a remote reference of \code{objB}, \code{objB} references \code{stubA} which
     is a remote reference of \code{objA}. Neither of them can be garbage collected. }
     \label{fig:nodermicycle}
