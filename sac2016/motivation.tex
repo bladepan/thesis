@@ -1,0 +1,144 @@
+\section{Motivation}
+\label{sec:motivation}
+
+With the emergence of AJAX as a technique over ten years ago a shift commenced from 
+traditional, page-based applications to the single-page applications in use today. 
+Although hybrid forms have been emerging recently, architectural frameworks for these 
+applications largely falls into two groups: client-centric and server-centric.
+Client-centric approaches focused on the creation of powerful JavaScript
+libraries that execute in the browser and which provide high-level abstractions
+such as two-way data bindings and custom directives to manage UI state.
+
+However, the user interface programmer must decide when to retrieve the data
+from the server and when to save/update the server's state.  Any type of ``server-push''
+must be explicitly programmed.  Moreover, such applications
+rarely remember presentation state across visits, and when they do, they do so 
+using storage facilities (such as HTML5's \code{localstorage}) that is not 
+available on other devices on which a user might use the application.
+
+By contrast, server-centric approaches represent the user interface on the server.
+In a server-centric approach, the application programmer writes only code
+that executes on the server, whereas all client-side code is framework-provided
+code.  A pioneering framework in this area was ZK~\cite{ChenCheng:book2007}.
+This simplified model, along with having to maintain a single and much smaller codebase,
+is tied to significant productivity gains.
+Unfortunately, even in this approach, the user interface representation 
+is recreated every time a user navigates to a page.  If programmers wish to
+preserve UI state across visits, they have to represent it in session state
+or in persistent state such as a database, and retrieve it from there every 
+time the view is rebuilt.
+
+Our own experience includes the development of two substantial applications
+using a server-centric approach: [references elided] %~\cite{tilothesis,EdwardsBack:csc2011}:
+an application to allow students to develop ZK applications in the cloud, and
+a complex configuration management system.  This experience convinced
+us of the feasibility and value of a server-centric approach.  In particular,
+our users reported enjoying the user interface style we were able to
+present, in which their actions took immediate effect [reference elided].%~\cite{BaileyBack:igi2013}.
+Notably, the latency introduced by server round trips did not present a
+barrier to usability.
+
+We soon felt hampered by the lack of persistence across visits and no obvious way 
+to solve it, other than to tie all variables controlling the application's
+view to model variables that were, in turn, stored persistently in some way.
+We hesitated to do that since we did not want to pollute our relatively clean
+model that represented the business data of our application with less 
+critical state solely intended to improve usability.
+
+A second limitation that influenced our thinking was the mismatch between
+server side representation (XUL) and the HTML used in the browser, which meant
+that debugging layout issues became difficult since it required understanding
+or reverse engineering how ZK's components were implemented.
+Thus born was the idea to keep the presentation state in HTML on the server.
+
+Keeping presentation state on the server imposes a cost that not all
+types of applications may be willing to pay, even when the reduced development
+effort is taken into account.  In (reference elided), we 
+discuss the types of applications for which we believe the trade-off we propose
+may be worthwhile: personal and business applications such as tax preparation systems
+or configuration management systems.  These applications are characterized by the following
+traits:
+\begin{itemize}
+\item They are single-page applications with a large navigation space in which the
+    user has free reign, thus remembering the exact view state is crucial for
+    a satisfactory user experience.
+\item Users expect that their actions take immediate effect, that is, almost every
+    user input must trigger a communication with the server.
+\item Users expect that updates to application state done by others become immediately
+    reflected in their UI.
+\end{itemize}
+
+\architectureoverview{}
+
+\subsection{Challenges}
+\webscaleout{}
+Successfully applying the idea of preserving presentation state using virtual
+browsers in server memory imposes a number of challenges which this work 
+makes an attempt to better understand.
+These are related to user interface implementation, latency, 
+resource consumption, scalability, and behavior in the presence of faults.
+
+% Layout/Rendering.
+A virtual browser does not lay out HTML elements or compute their styles in the
+way that the rendering engine in the actual browser will, as doing so would be 
+cost-prohibitive and not help at all when the user switches devices.  As such,
+it cannot support inquiries by code about computed or user-determined
+attributes such as what is the screen size, or what is the height of an
+element after its layout has been computed.  Recent trends in web development
+have made this much less of a problem; for instance, in applications
+that use responsive design (e.g. the Bootstrap library),
+programmers are discouraged from directly inquiring about computed style
+attributes.
+
+% Latency.
+Secondly, since events are dispatched on the server,
+the delay of a wide area network roundtrip is added to the processing delay,
+along with any request queuing that may occur.  According to the human computer
+interface literature, the resulting latency must not be larger than 100-150ms 
+for the user to be perceived negatively. We treat this as a cut-off for the
+feasibility of a server-centric design.
+
+% Memory & CPU Cost
+A third concern is resource consumption, in particular memory and CPU consumption.
+Virtual browsers will consume memory while they exist, and consume CPU time
+while handling events. The use of high-level JavaScript libraries exacerbates
+this effect because they are often designed for use on powerful client machines,
+although optimizations in terms of CPU and memory for use on less powerful
+mobile devices helps us.
+
+% Scaling/Fault Tolerance
+A fourth concern which this paper focuses on, is how to implement
+scalability across multiple processes and/or machines. Related to that is the 
+behavior of the system if server processes fail or must be restarted for other reasons.
+Fig.~\ref{fig:webscaleout} shows a canonical architecture used for scalable, multi-tier web 
+applications, of which numerous variations exist.  Scalability is achieved
+by having a load balancer spread individual HTTP requests across multiple
+web or application servers, which in turn talk to databases or other storage
+providers.  In this model, the load balancer must be able to dispatch requests 
+to any web server as web servers can be added and removed at will. To handle a 
+request, a web server needs to have access to session state, which is replicated
+and kept consistent across the web servers.  Though session state may be cached
+in a web server's memory, it is stored in a way that allows for server processes
+to restart.  At the same time, loss of session state is not catastrophic
+as essential user data is stored in a separate storage layer.
+
+A scalable virtual browser environment can be implemented in similar fashion;
+however, here the load balancer is restricted in the choice of web server to 
+which to forward requests as soon as a server process is chosen on which the
+virtual browser is allocated.  A crash or restart of such a process leads
+to the loss of all presentation state.  To prevent this from becoming 
+catastrophic, applications developers must, as before, decide which part of their
+state is deemed essential data that must be stored in the separate storage
+layer.  This can be done by accessing existing storage layers,
+but we also added a facility that allows applications to save a snapshot
+of their state and resume from it later.
+
+% Nevertheless, from a practical point of view, we encountered multiple
+% examples where application developers might designate state that is only
+% stored transiently in the server process, assuming that crashes or restarts
+% are not frequent.  For example, in an application that presents to the
+% user results obtained from an exterior search engine, it may be reasonable
+% to save those only in-memory as this information can be recreated, and likely
+% should be recreated anyway, especially if the users revisits the application
+% after a significant pause.
+

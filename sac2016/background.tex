@@ -1,0 +1,94 @@
+\section{Background}
+\label{sec:background}
+
+Before describing the technical aspects of our design and implementation,
+we briefly review a bit of history and related frameworks.
+With the emergence of AJAX as a technique over ten years ago a shift commenced from traditional,
+page-based applications to the single-page applications in use today. 
+The need for architectural support became soon apparent.  The approaches 
+that were developed largely fall into two groups: client-centric and server-centric.
+Client-centric approaches focused on the creation of powerful JavaScript
+libraries that execute in the browser, which is the only language supported
+in this environment.  At first, these libraries removed the 
+need to handle the many browser incompatibilities that used to be common, 
+and they provided the ability to write an application's controller logic 
+using higher-level abstractions.  This trend culminated in the creation of 
+frameworks which provide components (widgets) from which a UI can be
+composed.  More recently, frameworks such as AngularJS added the ability
+to implement directives (extensions of HTML) which can be implemented using 
+declarative templates.  These directives provide, among others, two-way data 
+bindings that connect model variables to the attributes of UI elements such 
+as text or checkboxes without requiring the programmer to write controller
+code.
+
+The resulting architecture is one in which application developers have enough
+high-level facilities at their disposal that it has become feasible to execute 
+all user interface related code in the browser.   
+Examples include a directive compiler and linker, software engineering features 
+such as dependency injection, as well as a ``dirty-checking'' mechanisms that 
+detect changes in model variables automatically.
+Thus at the extreme end of these frameworks, the backend 
+(server side) does not run any user interface logic at all.  Client-side code
+interacts with the server through HTTP requests sent to entry points that
+retrieve or update only model data, usually represented in JSON as an object or array
+that can be easily integrated into the client's model and tied to the rendered 
+view.  Application developers write server-side code that implements input 
+validation and serializes the data that is sent in responses.
+This design creates a clear separation that simplifies server-side 
+code as well as load balancing and scaling.
+
+\begin{listing}[ht,width=\columnwidth]
+\begin{minted}[
+frame=lines,
+fontsize=\scriptsize,
+linenos
+]
+{html}
+<button ng-hide="showit" ng-click="showit = true">
+    Show content!</button>
+<button ng-show="showit" ng-click="showit = false">
+    Hide content!</button>
+<div ng-show="showit">Content here...</div>
+\end{minted}
+\caption{AngularJS to implement a simple hide/show control 
+    that shows/hides content.}
+\label{code:angularshowhide}
+\end{listing}
+
+However, the user interface programmer must decide when to retrieve the data
+from the server and when to save/update the server's state.  Any type of ``server-push''
+must be explicitly programmed.  Moreover, such applications
+rarely remember presentation state across visits, and when they do, they do so 
+using storage facilities (such as HTML5's \code{localstorage}) that is not 
+available on other devices on which a user might use the application.
+As a concrete example, consider the snippet of AngularJS code shown in
+Listing~\ref{code:angularshowhide}. The value of the model variable \code{showit},
+which determines the visibility of a given piece of content, is entirely
+client-side and is not remembered across visits unless the programmer writes
+code that loads its initial value from the server upon page load and then 
+propagates any changes to the server.  Writing this code is possible, but can 
+severely undermine the elegance of using high-level frameworks like AngularJS.
+
+By contrast, server-centric approaches represent the user interface on
+the server, often using component libraries as well.  Originally, a motivation
+for server-centric approaches was that they could be implemented in any language,
+such as Java, or C\# which has large ecosystems of support libraries.
+In a server-centric approach, the application programmer writes only code
+that executes on the server, whereas all client-side code is framework-provided
+code.  A pioneering framework in this area was ZK~\cite{ChenCheng:book2007}.
+ZK keeps the user interface state in a server-side document that contains
+low and high level components, which can be described using declarative
+markup and are represented as Java objects.
+A client engine receives instructions from the server that render each 
+component into appropriate DOM elements.  Application code interacts
+with server-side components throught event handlers and attributes, 
+creating the appearance of a non-distributed application.  This simplified
+model, along with having to maintain a single and much smaller codebase,
+is tied to significant productivity gains.
+Unfortunately, even in this approach, the user interface representation 
+is recreated every time a user navigates to a page.  If programmers wish to
+preserve UI state across visits, they have to represent it in session state
+or in persistent state such as a database, and retrieve it from there every 
+time the view is rebuilt.
+
+% Where to include a preemptive discussion?

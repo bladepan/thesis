@@ -1,0 +1,28 @@
+\begin{abstract}
+
+% Usenix style
+% \subsection*{Abstract}
+% todo more description about cb
+Designing modern web applications involves a wide spectrum of
+choices when it comes to deciding where the different tiers of
+application and framework code that constitute these distributed
+applications should be placed.  These system design choices affect 
+programmer productivity, ease of deployment, security, and performance, 
+particularly with respect to latency and scalability.
+
+In this paper, we propose and evaluate a design choice
+in which not only all application logic executes server-side, but
+most presentation logic as well.  The client browser is reduced to
+a rendering and I/O engine, similar to a ``thin client'' or ``dumb 
+terminal,'' but retains the full expressiveness of
+rich, modern Internet applications.
+
+We have developed CloudBrowser 2.0, a system that implements this
+distribution model using a scalable multiprocess approach.  
+In this paper, we perform an evaluation of the benefits and costs of 
+this approach when compared to both more traditional approaches as well 
+as emerging alternatives.  We focus on 
+programmability and systems aspects including performance and latency. 
+
+\end{abstract}
+

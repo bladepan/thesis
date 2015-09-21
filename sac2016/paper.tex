@@ -1,0 +1,253 @@
+
+%\documentclass[letterpaper,twocolumn,10pt]{article}
+\documentclass{acm_proc_article-sp}
+\usepackage{epsfig,endnotes}
+
+\usepackage{color}
+\usepackage{epstopdf}
+\usepackage{psfrag}
+\usepackage{subfigure}
+\usepackage{xspace}
+\usepackage{booktabs}
+%\usepackage{float}
+\usepackage{url}
+\usepackage{path}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{courier}
+\usepackage{listings}
+\usepackage{pifont}
+\usepackage{graphicx}
+\usepackage{minted}
+\usepackage{multirow}
+
+
+
+
+%don't want date printed
+\date{}
+
+%% disable the splitting of footnotes
+\interfootnotelinepenalty=10000
+
+%% source code styles
+\lstset{
+	basicstyle=\footnotesize\ttfamily,
+	extendedchars=true,
+	breaklines=true,
+	frame=lines
+}
+
+%% table style
+\renewcommand{\arraystretch}{1.1}
+
+\begin{document}
+
+% key words
+\newcommand{\cb}{CloudBrowser\xspace}
+\newcommand{\projectname}{CloudBrowser\xspace}
+\newcommand{\cbtwo}{CloudBrowser 2.0\xspace}
+\newcommand{\js}{JavaScript\xspace}
+\newcommand{\nodejs}{Node.js\xspace}
+\newcommand{\appins}{App Instance\xspace}
+\newcommand{\jsdom}{JSDOM\xspace}
+\newcommand{\citemain}{~\cite{mcdaniel2012cloudbrowser}}
+
+\def\code#1{\texttt{#1}}
+\def\nodermi{\texttt{nodermi\xspace}}
+
+% section for figs
+% maybe put this in a figure.tex
+
+\newcommand{\webscaleout}{
+    \begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../figs/web_scale_out}
+    \caption{Traditional Scalable Multitier Application Design}
+    \label{fig:webscaleout}
+    \end{figure}
+}
+
+\newcommand{\architectureoverview}{
+    \begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../figs/architecture_overview}
+    \caption{Single Process \cb{} Architecture Overview}
+    \label{fig:cb1arch}
+    \end{figure*}
+}
+
+\newcommand{\newarchitectureoverview}{
+    \begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../figs/new_architecture_overview}
+    \caption{Multiprocess Architecture Overview}
+    \label{fig:cb2arch}
+    \end{figure*}
+}
+
+\newcommand{\requestdispatchdiagram}{
+    \begin{figure}[ht]
+    \includegraphics[width=0.4\textwidth]{../figs/request_dispatch}
+    \caption{Request Dispatch Diagram}
+    \label{fig:dispatch}
+    \end{figure}
+}
+
+\newcommand{\appinstancefig}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../figs/appInstance}
+    \caption{Detailed view of an App Instance}
+    \label{fig:appinstance}
+    \end{figure}
+}
+
+
+\newcommand{\chatappfig}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../figs/chat_application}
+    \caption{This figure shows how multiple virtual browsers can directly,
+        and seamlessly share relevant application data, in this case chat messages,
+        which then become part of the model that drives the presentation
+        MVC framework.
+    }
+    \label{fig:chatapp}
+    \end{figure}
+}
+
+
+\newcommand{\clickthroughput}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../gnuplot/click_throughput}
+    \caption{Throughput of ``Back-to-back'' click application.}
+    \label{fig:clickthroughput}
+    \end{figure}
+}
+
+
+\newcommand{\clicklatency}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../gnuplot/click_latency}
+    \caption{Latency of ``Back-to-back'' click application.}
+    \label{fig:clicklatency}
+    \end{figure}
+}
+
+
+\newcommand{\clickwaitthroughput}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../gnuplot/click_wait_throughput}
+    \caption{Throughput of click application, after introducing artificial delay.}
+    \label{fig:clickwaitthroughput}
+    \end{figure}
+}
+
+
+\newcommand{\clickwaitlatency}{
+    \begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../gnuplot/click_wait_latency}
+    \caption{Latency of click application, after introducing artificial delay.}
+    \label{fig:clickwaitlatency}
+    \end{figure}
+}
+
+
+
+\newcommand{\angularchatlatency}{
+    \begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../gnuplot/angularchat_latency}
+    \caption{Latency of chat application with Angular.js.}
+    \label{fig:angularchatlatency}
+    \end{figure}
+}
+
+
+\newcommand{\jquerychatlatency}{
+    \begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../gnuplot/jquerychat_latency}
+    \caption{Latency of chat application with JQuery.}
+    \label{fig:jquerychatlatency}
+    \end{figure}
+}
+
+
+\newcommand{\chatroomfig}{
+    \begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../figs/chatroom}
+    \caption{Chat Room Application}
+    \label{fig:chatroom}
+    \end{figure}
+}
+
+\newcommand{\apphierarchyfig}{
+    \begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../figs/application_hierarchy}
+    \caption{Hierarchy of applications, application instances, and virtual browsers.
+    Note that a single virtual browser may be broadcast to multiple clients (cobrowsing).}
+    \label{fig:appidhierarchy}
+    \end{figure}
+}
+
+\newcommand{\memfig}{
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../gnuplot/resource_consumption}
+    \caption{
+    Resource Consumption of worker node running JQueryChat Application\\
+X axis is time. Left Y axis corresponds to the red line of CPU usage.
+Right Y axis corresponds to memory statistics.\\
+After about 90s after the system boots up, the benchmark tool starts to simulate 
+user workload.
+When the benchmark tool sending requests, \emph{HeapUsed} fluctuates as the system creates new objects and garbage collector cleans dead objects.
+When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating garbage collector is working at that time.
+    }
+    \label{fig:mem}
+\end{figure*}
+}
+
+% -\title{\Large \bf Server-oriented web application design with \cbtwo}
+% \title{\Large \bf Moving your browser into the cloud with \cbtwo}
+\title{\Large \bf Rich Cloud-based Web Applications with \cbtwo}
+
+%\author{Xiaozhong Pan  \qquad  Godmar Back\\
+%Department of Computer Science\\ 
+%Virginia Tech\\
+%\url{bladepan@cs.vt.edu} \qquad  \url{gback@cs.vt.edu}
+%}
+
+
+
+
+\maketitle
+\thispagestyle{empty}
+
+%% remove newpage here
+\input{abstract}
+% \newpage
+\input{introduction2}
+% \input{background}
+\input{motivation}
+\input{implementation}
+\input{evaluation}
+\input{related}
+\input{conclusion}
+\input{acknowledgement}
+% \newpage
+
+{\footnotesize \bibliographystyle{acm}
+\bibliography{../references,../webapps2012,../webappsadditional}
+}
+
+%\theendnotes
+
+\end{document}
+

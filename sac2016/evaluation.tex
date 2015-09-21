@@ -1,0 +1,151 @@
+\section{Evaluation}
+\label{sec:eval}
+
+% \cite{mcdaniel2012cloudbrowser}
+Our main focus in this evaluation is to demonstrate that the multiprocess implementation
+in \cbtwo can scale with the number of available cores on which to place separate workers.
+Our secondary focus is to investigate the cost of using different client libraries on 
+the throughput we achieve.
+
+To test \cbtwo with existing applications, we developed a small expect-like language 
+in which to describe scenarios. A client test tool interprets test scripts written in
+this language and makes RPC calls to a server in the same way the client engine would
+in actual deployment, then checks whether the server is making the expected RPC
+calls back that would reflect requests to the client engine to update the DOM the
+user sees.  
+%However, to minimize CPU consumption, the tool does not maintain a DOM in the same
+%way a real browser would.
+Like a (patient) human user, the script will not send the next event until after the
+previous event resulted in the expect DOM update.  
+%Our test language allows us to express repetition and has the ability to check
+%the correctness of expected responses.  
+To simulate human processing speed, a programmable ``thinking delay'' can be introduced 
+between receiving an expected response and sending the next event.
+To create test scenarios from actual applications,
+we run those applications using a real browser and record the client/server interactions
+in a log, which our test tools can reply.
+%To avoid limiting throughput when the test client becomes CPU bound,
+%we can start multiple instances of the client.
+
+We used a dual-socket, 8 core Intel Xeon 2.27GHz processor with 38GB of RAM on the machine
+on which we run \cbtwo{}'s master, worker, and proxies.  We colocate the first proxy with
+the master in the same process.
+This system is connected via Gigabit Ethernet to a 8 core AMD
+machine with 16GB of RAM on which the test client(s) execute. Both machines run 
+Ubuntu 14.04 with a stock Linux 3.13 kernel.  We use \nodejs{} 0.10.33 and the version
+of JSDOM 2.0 we customized.  We use the static load balancing strategy discussed in 
+Section~\ref{sec:distribution} to ensure an exactly predictable distribution of application
+instances onto workers.
+
+%
+%
+
+\subsection{Click Application}
+Our first benchmark is a simple click application that increments a counter on a page
+whenever the user clicks.  It is written without any libraries, making direct use of
+the JavaScript DOM API.  It only has 14 lines of HTML and 5 lines of JavaScript code.
+As such it most closely measures the overhead of our
+framework only, e.g. the overhead of making RPC calls, serialization and deserialization,
+and dispatching events into the server-side DOM, observing any DOM changes occurring as
+a result, and relaying those to the client.
+
+We consider two possible scenarios, a fast ``Back-to-back'' click application 
+with no thinking times between clicks, and a more ``Human-paced'' click application
+in which there is a think time drawn from a uniform distribution in the range of
+1 to 2 seconds.  We perform 5 runs for each data point and report the mean.
+For all benchmarks, the variance was small. The vast majority of data points incurred
+a relative standard error below 5\%, the maximum relative standard error was 11\%.
+
+\clickthroughput{}
+\clicklatency{}
+
+We measure throughput in terms of operations per second and average latency.  
+Figure~\ref{fig:clickthroughput} shows the throughput of the application for different
+numbers of workers. In those cases, all workers become CPU bound, adding more workers
+that can use additional cores increases throughput near linearly up to 6 workers. 
+In this scenario, a single proxy is sufficient to support up to
+8,000 operations per second at which point it becomes CPU bound;
+for the 6 and 8 worker cases, we add a second proxy process.
+Since the reverse proxy processes run on the same machine as the workers, throughput 
+does not increase beyond 6 workers since this machine has only 8 cores.
+We carefully monitor the CPU usage on the benchmark client machine, adding new
+test driver instances as needed, up to 8.
+
+\clickwaitthroughput{}
+\clickwaitlatency{}
+
+For the back-to-back scenario, throughput is limited by the CPU capacity available
+to the workers for 100 clients or more.  Throughput stays relatively constant as
+the number of client increases, but the observed latency increases, which is
+shown in Figure~\ref{fig:clicklatency}.  Note that we consider a latency of more than
+100ms unacceptable~\cite{Nielsen1993Usability}, which is why we cut off the y-axis
+accordingly.  As such, in this scenario, a single worker may support up to 200 clients,
+and 6 workers can handle about 1,200 clients before latency increases to unacceptable
+levels. 
+
+When introducing think times to simulate ``human-paced'' clients, we obtain the
+throughput and latency shown in Figures~\ref{fig:clickwaitthroughput} 
+and~\ref{fig:clickwaitlatency}.  In those cases, a larger number of clients can be
+supported, and maximum throughput will not be reached until the number of
+clients ramps up.  For each worker configuration, the maximum acceptable latency 
+is reached slightly before maximum throughput is reached.  In these experiments,
+we do not increase the number of clients further if latency has already reached
+unacceptable levels.
+We must note that the latency reported here does not include a wide-area network (WAN) delay;
+which when taken into account would reduce the bounds on acceptable processing delay.
+Nevertheless, we conclude that our method of scaling to multiple processes is effective 
+and that the reverse proxy in particular does not become a bottleneck.
+
+% ----------------------------------------------------------------------------------------------
+\subsection{Chat Application} 
+
+A key part of the productivity promise for using the server-centric \cb framework
+is the ability to reuse high-level libraries such as AngularJS with little or
+no changes, so that applications prototyped in AngularJS can be directly
+executed in virtual browsers.  These libraries are designed for client-side
+use, however.  We prototyped a Chat application to investigate the overhead
+of this usage scenario, a screenshot is shown in Figure~\ref{fig:chatapp}.  
+The application is only 207 lines of HTML and JS code while providing features such as 
+creating chatrooms, joining them, chatting and changing the desired display name.
+
+\chatroomfig{}
+
+We make use of shared application instance data as discussed in Section~\ref{sec:appmodel}
+to hold the last 50 chat messages.  Each application instance is visited by 5 simulated users,
+each instantiating their own virtual browser.  Each user sends 100 chat messages in our
+script, consisting of a sentence of 15-20 characters.  We set the think time to 5-10 seconds
+between messages.  We define latency as the time taken to hit enter and when the  message
+appears in the chat window.
+
+\angularchatlatency{}
+
+Fig.\ref{fig:angularchatlatency} shows the latency perceived by benchmark tool
+under different numbers of clients. While scaling to multiple workers remains effective,
+the use of AngularJS imposes a significant cost, reducing the number of concurrent users 
+that can be supported with the same hardware.  Most of the time is spent in the AngularJS
+framework, which we discovered through profiling.  Optimizations made in successive revisions
+of AngularJS heavily impacted our performance; for instance, a single commit to optimize
+needless reexecution of so-called filters in AngularJS improved benchmark performance by 20\%.
+As such, our numbers provide limited information about the performance envelope of
+server-side environments; rather, they provide a snapshot into the current state of
+engineering high-level libraries such as AngularJS.  
+
+\jquerychatlatency{}
+To eliminate the impact of AngularJS, we also reprototyped the same application with a
+lower-level library, jQuery, which increased its size significantly (and made it significantly
+less readable).  Avoiding AngularJS's method of dirty checking to identify model changes
+roughly doubled performance, as shown in Figure~\ref{fig:jquerychatlatency}.
+AngularJS's developers expect an order of magnitude speedup through direct VM 
+support via \code{Object.observe()} in future JavaScript VMs~\cite{angularjsspeedup}.
+
+% A second example of a disproportionate impact of specific implementation limitations
+% is the handling of style attributes.  For instance, jQuery's \code{toggle()} method changes an element's
+% visibility by changing a style attribute.  To obtain the current value, it uses the
+% \code{getComputedStyle()} function, which triggers the application of CSS selectors.
+% This is a well-known performance bottleneck~\cite{Meyerovich+:WWW2010} in browser
+% layout engines and not optimized at all in JSDOM.  A third example we encountered 
+% is the original implementation of a frequently called function \code{length\-From\-Properties}
+% which determines the number of children of a DOM node.  Profiling showed 30\% of CPU
+% spent in this function, which disappeared after an upgrade that substituted a
+% constant time $O(1)$ implementation.
+

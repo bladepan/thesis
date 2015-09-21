@@ -1,0 +1,16 @@
+\section{Conclusion}
+\label{sec:conclu}
+
+This paper discusses a scalable, multiprocess implementation of web application framework
+that maintains rich presentation state server-side.  This approach has many 
+advantages, from simplified and accelerated application development, improved user 
+experience across visits without requiring programmer effort, and potentially 
+increased security.   As such, it has the potential to lead to applications
+that truly ``live'' in the cloud, rather than merely interactive web pages.
+
+Our results show that this design can be implemented in a scalable way such that
+adding more resources results in a proportional increase in capacity.  However,
+it also shows that the use of code and libraries originally intended for client-side
+use on the server can be very expensive, primarily in terms of CPU time.
+These limitations will narrow the scope of applications for which a pure
+server-centric approach such as ours is applicable.

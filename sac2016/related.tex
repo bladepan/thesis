@@ -1,0 +1,79 @@
+\section{Related Work}
+\label{sec:related}
+
+ZK~\cite{ChenCheng:book2007},
+which we use as part of our motivation in Section~\ref{sec:motivation}
+is a Java-based server-centric web framework that is in wide use.
+ZK applications are constructed using components, which are represented
+using the ZK User Interface Markup Language (ZUML).  ZUML components
+are translated into HTML and CSS when a page is rendered.
+A client-side library handles synchronization between the client's 
+view of and interaction with components and their server-side 
+representation.  Our extensive experience deploying applications
+with ZK ([references elided]) % ~\cite{Tilevich:aop2008,EdwardsBack:csc2011} 
+inspired the 
+work on \cb.  As discussed, ZK does not maintain a representation
+of the server document across page reloads, which means that
+all presentation state must be tied to session or persistent state.
+To scale ZK to multiple processes or servers, this session state must
+be replicated.
+
+Unlike \projectname{}, ZK aims to support layout attributes, but
+we have found that the complexity of its client engine leads to 
+numerous layout and compatibility bugs developers must work around,
+particularly when the server-side document and the client-side
+document are not identical.  By contrast, \cb uses identical, HTML-based
+documents on the client and the server.
+
+ItsNat~\cite{JoseMariaArranzSantamariaItsNat} is a Java-based AJAX
+component framework similar to ZK, although it uses HTML instead of
+ZUML to express server documents, along with the Java W3C implementation.  
+Unlike \projectname, it also does not maintain the server document 
+state across visits, and cannot make use of existing JavaScript libraries.
+
+The Google Web Toolkit~\cite{GWT} allows the implementation of
+AJAX applications in Java that are compiled to JavaScript (or other
+targets).  Like \projectname, it provides an environment similar to 
+that provided by desktop libraries, but focuses on the client-side only; 
+communication with the server is outside its scope.
+
+% Fiz~\cite{OusterhoutFiz2009} is a server centric component based web framework
+
+% http://itsnat.sourceforge.net/index.php?_page=overview
+
+% http://books.zkoss.org/wiki/ZK_Developer%27s_Reference/Clustering
+% http://www.javaworld.com/article/2075019/jndi/j2ee-clustering--part-1.html
+
+% TODO zkoss
+
+% http://books.zkoss.org/wiki/Small_Talks/2007/April/How_to_Run_ZK_on_Apache_%2B_Tomcat_clustering,_Part_I
+% session replication "replication costly while cluster nodes more then three (it's about math, think about fully connected graph K3~K4"
+% TODO every node pick an arbitrary node to replicate is also an option, wonder why they do not use this option
+
+A closely related project that pursues similar goals in simplifying the development
+of rich web applications is Meteor~\cite{meteor}, a full stack platform for building 
+web and mobile applications.  Meteor provides mechanisms that tie a client's presentation
+state directly to model state that is kept in a server-side database, which in turn is 
+partially replicated on the client.  As such, user input can be handled, optimistically, before 
+the server roundtrip has completed. If an update is rejected by the server, the optimistic 
+application is undone. Like with client-centric frameworks, no presentation state is kept on
+the server. Asynchronous updates to model data is pushed to clients.
+
+Meteor will have lower server-side cost, and thus higher scalability, than \cb, as well
+as the ability to reduce user-perceived latency because of its optimistic processing.
+However, we believe that this comes at a high price of complexity and increased risk.
+For instance, programmers must be extremely careful to not leak sensitive data to the 
+client, and they may easily expose (unintentionally) sensitive business logic to the client.  
+Meteor also does not focus on the problem of simplifying the retention of presentation
+state across visits, either making that state ephemeral, or requiring the programmer
+use session state or store all necessary model variables in the database.
+
+Lastly, our system shares ideas with traditional thin-client and remote display 
+systems, going back to ``dumb terminals'' based on the X Window 
+System~\cite{ScheiflerGettys:acmtg1986}.  We note that VMWare's Horizon product provides
+a way to see the user interface of actual virtual machines via a browser, with its
+BLAST protocol.  Compared to these systems, \cb{} is 
+unique in that it uses a markup document and differential update to it to 
+describe the structure and evolution of the user interface that is rendered 
+to the user.  
+
