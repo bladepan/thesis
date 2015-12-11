@@ -1,0 +1,178 @@
+============================================================================
+SAC 2016 Reviews for Submission #1314
+============================================================================
+
+Title: Rich Cloud-based Web Applications with CloudBrowser 2.0
+
+Authors: Xiaozhong Pan and Godmar Back
+============================================================================
+                            REVIEWER #1
+============================================================================
+
+
+---------------------------------------------------------------------------
+Reviewer's Scores
+---------------------------------------------------------------------------
+
+          Technical Content and Accuracy: 3
+                Significance of the Work: 5
+Appropriate Title, Introduction, and Conclusion: 6
+                    Overall Organization: 5
+                 Appropriateness for SAC: 5
+          Style and Clarity of the Paper: 5
+                  Originality of Content: 4
+                  OVERALL RECOMMENDATION: 5
+
+
+---------------------------------------------------------------------------
+Comments
+---------------------------------------------------------------------------
+
+The paper proposes moving the majority of browser functionality from the client
+to the server. That way numerous resource related constraints can be solved,
+and also living with several devices that are used for web access becomes
+simpler.
+
+Similar approaches have been proposed by others as well; Google scholar gives
+several references and based on the title, these should be referred to, too.
+Many of the approaches are closer to the presented design (which lacks
+precision in the description in the paper) than GWT, so for the sake of
+fairness, these should be addressed also in related work section.
+
+============================================================================
+                            REVIEWER #2
+============================================================================
+
+
+---------------------------------------------------------------------------
+Reviewer's Scores
+---------------------------------------------------------------------------
+
+          Technical Content and Accuracy: 6
+                Significance of the Work: 6
+Appropriate Title, Introduction, and Conclusion: 7
+                    Overall Organization: 7
+                 Appropriateness for SAC: 7
+          Style and Clarity of the Paper: 7
+                  Originality of Content: 6
+                  OVERALL RECOMMENDATION: 6
+
+
+---------------------------------------------------------------------------
+Comments
+---------------------------------------------------------------------------
+
+The paper proposes a novel approach to build Web applications where all
+application logic as well as most presentation logic execute on the
+server-side. The idea is similar to the traditional “thin client” model,
+but retains the typical features of modern rich Internet applications. In
+addition, unlike typical Web applications, the approach support the seamless
+disconnect/resume feature typical of remote desktops. To do so the approach
+keeps parts of the HTML in memory on the server (virtual Web browser) and
+mirrors it to the client Web browser. I really like the unbiased discussion in
+Section 2 about the pro/cons of the approach and the types of applications
+which can take advantage of the proposed approach. The paper discusses the
+design and implementation of the approach, called CloudBrowser, and technical
+considerations to achieve fault tolerance, scalability and performance
+(latency). CouldBrowser has been tested with two simple applications to assess
+its latency varying the number of clients and workers on the server. The
+results are very encouraging, particularly in the second application,
+considering both CouldBrowser complexity and that the application uses
+AngularJS, which is designed for executing on the client side.
+
+The paper is very well written, contains enough details and is technically
+sound. The conclusions are well supported by empirical data. In my opinion the
+paper should be accepted.
+
+============================================================================
+                            REVIEWER #3
+============================================================================
+
+
+---------------------------------------------------------------------------
+Reviewer's Scores
+---------------------------------------------------------------------------
+
+          Technical Content and Accuracy: 6
+                Significance of the Work: 6
+Appropriate Title, Introduction, and Conclusion: 7
+                    Overall Organization: 7
+                 Appropriateness for SAC: 7
+          Style and Clarity of the Paper: 6
+                  Originality of Content: 7
+                  OVERALL RECOMMENDATION: 7
+
+
+---------------------------------------------------------------------------
+Comments
+---------------------------------------------------------------------------
+
+The paper describes an original thin-client approach to serve and distribute
+applications in a web browser using a DOM level update protocol. The paper
+justifies the feasibility of this approach with two evaluations made with two
+specifically written test applications.
+
+I really enjoyed reading the paper as it contains lot of references and
+introduces some breakthrough ideas. In particular it gives an original view of
+the application state as a first order object and derivates some interesting
+applications such as sharing this state between multiple users and/or making it
+persists.
+
+The reverse side of this rich content is that we really would like to learn
+more about the pros and cons of that approach, but I guess reading the other
+papers from the authors which are cited but (voluntarily to comply with the
+submission process) not referenced should complete the picture.
+
+My only concern with this paper is that it gives too few implementation details
+to really figure out the application functional domain (the 3 characteristics
+given col2 p2 could still apply to lot of applications and sounds a bit
+optimistic).  In particular there are no details about the update protocol
+which is most probably a bottleneck. For instance I wonder if creating
+visualization intensive applications (like dashboards made with d3.js) would be
+realistic since that would be very costly in terms of updates at the
+presentation level. Similarly there seem to be an implicit assumption that all
+the virtual browsers of a same application instance should be executed by the
+same worker, this should be clarified as it probably limits scalability of
+co-browsing
+and would not for instance allow to develop MUD-like applications. But all this
+can be discussed during the symposium.
+
+Figure 2 and Figure 1 should be renumbered so that they are printed in their
+logical order.
+
+============================================================================
+                            REVIEWER #4
+============================================================================
+
+
+---------------------------------------------------------------------------
+Reviewer's Scores
+---------------------------------------------------------------------------
+
+          Technical Content and Accuracy: 5
+                Significance of the Work: 5
+Appropriate Title, Introduction, and Conclusion: 5
+                    Overall Organization: 5
+                 Appropriateness for SAC: 5
+          Style and Clarity of the Paper: 5
+                  Originality of Content: 5
+                  OVERALL RECOMMENDATION: 5
+
+
+---------------------------------------------------------------------------
+Comments
+---------------------------------------------------------------------------
+
+This paper presents CloudBrowser 2.0, a system that implements a web design
+model that executes all application logic and most of the presentation logic
+sever side, resembling the thin-client model in the mainframe era. The
+motivation is mainly due to programmer productivity and ease of deployment for
+web applications, as in a server-centric approach, the application programmer
+writes only code that executes on the server, leaving all client-side code
+framework-provided. A server-centric approach also facilitates a better user
+experience by allowing users to feel a persistent application state while
+switching between different applications. Of course, this is at the cost of
+scalability. Although I believe that both client-centric approaches and
+server-centric approaches have their niche applications and will coexist in the
+cloud era, I appreciate the authors’ efforts in developing CloudBrowser 2.0
+to make server-centric approaches more scalable.

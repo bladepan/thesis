@@ -1,0 +1,421 @@
+% This is "sig-alternate.tex" V2.1 April 2013
+% This file should be compiled with V2.5 of "sig-alternate.cls" May 2012
+%
+% This example file demonstrates the use of the 'sig-alternate.cls'
+% V2.5 LaTeX2e document class file. It is for those submitting
+% articles to ACM Conference Proceedings WHO DO NOT WISH TO
+% STRICTLY ADHERE TO THE SIGS (PUBS-BOARD-ENDORSED) STYLE.
+% The 'sig-alternate.cls' file will produce a similar-looking,
+% albeit, 'tighter' paper resulting in, invariably, fewer pages.
+%
+% ----------------------------------------------------------------------------------------------------------------
+% This .tex file (and associated .cls V2.5) produces:
+%       1) The Permission Statement
+%       2) The Conference (location) Info information
+%       3) The Copyright Line with ACM data
+%       4) NO page numbers
+%
+% as against the acm_proc_article-sp.cls file which
+% DOES NOT produce 1) thru' 3) above.
+%
+% Using 'sig-alternate.cls' you have control, however, from within
+% the source .tex file, over both the CopyrightYear
+% (defaulted to 200X) and the ACM Copyright Data
+% (defaulted to X-XXXXX-XX-X/XX/XX).
+% e.g.
+% \CopyrightYear{2007} will cause 2007 to appear in the copyright line.
+% \crdata{0-12345-67-8/90/12} will cause 0-12345-67-8/90/12 to appear in the copyright line.
+%
+% ---------------------------------------------------------------------------------------------------------------
+% This .tex source is an example which *does* use
+% the .bib file (from which the .bbl file % is produced).
+% REMEMBER HOWEVER: After having produced the .bbl file,
+% and prior to final submission, you *NEED* to 'insert'
+% your .bbl file into your source .tex file so as to provide
+% ONE 'self-contained' source file.
+%
+% ================= IF YOU HAVE QUESTIONS =======================
+% Questions regarding the SIGS styles, SIGS policies and
+% procedures, Conferences etc. should be sent to
+% Adrienne Griscti (griscti@acm.org)
+%
+% Technical questions _only_ to
+% Gerald Murray (murray@hq.acm.org)
+% ===============================================================
+%
+% For tracking purposes - this is V2.0 - May 2012
+
+\documentclass{sig-alternate-05-2015}
+  \pdfpagewidth=8.5truein
+  \pdfpageheight=11truein
+
+\usepackage{epsfig,endnotes}
+
+\usepackage{color}
+\usepackage{epstopdf}
+\usepackage{psfrag}
+\usepackage{subfigure}
+\usepackage{xspace}
+\usepackage{booktabs}
+%\usepackage{float}
+\usepackage{url}
+\usepackage{path}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{courier}
+\usepackage{listings}
+\usepackage{pifont}
+\usepackage{graphicx}
+\usepackage{minted}
+\usepackage{multirow}
+
+
+%% disable the splitting of footnotes
+% \interfootnotelinepenalty=10000
+
+%% source code styles
+\lstset{
+	basicstyle=\footnotesize\ttfamily,
+	extendedchars=true,
+	breaklines=true,
+	frame=lines
+}
+
+%% table style
+\renewcommand{\arraystretch}{1.1}
+
+\begin{document}
+
+% key words
+\newcommand{\cb}{CloudBrowser\xspace}
+\newcommand{\projectname}{CloudBrowser\xspace}
+\newcommand{\cbtwo}{CloudBrowser 2.0\xspace}
+\newcommand{\js}{JavaScript\xspace}
+\newcommand{\nodejs}{Node.js\xspace}
+\newcommand{\appins}{App Instance\xspace}
+\newcommand{\jsdom}{JSDOM\xspace}
+\newcommand{\citemain}{~\cite{mcdaniel2012cloudbrowser}}
+
+\def\code#1{\texttt{#1}}
+\def\nodermi{\texttt{nodermi\xspace}}
+
+% section for figs
+% maybe put this in a figure.tex
+
+\newcommand{\webscaleout}{
+    \begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../figs/web_scale_out}
+    \caption{Traditional Scalable Multitier Application Design}
+    \label{fig:webscaleout}
+    \end{figure}
+}
+
+\newcommand{\architectureoverview}{
+    \begin{figure*}[ht]
+    \centering
+    \includegraphics[width=.9\textwidth]{../figs/architecture_overview}
+    \caption{Single Process \cb{} Architecture Overview}
+    \label{fig:cb1arch}
+    \end{figure*}
+}
+
+\newcommand{\newarchitectureoverview}{
+    \begin{figure*}[ht]
+    \centering
+    \includegraphics[width=.9\textwidth]{../figs/new_architecture_overview}
+    \caption{Multiprocess Architecture Overview}
+    \label{fig:cb2arch}
+    \end{figure*}
+}
+
+\newcommand{\requestdispatchdiagram}{
+    \begin{figure}[ht]
+    \includegraphics[width=0.4\textwidth]{../figs/request_dispatch}
+    \caption{Request Dispatch Diagram}
+    \label{fig:dispatch}
+    \end{figure}
+}
+
+\newcommand{\appinstancefig}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../figs/appInstance}
+    \caption{Detailed view of an App Instance}
+    \label{fig:appinstance}
+    \end{figure}
+}
+
+
+\newcommand{\chatappfig}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.4\textwidth]{../figs/chat_application}
+    \caption{This figure shows how multiple virtual browsers can directly,
+        and seamlessly share relevant application data, in this case chat messages,
+        which then become part of the model that drives the presentation
+        MVC framework.
+    }
+    \label{fig:chatapp}
+    \end{figure}
+}
+
+
+\newcommand{\clickthroughput}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.45\textwidth]{../gnuplot/click_throughput}
+    \caption{Throughput of ``Back-to-back'' click application.}
+    \label{fig:clickthroughput}
+    \end{figure}
+}
+
+
+\newcommand{\clicklatency}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.45\textwidth]{../gnuplot/click_latency}
+    \caption{Latency of ``Back-to-back'' click application.}
+    \label{fig:clicklatency}
+    \end{figure}
+}
+
+
+\newcommand{\clickwaitthroughput}{
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.45\textwidth]{../gnuplot/click_wait_throughput}
+    \caption{Throughput of click application, after introducing artificial delay.}
+    \label{fig:clickwaitthroughput}
+    \end{figure}
+}
+
+
+\newcommand{\clickwaitlatency}{
+    \begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.45\textwidth]{../gnuplot/click_wait_latency}
+    \caption{Latency of click application, after introducing artificial delay.}
+    \label{fig:clickwaitlatency}
+    \end{figure}
+}
+
+
+
+\newcommand{\angularchatlatency}{
+    \begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.45\textwidth]{../gnuplot/angularchat_latency}
+    \caption{Latency of chat application with Angular.js.}
+    \label{fig:angularchatlatency}
+    \end{figure}
+}
+
+
+\newcommand{\jquerychatlatency}{
+    \begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.45\textwidth]{../gnuplot/jquerychat_latency}
+    \caption{Latency of chat application with JQuery.}
+    \label{fig:jquerychatlatency}
+    \end{figure}
+}
+
+
+\newcommand{\chatroomfig}{
+    \begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.45\textwidth]{../figs/chatroom}
+    \caption{Chat Room Application}
+    \label{fig:chatroom}
+    \end{figure}
+}
+
+\newcommand{\apphierarchyfig}{
+    \begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.45\textwidth]{../figs/application_hierarchy}
+    \caption{Hierarchy of applications, application instances, and virtual browsers.
+    Note that a single virtual browser may be broadcast to multiple clients (cobrowsing).}
+    \label{fig:appidhierarchy}
+    \end{figure}
+}
+
+\newcommand{\memfig}{
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../gnuplot/resource_consumption}
+    \caption{
+    Resource Consumption of worker node running JQueryChat Application\\
+X axis is time. Left Y axis corresponds to the red line of CPU usage.
+Right Y axis corresponds to memory statistics.\\
+After about 90s after the system boots up, the benchmark tool starts to simulate 
+user workload.
+When the benchmark tool sending requests, \emph{HeapUsed} fluctuates as the system creates new objects and garbage collector cleans dead objects.
+When the \emph{HeapUsed} drops there is a steep surge of CPU usage, indicating garbage collector is working at that time.
+    }
+    \label{fig:mem}
+\end{figure*}
+}
+
+% Copyright
+%\setcopyright{acmcopyright}
+\setcopyright{acmlicensed}
+%\setcopyright{rightsretained}
+%\setcopyright{usgov}
+%\setcopyright{usgovmixed}
+%\setcopyright{cagov}
+%\setcopyright{cagovmixed}
+
+
+% DOI
+\doi{http://dx.doi.org/10.1145/2851613.2851859}
+
+% ISBN
+\isbn{978-1-4503-3739-7/16/04}
+
+%Conference
+%\conferenceinfo{PLDI '13}{June 16--19, 2013, Seattle, WA, USA}
+
+\acmPrice{\$15.00}
+
+%
+% --- Author Metadata here ---
+\conferenceinfo{SAC 2016,}{April 04 - 08, 2016, Pisa, Italy}
+\CopyrightYear{2016} % Allows default copyright year (20XX) to be over-ridden - IF NEED BE.
+%\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
+% --- End of Author Metadata ---
+
+\title{Rich Cloud-based Web Applications \\
+    with \cbtwo \vspace{-.5em}}
+%
+% You need the command \numberofauthors to handle the 'placement
+% and alignment' of the authors beneath the title.
+%
+% For aesthetic reasons, we recommend 'three authors at a time'
+% i.e. three 'name/affiliation blocks' be placed beneath the title.
+%
+% NOTE: You are NOT restricted in how many 'rows' of
+% "name/affiliations" may appear. We just ask that you restrict
+% the number of 'columns' to three.
+%
+% Because of the available 'opening page real-estate'
+% we ask you to refrain from putting more than six authors
+% (two rows with three columns) beneath the article title.
+% More than six makes the first-page appear very cluttered indeed.
+%
+% Use the \alignauthor commands to handle the names
+% and affiliations for an 'aesthetic maximum' of six authors.
+% Add names, affiliations, addresses for
+% the seventh etc. author(s) as the argument for the
+% \additionalauthors command.
+% These 'additional authors' will be output/set for you
+% without further effort on your part as the last section in
+% the body of your article BEFORE References or any Appendices.
+
+\numberofauthors{2} %  in this sample file, there are a *total*
+% of EIGHT authors. SIX appear on the 'first-page' (for formatting
+% reasons) and the remaining two appear in the \additionalauthors section.
+%
+\author{
+% You can go ahead and credit any number of authors here,
+% e.g. one 'row of three' or two rows (consisting of one row of three
+% and a second row of one, two or three).
+%
+% The command \alignauthor (no curly braces needed) should
+% precede each author name, affiliation/snail-mail address and
+% e-mail address. Additionally, tag each line of
+% affiliation/address with \affaddr, and tag the
+% e-mail address with \email.
+%
+% 1st. author
+\alignauthor
+Xiaozhong Pan\\
+       \affaddr{Department of Computer Science}\\
+       \affaddr{Virginia Tech}\\
+       \email{bladepan@cs.vt.edu}
+% 2nd. author
+\alignauthor
+Godmar Back\\
+       \affaddr{Department of Computer Science}\\
+       \affaddr{Virginia Tech}\\
+       \email{gback@vt.edu}
+}
+
+% Just remember to make sure that the TOTAL number of authors
+% is the number that will appear on the first page PLUS the
+% number that will appear in the \additionalauthors section.
+
+\maketitle
+
+\input{abstract}
+
+%
+% The code below should be generated by the tool at
+% http://dl.acm.org/ccs.cfm
+% Please copy and paste the code instead of the example below. 
+%
+\begin{CCSXML}
+    <ccs2012>
+    <concept>
+    <concept_id>10002951.10003260.10003282</concept_id>
+    <concept_desc>Information systems~Web applications</concept_desc>
+    <concept_significance>500</concept_significance>
+    </concept>
+    <concept>
+    <concept_id>10002951.10003260.10003300</concept_id>
+    <concept_desc>Information systems~Web interfaces</concept_desc>
+    <concept_significance>500</concept_significance>
+    </concept>
+    <concept>
+    <concept_id>10010520.10010521.10010537.10010538</concept_id>
+    <concept_desc>Computer systems organization~Client-server architectures</concept_desc>
+    <concept_significance>300</concept_significance>
+    </concept>
+    </ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Information systems~Web applications}
+\ccsdesc[500]{Information systems~Web interfaces}
+\ccsdesc[300]{Computer systems organization~Client-server architectures}
+
+%
+% End generated code
+%
+
+%
+%  Use this command to print the description
+%
+\printccsdesc
+
+% We no longer use \terms command
+%\terms{Theory}
+
+% \keywords{}
+
+\input{introduction2}
+% \input{background}
+\input{motivation}
+\input{implementation}
+\input{evaluation}
+\input{related}
+\input{conclusion}
+\input{acknowledgement}
+
+%
+% The following two commands are all you need in the
+% initial runs of your .tex file to
+% produce the bibliography for the citations in your paper.
+{\footnotesize 
+\vskip 1em
+\bibliographystyle{abbrv}
+\bibliography{../references,../webapps2012,../webappsadditional}
+}
+% You must have a proper ".bib" file
+%  and remember to run:
+% latex bibtex latex latex
+% to resolve all references
+%
+% ACM needs 'a single self-contained file'!
+%
+% That's all folks!
+\end{document}

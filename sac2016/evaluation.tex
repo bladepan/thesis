@@ -77,9 +77,9 @@ test driver instances as needed, up to 8.
 For the back-to-back scenario, throughput is limited by the CPU capacity available
 to the workers for 100 clients or more.  Throughput stays relatively constant as
 the number of client increases, but the observed latency increases, which is
-shown in Figure~\ref{fig:clicklatency}.  Note that we consider a latency of more than
+shown in Figure~\ref{fig:clicklatency}.  We consider a latency of more than
 100ms unacceptable~\cite{Nielsen1993Usability}, which is why we cut off the y-axis
-accordingly.  As such, in this scenario, a single worker may support up to 200 clients,
+accordingly.  In this scenario, a single worker can support up to 200 clients,
 and 6 workers can handle about 1,200 clients before latency increases to unacceptable
 levels. 
 
@@ -126,17 +126,17 @@ that can be supported with the same hardware.  Most of the time is spent in the 
 framework, which we discovered through profiling.  Optimizations made in successive revisions
 of AngularJS heavily impacted our performance; for instance, a single commit to optimize
 needless reexecution of so-called filters in AngularJS improved benchmark performance by 20\%.
-As such, our numbers provide limited information about the performance envelope of
-server-side environments; rather, they provide a snapshot into the current state of
-engineering high-level libraries such as AngularJS.  
+% As such, our numbers provide limited information about the performance envelope of
+% server-side environments; rather, they provide a snapshot into the current state of
+% engineering high-level libraries such as AngularJS.  
 
 \jquerychatlatency{}
 To eliminate the impact of AngularJS, we also reprototyped the same application with a
 lower-level library, jQuery, which increased its size significantly (and made it significantly
 less readable).  Avoiding AngularJS's method of dirty checking to identify model changes
 roughly doubled performance, as shown in Figure~\ref{fig:jquerychatlatency}.
-AngularJS's developers expect an order of magnitude speedup through direct VM 
-support via \code{Object.observe()} in future JavaScript VMs~\cite{angularjsspeedup}.
+% AngularJS's developers expect an order of magnitude speedup through direct VM 
+% support via \code{Object.observe()} in future JavaScript VMs~\cite{angularjsspeedup}.
 
 % A second example of a disproportionate impact of specific implementation limitations
 % is the handling of style attributes.  For instance, jQuery's \code{toggle()} method changes an element's

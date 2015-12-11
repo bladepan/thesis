@@ -29,12 +29,12 @@ or in persistent state such as a database, and retrieve it from there every
 time the view is rebuilt.
 
 Our own experience includes the development of two substantial applications
-using a server-centric approach: [references elided] %~\cite{tilothesis,EdwardsBack:csc2011}:
+using a server-centric approach~\cite{tilothesis,EdwardsBack:csc2011}:
 an application to allow students to develop ZK applications in the cloud, and
 a complex configuration management system.  This experience convinced
 us of the feasibility and value of a server-centric approach.  In particular,
 our users reported enjoying the user interface style we were able to
-present, in which their actions took immediate effect [reference elided].%~\cite{BaileyBack:igi2013}.
+present, in which their actions took immediate effect~\cite{BaileyBack:igi2013}.
 Notably, the latency introduced by server round trips did not present a
 barrier to usability.
 
@@ -53,7 +53,7 @@ Thus born was the idea to keep the presentation state in HTML on the server.
 
 Keeping presentation state on the server imposes a cost that not all
 types of applications may be willing to pay, even when the reduced development
-effort is taken into account.  In (reference elided), we 
+effort is taken into account.  In~\cite{mcdaniel2012cloudbrowser}, we 
 discuss the types of applications for which we believe the trade-off we propose
 may be worthwhile: personal and business applications such as tax preparation systems
 or configuration management systems.  These applications are characterized by the following
@@ -68,10 +68,10 @@ traits:
     reflected in their UI.
 \end{itemize}
 
+\webscaleout{}
 \architectureoverview{}
 
 \subsection{Challenges}
-\webscaleout{}
 Successfully applying the idea of preserving presentation state using virtual
 browsers in server memory imposes a number of challenges which this work 
 makes an attempt to better understand.

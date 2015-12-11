@@ -2,7 +2,7 @@
 \label{sec:implementation}
 
 Full details of a single process implementation of the \cb architecture
-are available in [reference elided]% ~\cite{mcdaniel2012cloudbrowser}.  
+are available in~\cite{mcdaniel2012cloudbrowser}.  
 We highlight only the
 essential design here.  Figure \ref{fig:cb1arch} shows the relationship 
 between the client engine running in the user's browser and the virtual browser
@@ -144,7 +144,7 @@ Masters, proxies, and workers need to be able communicate with one another.
 This communication takes places at the level of JavaScript method calls.
 To facilitate the invocation of JavaScript methods that belong to objects residing 
 in other processes, we developed \nodermi, a remote method invocation (RMI) 
-library [reference elided]. % ~\cite{nodermi}.
+library~\cite{nodermi}.
 
 \nodermi uses JavaScript's reflection facilities to transparently create client-side 
 stubs for remote objects on the fly.
